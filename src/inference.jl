@@ -7,7 +7,7 @@ include("model.jl")
 using .Model
 
 import Base.show
-export AdditiveNoisePosterior, Posterior
+export AdditiveNoisePosterior
 # -
 
 u_selection = StaticSelection(select(:U))
@@ -32,7 +32,11 @@ end
 
 
 # +
-# TODO, Add eps samples
+# TODO: Test this function 
+
+# TODO: Change Us to include epsY. We don't need epsX for 
+# estimating any causal estimates, but we do need to take mh steps
+# over epsX to make sure we sample from the marginal of epsY.
 
 function Posterior(hyperparams, X, Y, nSteps, nESS)
     obs = Gen.choicemap()
