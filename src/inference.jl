@@ -13,21 +13,37 @@ export AdditiveNoisePosterior
 u_selection = StaticSelection(select(:U))
 
 
-function AdditiveNoisePosterior(hyperparams, X, Y, nSteps)
+function AdditiveNoisePosterior(hyperparams, X, Y, nOuter, nMHInner, nESInner)
     obs = Gen.choicemap()
     obs[:X] = X
     obs[:Y] = Y
     
+    noise_selection = StaticSelection(select(:uNoise, :xNoise, :yNoise))
+    LS_selection = StaticSelection(select(:uxLS, :uyLS, :xyLS))
+    scale_selection = StaticSelection(select(:xScale, :yScale))
+    
     n = length(X)
     
-    Us = zeros(nSteps, n)
+    PosteriorSamples = []
     
     (tr, _) = generate(AdditiveNoiseGPROC, (hyperparams,), obs)
-    for iter=1:nSteps
-        tr = elliptical_slice(tr, :U, zeros(n), hyperparams["uCov"])
-        Us[iter, :] = get_choices(tr)[:U]
+    
+    for i=1:nOuter    
+        for j=1:nMHInner
+            (tr, _) = mh(tr, noise_selection)
+            (tr, _) = mh(tr, LS_selection)
+            (tr, _) = mh(tr, scale_selection)
+        end
+        
+        uCov = hyperparams["SigmaU"] * get_choices(tr)[:uNoise]
+        
+        for k=1:nESInner
+            tr = elliptical_slice(tr, :U, zeros(n), uCov)
+        end
+        
+        push!(PosteriorSamples, get_choices(tr))
     end
-    Us, tr
+    PosteriorSamples, tr
 end
 
 

@@ -10,33 +10,36 @@ include("../src/model.jl")
 using .Inference
 using .Estimation
 using .Model
+# -
+
+# # Synthetic Data Generators
 
 # +
-function simQuadraticData(uCov)
-    n = size(uCov)[1]
+function simLinearData(SigmaU, xNoise, yNoise, uNoise, UXslope, UYslope, XYslope)
+    n = size(SigmaU)[1]
     U = zeros(n)
     X = zeros(n)
     Y = zeros(n)
     epsY = zeros(n)
     
-    U = mvnormal(zeros(n), uCov)
+    U = mvnormal(zeros(n), SigmaU * uNoise)
     
     for i in 1:n
-        X[i] = normal(U[i]+1, 1.0)
-        Ymean = (0.2 * X[i] * U[i])
-        epsY[i] = normal(0, 0.1)
+        X[i] = normal(U[i] * UXslope, xNoise)
+        Ymean = (X[i] * XYslope + U[i] * UYslope)
+        epsY[i] = normal(0, yNoise)
         Y[i] = Ymean + epsY[i]
     end
     return U, X, Y, epsY
 end
 
-function simQuadraticIntData(U, epsY, doX)
+function simLinearIntData(U, epsY, doX, XYslope)
     n = length(U)
     
     Yint = zeros(n)
     
     for i in 1:n
-        Ymean = (0.2 * doX * U[i])
+        Ymean = (XYslope * doX)
         Yint[i] = Ymean + epsY[i]
     end
     return Yint
@@ -44,34 +47,41 @@ end
 
 # +
 # n should be even
-n = 10
-eps = 0.000000000000001
+n = 100
+eps = 0.0000000000001
+uNoise = .5
+xNoise = 1.
+yNoise = 0.1
+
+
+UXslope = 1.
+UYslope = -1.
+XYslope = 1.
+
 
 # All individuals indepedendent.
-# uCov = Matrix{Float64}(I, n, n)
+# SigmaU = Matrix{Float64}(I, n, n)
 
 # All individuals belong to the same group.
-uCov = ones(n, n) + Matrix{Float64}(I, n, n) * eps
+# SigmaU = ones(n, n) + Matrix{Float64}(I, n, n) * eps
 
 # Two individuals per group.
-# uCov = Matrix{Float64}(I, n, n) + Matrix{Float64}(I, n, n) * eps
-# for i = 1:Integer(n/2)
-#     uCov[2*i, 2*i-1] = 1.
-#     uCov[2*i-1, 2*i] = 1.
-# end
+SigmaU = Matrix{Float64}(I, n, n) + Matrix{Float64}(I, n, n) * eps
+for i = 1:Integer(n/2)
+    SigmaU[2*i, 2*i-1] = 1.
+    SigmaU[2*i-1, 2*i] = 1.
+end
 
 # Two groups with all individuals
-# uCov = Matrix{Float64}(I, n, n)
-# uCov[1:(Integer(n/2)), 1:(Integer(n/2))] = ones(Integer(n/2), Integer(n/2))
-# uCov[Integer(n/2)+1:end, Integer(n/2)+1:end] = ones(Integer(n/2), Integer(n/2))
-# uCov += Matrix{Float64}(I, n, n) * eps
+# SigmaU = Matrix{Float64}(I, n, n)
+# SigmaU[1:(Integer(n/2)), 1:(Integer(n/2))] = ones(Integer(n/2), Integer(n/2))
+# SigmaU[Integer(n/2)+1:end, Integer(n/2)+1:end] = ones(Integer(n/2), Integer(n/2))
+# SigmaU += Matrix{Float64}(I, n, n) * eps
 
 println("")
-
-
 # -
 
-U, X, Y, epsY = simQuadraticData(uCov)
+U, X, Y, epsY = simLinearData(SigmaU, xNoise, yNoise, uNoise, UXslope, UYslope, XYslope)
 scatter(X, Y, c=U)
 colorbar()
 title("Color = U")
@@ -79,18 +89,22 @@ xlabel("Treatment")
 ylabel("Outcome")
 
 # +
-# Tune Hyperparameters
+# Set Hyperparameters
 
 hyperparams = Dict()
 
-hyperparams["uxLS"] = 10.
-hyperparams["uyLS"] = 10.
-hyperparams["xyLS"] = 1.
+hyperparams["xNoiseMin"], hyperparams["xNoiseMax"] = 0.01, 3.
+hyperparams["yNoiseMin"], hyperparams["yNoiseMax"] = 0.01, 3.
+hyperparams["uNoiseMin"], hyperparams["uNoiseMax"] = 0.01, 3.
 
-hyperparams["xNoise"] = 1.
-hyperparams["yNoise"] = 0.1
+hyperparams["uxLSShape"], hyperparams["uxLSScale"] = 4., 4.
+hyperparams["uyLSShape"], hyperparams["uyLSScale"] = 4., 4.
+hyperparams["xyLSShape"], hyperparams["xyLSScale"] = 4., 4.
 
-hyperparams["uCov"] = uCov
+hyperparams["xScaleShape"], hyperparams["xScaleScale"] = 4., 4.
+hyperparams["yScaleShape"], hyperparams["yScaleScale"] = 4., 4.
+
+hyperparams["SigmaU"] = SigmaU
 
 load_generated_functions()
 (tr, _) = generate(AdditiveNoiseGPROC, (hyperparams,))
@@ -106,70 +120,26 @@ ylabel("Generated Outcome")
 # -
 
 # Inference
-nSteps = 20
-Us, tr = AdditiveNoisePosterior(hyperparams, X, Y, nSteps)
+nOuter = 1000
+nMHInner = 1
+nESInner = 1
+PosteriorSamples, tr = AdditiveNoisePosterior(hyperparams, X, Y, nOuter, nMHInner, nESInner)
 println("")
 
 # +
 # Estimation
+burnIn = 100
+MHStep = 10
+doX = -2.
+MeanSATEs, VarSATEs = SATE(PosteriorSamples[burnIn:MHStep:end], X, Y, doX)
 
-burnIn = 1
-doX = 1.
-_, _, effectMeans, effectVars = SATE([hyperparams for i in burnIn:nSteps], Us[burnIn:end, :], X, Y, doX)
+nSamplesPerMixture = 100
 
-   
-nSamplesPerMixture = 1
-
-samples = SATEsamples(effectMeans, effectVars, nSamplesPerMixture)
+samples = SATEsamples(MeanSATEs, VarSATEs, nSamplesPerMixture)
 println("")
-# -
-
-Us
-
-function TestYKernel(u1::Float64, u2::Float64, uyLS::Float64, x1::Float64, x2::Float64, xyLS::Float64)
-# function y_kernel(u1, u2, uyLS, x1, x2, xyLS)
-    u_term = ((u1 - u2)/uyLS)^2
-    x_term = ((x1 - x2)/xyLS)^2
-    return exp(-(u_term + x_term)/2)
-end
-
-function TestConditionalSATE(uyLS::Float64, xyLS::Float64, U, X, Y, doX)
-#   Generate a new post-intervention instance for each data instance in
-#   the dataset. This data instance has the same U_i and eps_i, but X[i] is replaced
-#   with doX.
-    
-#   This assumes that the confounder U and kernel hyperparameters are known. 
-#   To compute the SATE marginalized over P(U, lambda|X, Y) this function can
-#   be used to compute monte carlo estimates.
-    
-    n = length(U)
-    
-    CovY = broadcast(TestYKernel, U, reshape(U, 1, n), uyLS, X, reshape(X, 1, n), xyLS)
-    CovY = Symmetric(CovY)
-    println(cond(CovY))
-    
-#   k_Y,Y_x in the overleaf doc. The cross covariance block is not in general symettric.
-    crossCovY = broadcast(TestYKernel, U, reshape(U, 1, n), uyLS, doX, reshape(X, 1, n), xyLS)
-    
-#   k_Y_x in the overleaf doc.
-    intCovY = broadcast(TestYKernel, U, reshape(U, 1, n), uyLS, doX, doX, xyLS)
-    intCovY = Symmetric(intCovY)
-    
-    condMean = crossCovY * (CovY \ Y)
-    condCov = intCovY - (crossCovY * (CovY \ transpose(crossCovY)))
-    effectMean = sum(condMean-Y)/n
-    effectVar = sum(condCov)/n
-    
-    return effectMean, effectVar
-end
 
 # +
-index = 20
-
-TestConditionalSATE(hyperparams["uyLS"], hyperparams["xyLS"], Us[index, :], X, Y, doX)
-
-# +
-intY = simQuadraticIntData(U, epsY, doX)
+intY = simLinearIntData(U, epsY, doX, XYslope)
 
 # kdeplot(intY - Y, label="(Y|do(X=$doX)) - Y", c="r")
 axvline(sum(intY - Y)/n, c="r", ymax=0.1, label="Ground Truth")
@@ -187,6 +157,3 @@ kdeplot(samples, label="GPROC Estimate")
 legend()
 xlabel("SATE")
 ylabel("P(SATE)")
-# -
-
-
