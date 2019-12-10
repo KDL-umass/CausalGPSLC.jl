@@ -5,34 +5,34 @@ using Gen
 using LinearAlgebra
 import Base.show
 
-export x_kernel, y_kernel, GPROC, AdditiveNoiseGPROC
+export t_kernel, y_kernel, GPROC, AdditiveNoiseGPROC
 
 # +
-function x_kernel(u1::Float64, u2::Float64, uxLS::Float64, eps1::Float64, eps2::Float64, 
-                  epsxLS::Float64, xScale::Float64)
-    u_term = ((u1 - u2)/uxLS)^2
-    eps_term = ((eps1 - eps2)/epsxLS)^2
-    return xScale * exp(-(u_term + eps_term)/2)
+function t_kernel(u1::Float64, u2::Float64, utLS::Float64, eps1::Float64, eps2::Float64, 
+                  epsxLS::Float64, tScale::Float64)
+    u_term = ((u1 - u2)/utLS)^2
+    eps_term = ((eps1 - eps2)/epstLS)^2
+    return tScale * exp(-(u_term + eps_term)/2)
 end
 
-function x_kernel(u1::Float64, u2::Float64, uxLS::Float64, xScale::Float64)
-    u_term = ((u1 - u2)/uxLS)^2
-    return xScale * exp(-(u_term)/2)
+function t_kernel(u1::Float64, u2::Float64, utLS::Float64, tScale::Float64)
+    u_term = ((u1 - u2)/utLS)^2
+    return tScale * exp(-(u_term)/2)
 end
     
-function y_kernel(u1::Float64, u2::Float64, uyLS::Float64, x1::Float64, x2::Float64,
-                  xyLS::Float64, eps1::Float64, eps2::Float64, epsyLS::Float64, yScale::Float64)
+function y_kernel(u1::Float64, u2::Float64, uyLS::Float64, t1::Float64, t2::Float64,
+                  tyLS::Float64, eps1::Float64, eps2::Float64, epsyLS::Float64, yScale::Float64)
     u_term = ((u1 - u2)/uyLS)^2
-    x_term = ((x1 - x2)/xyLS)^2
+    t_term = ((t1 - t2)/tyLS)^2
     eps_term = ((eps1 - eps2)/epsyLS)^2
-    return yScale * exp(-(u_term + x_term + eps_term)/2)
+    return yScale * exp(-(u_term + t_term + eps_term)/2)
 end
 
-function y_kernel(u1::Float64, u2::Float64, uyLS::Float64, x1::Float64, x2::Float64, 
-                    xyLS::Float64, yScale::Float64)
+function y_kernel(u1::Float64, u2::Float64, uyLS::Float64, t1::Float64, t2::Float64, 
+                    tyLS::Float64, yScale::Float64)
     u_term = ((u1 - u2)/uyLS)^2
-    x_term = ((x1 - x2)/xyLS)^2
-    return yScale * exp(-(u_term + x_term)/2)
+    t_term = ((t1 - t2)/tyLS)^2
+    return yScale * exp(-(u_term + t_term)/2)
 end
 
 # +
@@ -44,17 +44,17 @@ end
 MappedGenerateEps = Map(generateEps)
 
 @gen (static) function GPROC(hyperparams)    
-    n = size(hyperparams["uCov"])[1]
+    n = size(hyperparams["SigmaU"])[1]
     
-    U = @trace(mvnormal(fill(0, n), hyperparams["uCov"]), :U)
+    U = @trace(mvnormal(fill(0, n), hyperparams["SigmaU"]), :U)
     
-    epsX = @trace(MappedGenerateEps(fill(hyperparams["xNoise"], n)), :epsX)
-    Xcov = broadcast(x_kernel, U, U', hyperparams["uxLS"], epsX, epsX', hyperparams["epsxLS"])
-    X = @trace(mvnormal(fill(0, n), Xcov), :X)
+    epsT = @trace(MappedGenerateEps(fill(hyperparams["tNoise"], n)), :epsT)
+    Tcov = broadcast(t_kernel, U, U', hyperparams["utLS"], epsT, epsT', hyperparams["epstLS"])
+    Tr = @trace(mvnormal(fill(0, n), Tcov), :Tr)
     
     epsY = @trace(MappedGenerateEps(fill(hyperparams["yNoise"], n)), :epsY)
     Ycov = broadcast(y_kernel, U, U', hyperparams["uyLS"], 
-                               X, X', hyperparams["xyLS"], 
+                               Tr, Tr', hyperparams["tyLS"], 
                                epsY, epsY', hyperparams["epsyLS"])
     Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
     return Y
@@ -65,25 +65,25 @@ end
     
 #   Prior over Noise
     uNoise = @trace(uniform(hyperparams["uNoiseMin"], hyperparams["uNoiseMin"]), :uNoise)
-    xNoise = @trace(uniform(hyperparams["xNoiseMin"], hyperparams["xNoiseMax"]), :xNoise)
+    tNoise = @trace(uniform(hyperparams["tNoiseMin"], hyperparams["tNoiseMax"]), :tNoise)
     yNoise = @trace(uniform(hyperparams["yNoiseMin"], hyperparams["yNoiseMax"]), :yNoise)
     
 #   Prior over Kernel Lengthscales
-    uxLS = @trace(inv_gamma(hyperparams["uxLSShape"], hyperparams["uxLSScale"]), :uxLS)
+    utLS = @trace(inv_gamma(hyperparams["utLSShape"], hyperparams["utLSScale"]), :utLS)
     uyLS = @trace(inv_gamma(hyperparams["uyLSShape"], hyperparams["uyLSScale"]), :uyLS)
-    xyLS = @trace(inv_gamma(hyperparams["xyLSShape"], hyperparams["xyLSScale"]), :xyLS)    
+    tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)    
     
 #   Prior over Kernel Scale
-    xScale = @trace(inv_gamma(hyperparams["xScaleShape"], hyperparams["xScaleScale"]), :xScale)
+    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
   
 #   Generate Data 
     U = @trace(mvnormal(fill(0, n), hyperparams["SigmaU"] * uNoise), :U)
     
-    Xcov = broadcast(x_kernel, U, U', uxLS, xScale) + xNoise * 1I
-    X = @trace(mvnormal(fill(0, n), Xcov), :X)
+    Tcov = broadcast(t_kernel, U, U', utLS, tScale) + tNoise * 1I
+    Tr = @trace(mvnormal(fill(0, n), Tcov), :Tr)
     
-    Ycov = broadcast(y_kernel, U, U', uyLS, X, X', xyLS, yScale) + yNoise * 1I
+    Ycov = broadcast(y_kernel, U, U', uyLS, Tr, Tr', tyLS, yScale) + yNoise * 1I
     Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
     return Y
 end

@@ -13,53 +13,53 @@ export AdditiveNoisePosterior
 u_selection = StaticSelection(select(:U))
 
 
-function AdditiveNoisePosterior(hyperparams, X, Y, nOuter, nMHInner, nESInner)
+function AdditiveNoisePosterior(hyperparams, T, Y, nOuter, nMHInner, nESInner)
     obs = Gen.choicemap()
-    obs[:X] = X
+    obs[:Tr] = T
     obs[:Y] = Y
     
-    noise_selection = StaticSelection(select(:uNoise, :xNoise, :yNoise))
-    LS_selection = StaticSelection(select(:uxLS, :uyLS, :xyLS))
-    scale_selection = StaticSelection(select(:xScale, :yScale))
+    noise_selection = StaticSelection(select(:uNoise, :tNoise, :yNoise))
+    LS_selection = StaticSelection(select(:utLS, :uyLS, :tyLS))
+    scale_selection = StaticSelection(select(:tScale, :yScale))
     
-    n = length(X)
+    n = length(T)
     
     PosteriorSamples = []
     
-    (tr, _) = generate(AdditiveNoiseGPROC, (hyperparams,), obs)
+    (trace, _) = generate(AdditiveNoiseGPROC, (hyperparams,), obs)
     
     for i=1:nOuter    
         for j=1:nMHInner
-            (tr, _) = mh(tr, noise_selection)
-            (tr, _) = mh(tr, LS_selection)
-            (tr, _) = mh(tr, scale_selection)
+            (trace, _) = mh(trace, noise_selection)
+            (trace, _) = mh(trace, LS_selection)
+            (trace, _) = mh(trace, scale_selection)
         end
         
-        uCov = hyperparams["SigmaU"] * get_choices(tr)[:uNoise]
+        uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
         
         for k=1:nESInner
-            tr = elliptical_slice(tr, :U, zeros(n), uCov)
+            trace = elliptical_slice(trace, :U, zeros(n), uCov)
         end
         
-        push!(PosteriorSamples, get_choices(tr))
+        push!(PosteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, tr
+    PosteriorSamples, trace
 end
 
 
 # +
 # TODO: Test this function 
 
-# TODO: Change Us to include epsY. We don't need epsX for 
+# TODO: Change Us to include epsY. We don't need epsT for 
 # estimating any causal estimates, but we do need to take mh steps
 # over epsX to make sure we sample from the marginal of epsY.
 
-function Posterior(hyperparams, X, Y, nSteps, nESS)
+function Posterior(hyperparams, T, Y, nSteps, nESS)
     obs = Gen.choicemap()
-    obs[:X] = X
+    obs[:Tr] = T
     obs[:Y] = Y
     
-    n = length(X)
+    n = length(T)
     
     Us = zeros(nSteps, n)
     
@@ -71,7 +71,7 @@ function Posterior(hyperparams, X, Y, nSteps, nESS)
             tr = elliptical_slice(tr, :U, zeros(n), hyperparams["uCov"])
         end
 
-        # Update epsX and epsY with generic mh
+        # Update epsT and epsY with generic mh
         for k=1:n
             (tr, _) = mh(tr, select(:epsX => k => :eps))
             (tr, _) = mh(tr, select(:epsY => k => :eps))
