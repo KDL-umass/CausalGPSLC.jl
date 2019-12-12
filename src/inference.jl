@@ -7,20 +7,96 @@ include("model.jl")
 using .Model
 
 import Base.show
-export AdditiveNoisePosterior
+export AdditiveNoisePosterior, LinearAdditiveNoisePosterior
 # -
 
 u_selection = StaticSelection(select(:U))
 
 
+# +
+#   Like a gaussian drift, we match the moments of our proposal
+#   with the previous noise sample with a fixed variance.
+#   See https://arxiv.org/pdf/1605.01019.pdf.
+
+@gen (static) function uNoiseProposal(trace, var)
+    Noise = trace[:uNoise]
+    
+    Shape = (Noise * Noise / var) + 2
+    Scale = Noise * (Shape - 1)
+    
+    @trace(inv_gamma(Shape, Scale), :uNoise)
+end
+
+@gen (static) function tNoiseProposal(trace, var)
+    Noise = trace[:tNoise]
+    
+    Shape = (Noise * Noise / var) + 2
+    Scale = Noise * (Shape - 1)
+    
+    @trace(inv_gamma(Shape, Scale), :tNoise)
+end
+
+@gen (static) function yNoiseProposal(trace, var)
+    Noise = trace[:yNoise]
+    
+    Shape = (Noise * Noise / var) + 2
+    Scale = Noise * (Shape - 1)
+    
+    @trace(inv_gamma(Shape, Scale), :yNoise)
+end
+
+@gen (static) function utLSProposal(trace, var)
+    Noise = trace[:utLS]
+    
+    Shape = (Noise * Noise / var) + 2
+    Scale = Noise * (Shape - 1)
+    
+    @trace(inv_gamma(Shape, Scale), :utLS)
+end
+
+@gen (static) function uyLSProposal(trace, var)
+    Noise = trace[:uyLS]
+    
+    Shape = (Noise * Noise / var) + 2
+    Scale = Noise * (Shape - 1)
+    
+    @trace(inv_gamma(Shape, Scale), :uyLS)
+end
+
+@gen (static) function tyLSProposal(trace, var)
+    Noise = trace[:tyLS]
+    
+    Shape = (Noise * Noise / var) + 2
+    Scale = Noise * (Shape - 1)
+    
+    @trace(inv_gamma(Shape, Scale), :tyLS)
+end
+
+@gen (static) function tScaleProposal(trace, var)
+    Noise = trace[:tScale]
+    
+    Shape = (Noise * Noise / var) + 2
+    Scale = Noise * (Shape - 1)
+    
+    @trace(inv_gamma(Shape, Scale), :tScale)
+end
+
+@gen (static) function yScaleProposal(trace, var)
+    Noise = trace[:yScale]
+    
+    Shape = (Noise * Noise / var) + 2
+    Scale = Noise * (Shape - 1)
+    
+    @trace(inv_gamma(Shape, Scale), :yScale)
+end
+# -
+
 function AdditiveNoisePosterior(hyperparams, T, Y, nOuter, nMHInner, nESInner)
+    load_generated_functions()
+    
     obs = Gen.choicemap()
     obs[:Tr] = T
     obs[:Y] = Y
-    
-    noise_selection = StaticSelection(select(:uNoise, :tNoise, :yNoise))
-    LS_selection = StaticSelection(select(:utLS, :uyLS, :tyLS))
-    scale_selection = StaticSelection(select(:tScale, :yScale))
     
     n = length(T)
     
@@ -30,9 +106,15 @@ function AdditiveNoisePosterior(hyperparams, T, Y, nOuter, nMHInner, nESInner)
     
     for i=1:nOuter    
         for j=1:nMHInner
-            (trace, _) = mh(trace, noise_selection)
-            (trace, _) = mh(trace, LS_selection)
-            (trace, _) = mh(trace, scale_selection)
+            (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, yNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, utLSProposal, (0.5, ))
+            (trace, _) = mh(trace, uyLSProposal, (0.5, ))
+            (trace, _) = mh(trace, tyLSProposal, (0.5, ))
+            (trace, _) = mh(trace, tScaleProposal, (0.5, ))
+            (trace, _) = mh(trace, yScaleProposal, (0.5, ))
+            
         end
         
         uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
@@ -46,6 +128,41 @@ function AdditiveNoisePosterior(hyperparams, T, Y, nOuter, nMHInner, nESInner)
     PosteriorSamples, trace
 end
 
+
+function LinearAdditiveNoisePosterior(hyperparams, T, Y, nOuter, nMHInner, nESInner)
+    load_generated_functions()
+    
+    obs = Gen.choicemap()
+    obs[:Tr] = T
+    obs[:Y] = Y
+    
+    n = length(T)
+    
+    PosteriorSamples = []
+    
+    (trace, _) = generate(LinearAdditiveNoiseGPROC, (hyperparams,), obs)
+    
+    for i=1:nOuter    
+        for j=1:nMHInner
+            (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, yNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, utLSProposal, (0.5, ))
+            (trace, _) = mh(trace, uyLSProposal, (0.5, ))
+            (trace, _) = mh(trace, tScaleProposal, (0.5, ))
+            (trace, _) = mh(trace, yScaleProposal, (0.5, ))
+        end
+        
+        uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
+        
+        for k=1:nESInner
+            trace = elliptical_slice(trace, :U, zeros(n), uCov)
+        end
+        
+        push!(PosteriorSamples, get_choices(trace))
+    end
+    PosteriorSamples, trace
+end
 
 # +
 # TODO: Test this function 

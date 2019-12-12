@@ -8,7 +8,7 @@ include("model.jl")
 using .Model
 
 import Base.show
-export conditionalITE, conditionalSATE, ITE, SATE, ITEsamples, SATEsamples
+export conditionalITE, conditionalSATE, ITE, LinearSATE, SATE, ITEsamples, SATEsamples
 
 # +
 # TODO: Test and modify for new API
@@ -85,6 +85,48 @@ function conditionalITE(uyLS::Float64, tyLS::Float64, yNoise::Float64, yScale::F
     return MeanITE, CovITE
 end
 
+# Overloading function for the case where ty relationship is linear
+
+function conditionalITE(uyLS::Float64, yNoise::Float64, yScale::Float64, U, T, Y, doT)
+#   Generate a new post-intervention instance for each data instance in
+#   the dataset. This data instance has the same U_i and eps_i, but X[i] is replaced
+#   with doX.
+    
+#   This assumes that the confounder U and kernel hyperparameters are known. 
+#   To compute the SATE marginalized over P(U, lambda|X, Y) this function can
+#   be used to compute monte carlo estimates.
+    
+    n = length(U)
+    
+    CovWW = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, T, reshape(T, 1, n), yScale)
+    CovWW = Symmetric(CovWW)
+    
+    CovWWp = Symmetric(CovWW + (yNoise * 1I))
+    
+#   K(W, W_*) in the overleaf doc. The cross covariance block is not in general symettric.
+    CovWWs = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, T, doT, yScale)
+    
+#   K(W_*, W_*) in the overleaf doc.
+    CovWsWs = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, doT, doT, yScale)
+    CovWsWs = Symmetric(CovWsWs)
+    
+#   Intermediate inverse products to avoid repeated computation.
+    CovWWpInvCovWW = CovWWp \ CovWW
+    CovWWpInvCovWWs = CovWWp \ CovWWs
+    
+#   Covariance of P([f, f_*]|Y)
+    CovC11 = CovWW - (CovWW * CovWWpInvCovWW)
+    CovC12 = CovWWs - (CovWW * CovWWpInvCovWWs)
+    CovC21 = CovWWs' - (CovWWs' * CovWWpInvCovWW)
+    CovC22 = CovWsWs - (CovWWs' * CovWWpInvCovWWs)
+    
+    MeanITE = (CovWWs' - CovWW) * (CovWWp \ Y)
+    
+    CovITE = CovC11 - CovC12 - CovC21 + CovC22
+    
+    return MeanITE, CovITE
+end
+
 # Overloading the function depending on whether there is an exogenous noise term. 
 # If not, use the AdditiveNoiseGPROC model.
 
@@ -111,8 +153,8 @@ end
     
 #     return totalMean, totalVar
 # end
-# -
 
+# +
 function conditionalSATE(uyLS::Float64, tyLS::Float64, yNoise::Float64, yScale::Float64, U, T, Y, doT)
     
     MeanITE, CovITE = conditionalITE(uyLS, tyLS, yNoise, yScale, U, T, Y, doT)
@@ -122,6 +164,19 @@ function conditionalSATE(uyLS::Float64, tyLS::Float64, yNoise::Float64, yScale::
     VarSATE = sum(CovITE)/n
     return MeanSATE, VarSATE
 end
+
+# Overloading function for the case where ty relationship is linear
+
+function conditionalSATE(uyLS::Float64, yNoise::Float64, yScale::Float64, U, T, Y, doT)
+    
+    MeanITE, CovITE = conditionalITE(uyLS, yNoise, yScale, U, T, Y, doT)
+    n = length(T)
+    
+    MeanSATE = sum(MeanITE)/n
+    VarSATE = sum(CovITE)/n
+    return MeanSATE, VarSATE
+end
+# -
 
 function ITE(PosteriorSamples, T, Y, doT)
     nSamples = length(PosteriorSamples)
@@ -143,6 +198,7 @@ function ITE(PosteriorSamples, T, Y, doT)
     return MeanITEs, CovITEs
 end
 
+# +
 function SATE(PosteriorSamples, T, Y, doT)
     
     nSamples = length(PosteriorSamples)
@@ -162,6 +218,26 @@ function SATE(PosteriorSamples, T, Y, doT)
     
     return MeanSATEs, VarSATEs
 end
+
+function LinearSATE(PosteriorSamples, T, Y, doT)
+    
+    nSamples = length(PosteriorSamples)
+    MeanSATEs = zeros(nSamples)
+    VarSATEs = zeros(nSamples)
+    
+    for i in 1:nSamples
+        MeanSATEs[i], VarSATEs[i] = conditionalSATE(PosteriorSamples[i][:uyLS],  
+                                                  PosteriorSamples[i][:yNoise], 
+                                                  PosteriorSamples[i][:yScale],
+                                                  PosteriorSamples[i][:U], 
+                                                  T, 
+                                                  Y, 
+                                                  doT)
+    end
+    
+    return MeanSATEs, VarSATEs
+end
+# -
 
 function ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
     nMixtures = length(MeanITEs[:, 1])
