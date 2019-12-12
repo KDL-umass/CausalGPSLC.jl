@@ -1,0 +1,20 @@
+[data]
+    # the total number of data to generate
+    n = 1000
+
+    # Sigma U
+    num_obj = 10
+    eps = 1e-13
+    ucov = 0.9
+
+    # noise for u, t, x, y
+    uNoise = 0.2
+    xNoise = 0.5
+    tNoise = 1.0
+    yNoise = 0.1
+
+    dataType = "e"
+    [data.linear]
+        UTslope = 2.0
+        UYslope = 2.0
+        TYslope = -0.5
