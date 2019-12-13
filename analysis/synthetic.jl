@@ -12,13 +12,11 @@ include("../src/model.jl")
 using .Inference
 using .Estimation
 using .Model
-export generateSigmaU, simLinearData
-# -
+export generateSigmaU, generateSigmaX, generateT, generateY, generate_ft, generate_ftx, generate_ftxu
 
-# # Synthetic Data Generators
+
 function generateSigmaU(n::Int, nIndividualsArray::Array{Int}, eps::Float64, cov::Float64)
     SigmaU = Matrix{Float64}(I, n, n)
-
     i = 1
     for nIndividuals in nIndividualsArray
         SigmaU[i:i+nIndividuals-1,i:i+nIndividuals-1] = ones(nIndividuals, nIndividuals) * cov
@@ -26,39 +24,264 @@ function generateSigmaU(n::Int, nIndividualsArray::Array{Int}, eps::Float64, cov
     end
     
     SigmaU[diagind(SigmaU)] .= 1 + eps
-    
-    return SigmaU + Matrix{Float64}(I, n, n) * eps
+    return SigmaU
 end
 
-# +
-function simLinearData(SigmaU, tNoise, yNoise, uNoise, UTslope, UYslope, TYslope)
-    n = size(SigmaU)[1]
-    U = zeros(n)
+
+function generateSigmaX(n::Int, sigma::Array{Float64}, eps::Float64)
+    SigmaU = Matrix{Float64}(I, n, n)
+    SigmaU[diagind(SigmaU)] .= sigma .+ eps
+    return SigmaU
+end
+
+function generateSigmaX(n::Int, sigma::Float64, eps::Float64)
+    SigmaU = Matrix{Float64}(I, n, n)
+    SigmaU[diagind(SigmaU)] .= sigma .+ eps
+    return SigmaU
+end
+
+
+function PolyTransform(X::Array{Float64}, beta::Array{Float64})
+    """
+    X <- beta[1] * X + beta[2] * X^2 + ... + beta[p] * X^3
+    """
+    n = size(X)[1]
+    p = size(beta)[1]
+    Y = zeros(n)
+    for i in 1:n
+        for d in 1:p
+            Y[i] += beta[d]*X[i]^d
+        end
+    end
+    return Y
+end
+
+function ExpTransform(X::Array{Float64}, beta1::Float64, beta2::Float64)
+    """
+    X <- beta1 * exp(beta2 * X)
+    """
+    n = size(X)[1]
+    Y = zeros(n)
+    for i in 1:n
+        Y[i] = beta1 * exp(beta2 * X[i])
+    end
+    return Y
+end
+
+function SinTransform(X::Array{Float64}, beta1::Float64, beta2::Float64)
+    """
+    X <- beta1 * sin(beta2 * X)
+    """
+    n = size(X)[1]
+    Y = zeros(n)
+    for i in 1:n
+        Y[i] = beta1 * sin(beta2 * X[i])
+    end
+    return Y
+end
+
+function generateT(X::Array{Float64}, U::Array{Float64}, dtypeX::Array{String}, dtypeU::Array{String},
+    Xparam, Uparam, tNoise)
+    n = size(X)[1]
     T = zeros(n)
+    X_ = zeros(n)
+    U_ = zeros(n)
+
+    for value in dtypeX
+        if value == "polynomial"
+            beta = Xparam["poly"]
+            X_ = X_ .+ PolyTransform(X, beta)
+        elseif value == "exponential"
+            beta = Xparam["exp"]
+            X_ = X_ .+ ExpTransform(X, beta[1], beta[2])
+        else
+            beta = Xparam["sin"]
+            X_ = X_ .+ SinTransform(X, beta[1], beta[2])
+        end
+    end
+    for value in dtypeU
+        if value == "polynomial"
+            beta = Uparam["poly"]
+            U_ = U_ .+ PolyTransform(U, beta)
+        elseif value == "exponential"
+            beta = Uparam["exp"]
+            U_ = U_ .+ ExpTransform(U, beta[1], beta[2])
+        else
+            beta = Uparam["sin"]
+            U_ = U_ .+ SinTransform(U, beta[1], beta[2])
+        end
+    end
+
+    for i in 1:n
+        T[i] = normal(X_[i] + U_[i], tNoise)
+    end
+    return T
+end
+
+
+function generateY(X::Array{Float64}, U::Array{Float64}, T::Array{Float64},
+    dtypeX::Array{String}, dtypeU::Array{String}, dtypeT::Array{String},
+    Xparam, Uparam, Tparam, yNoise)
+
+    n = size(X)[1]
+    T_ = zeros(n)
+    X_ = zeros(n)
+    U_ = zeros(n)
     Y = zeros(n)
     epsY = zeros(n)
+    for value in dtypeX
+        if value == "polynomial"
+            beta = Xparam["poly"]
+            X_ = X_ .+ PolyTransform(X, beta)
+        elseif value == "exponential"
+            beta = Xparam["exp"]
+            X_ = X_ .+ ExpTransform(X, beta[1], beta[2])
+        else
+            beta = Xparam["sin"]
+            X_ = X_ .+ SinTransform(X, beta[1], beta[2])
+        end
+    end
 
-    U = mvnormal(zeros(n), SigmaU * uNoise)
+    for value in dtypeU
+        if value == "polynomial"
+            beta = Uparam["poly"]
+            U_ = U_ .+ PolyTransform(U, beta)
+        elseif value == "exponential"
+            beta = Uparam["exp"]
+            U_ = U_ .+ ExpTransform(U, beta[1], beta[2])
+        else
+            beta = Uparam["sin"]
+            U_ = U_ .+ SinTransform(U, beta[1], beta[2])
+        end
+    end
+
+    for value in dtypeT
+        if value == "polynomial"
+            beta = Tparam["poly"]
+            T_ = T_ .+ PolyTransform(T, beta)
+        elseif value == "exponential"
+            beta = Tparam["exp"]
+            T_ = T_ .+ ExpTransform(T, beta[1], beta[2])
+        else
+            beta = Tparam["sin"]
+            T_ = T_ .+ SinTransform(T, beta[1], beta[2])
+        end
+    end
 
     for i in 1:n
-        T[i] = normal(U[i] * UTslope, tNoise)
-        Ymean = (T[i] * TYslope + U[i] * UYslope)
         epsY[i] = normal(0, yNoise)
-        Y[i] = Ymean + epsY[i]
+        Y[i] = X_[i] + U_[i] + T_[i] + epsY[i]
     end
-    return U, T, Y, epsY
+    return Y, epsY
 end
 
-function simLinearIntData(U, epsY, doT, TYslope, UYslope)
-    n = length(epsY)
-    
-    Yint = zeros(n)
-    
-    for i in 1:n
-        Ymean = (doT * TYslope + U[i] * UYslope)
-        Yint[i] = Ymean + epsY[i]
+function generate_ft(dtypeT::Array{String}, Tparam)
+    function ft(T::Array{Float64})
+        T_ = zeros(size(T))
+        for value in dtypeT
+            if value == "polynomial"
+                beta = Tparam["poly"]
+                T_ = T_ .+ PolyTransform(T, beta)
+            elseif value == "exponential"
+                beta = Tparam["exp"]
+                T_ = T_ .+ ExpTransform(T, beta[1], beta[2])
+            else
+                beta = Tparam["sin"]
+                T_ = T_ .+ SinTransform(T, beta[1], beta[2])
+            end
+        end
+
+
+
+        return T_
     end
-    return Yint
+    return ft
 end
+
+function generate_ftx(dtypeT::Array{String}, dtypeX::Array{String}, Tparam, Xparam)
+    function ftx(T::Array{Float64}, X::Array{Float64})
+        T_ = zeros(size(T))
+        X_ = zeros(size(T))
+        for value in dtypeT
+            if value == "polynomial"
+                beta = Tparam["poly"]
+                T_ = T_ .+ PolyTransform(T, beta)
+            elseif value == "exponential"
+                beta = Tparam["exp"]
+                T_ = T_ .+ ExpTransform(T, beta[1], beta[2])
+            else
+                beta = Tparam["sin"]
+                T_ = T_ .+ SinTransform(T, beta[1], beta[2])
+            end
+        end
+
+        for value in dtypeX
+            if value == "polynomial"
+                beta = Xparam["poly"]
+                X_ = X_ .+ PolyTransform(X, beta)
+            elseif value == "exponential"
+                beta = Xparam["exp"]
+                X_ = X_ .+ ExpTransform(X, beta[1], beta[2])
+            else
+                beta = Xparam["sin"]
+                X_ = X_ .+ SinTransform(X, beta[1], beta[2])
+            end
+        end
+        return T_ .+ X_
+    end
+    return ftx
+end
+
+function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String}, dtypeU::Array{String},
+    Tparam, Xparam, Uparam)
+
+    function ftxu(T::Array{Float64}, X::Array{Float64}, U::Array{Float64})
+        T_ = zeros(size(T))
+        X_ = zeros(size(T))
+        U_ = zeros(size(T))
+
+        for value in dtypeT
+            if value == "polynomial"
+                beta = Tparam["poly"]
+                T_ = T_ .+ PolyTransform(T, beta)
+            elseif value == "exponential"
+                beta = Tparam["exp"]
+                T_ = T_ .+ ExpTransform(T, beta[1], beta[2])
+            else
+                beta = Tparam["sin"]
+                T_ = T_ .+ SinTransform(T, beta[1], beta[2])
+            end
+        end
+
+        for value in dtypeX
+            if value == "polynomial"
+                beta = Xparam["poly"]
+                X_ = X_ .+ PolyTransform(X, beta)
+            elseif value == "exponential"
+                beta = Xparam["exp"]
+                X_ = X_ .+ ExpTransform(X, beta[1], beta[2])
+            else
+                beta = Xparam["sin"]
+                X_ = X_ .+ SinTransform(X, beta[1], beta[2])
+            end
+        end
+
+        for value in dtypeU
+            if value == "polynomial"
+                beta = Uparam["poly"]
+                U_ = U_ .+ PolyTransform(U, beta)
+            elseif value == "exponential"
+                beta = Uparam["exp"]
+                U_ = U_ .+ ExpTransform(U, beta[1], beta[2])
+            else
+                beta = Uparam["sin"]
+                U_ = U_ .+ SinTransform(U, beta[1], beta[2])
+            end
+        end
+        return T_ .+ X_ .+ U_
+    end
+    return ftxu
+end
+
 
 end
