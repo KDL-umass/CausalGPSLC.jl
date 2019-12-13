@@ -12,8 +12,9 @@ export generate_synthetic
 
 function generate_synthetic(config_path::String)
     """
-    return SigmaU, T, X, Y, epsY
+    return SigmaU, U, T, X, Y, epsY, causal_query
     """
+
     config = TOML.parsefile(config_path)
     n = config["data"]["n"]
     obj_size = config["data"]["obj_size"]
@@ -30,33 +31,30 @@ function generate_synthetic(config_path::String)
     SigmaU = generateSigmaU(n, [obj_size for i in 1:n/obj_size], eps, ucov)
     SigmaX = generateSigmaX(n, xvar, eps)
 
-    n = size(SigmaU)[1]
-    X = mvnormal(zeros(n), SigmaX * xNoise)
-    U = mvnormal(zeros(n), SigmaU * uNoise)
-
-    T, Y, epsY = NaN, NaN, NaN
-    ft, ftx, ftxu = NaN, NaN, NaN  # causal queries
+    # generate X and U
+    X = mvnormal(zeros(size(SigmaU)[1]), SigmaX * xNoise)
+    U = mvnormal(zeros(size(SigmaU)[1]), SigmaU * uNoise)
 
     # assignment for T
     dtypex = config["data"]["XTAssignment"]
     xtparams = config["data"]["XTparams"]
     dtypeu = config["data"]["UTAssignment"]
     utparams = config["data"]["UTparams"]
-
     T = generateT(X, U, dtypex, dtypeu, xtparams, utparams, xNoise)
 
+    # assignment for Y
     dtypex = config["data"]["XYAssignment"]
     xyparams = config["data"]["XYparams"]
     dtypeu = config["data"]["UYAssignment"]
     uyparams = config["data"]["UYparams"]
     dtypet = config["data"]["TYAssignment"]
     typarams = config["data"]["TYparams"]
-
     Y, epsY = generateY(X, U, T, dtypex, dtypeu, dtypet, xyparams, uyparams, typarams, yNoise)
 
-    ft = generate_ft(dtypet, typarams)
-    ftx = generate_ftx(dtypet, dtypex, typarams, xyparams)
-    ftxu = generate_ftxu(dtypet, dtypex, dtypeu, typarams, xyparams, uyparams)
+    # recover true causal assignment
+    ft = generate_ft(dtypet, typarams) # function of T
+    ftx = generate_ftx(dtypet, dtypex, typarams, xyparams) # function of T and X
+    ftxu = generate_ftxu(dtypet, dtypex, dtypeu, typarams, xyparams, uyparams) # function of T and X and U
 
     causal_query = collect((ft, ftx, ftxu))
     return SigmaU, U, T, X, Y, epsY, causal_query
