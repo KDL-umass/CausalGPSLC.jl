@@ -161,11 +161,11 @@ end
 function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String}, dtypeU::Array{String},
     Tparam, Xparam, Uparam)
 
-    function ftxu(T::Array{Float64}, X::Array{Float64}, U::Array{Float64})
+    function ftxu(T::Array{Float64}, X::Array{Float64}, U::Array{Float64}, epsY::Array{Float64})
         T_ = AggregateTransform(T, dtypeT, Tparam)
         X_ = AggregateTransform(X, dtypeX, Xparam)
         U_ = AggregateTransform(U, dtypeU, Uparam)
-        return T_ .+ X_ .+ U_
+        return T_ .+ X_ .+ U_ .+ epsY
     end
     return ftxu
 end
