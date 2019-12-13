@@ -82,7 +82,7 @@ function SinTransform(X::Array{Float64}, beta1::Float64, beta2::Float64)
 end
 
 
-function AggregateTransoform(X::Array{Float64}, dtype::Array{String}, param)
+function AggregateTransform(X::Array{Float64}, dtype::Array{String}, param)
     """
     transform r.v input X via f(X) based on config
     """
@@ -109,8 +109,8 @@ function generateT(X::Array{Float64}, U::Array{Float64}, dtypeX::Array{String}, 
     """
     n = size(X)[1]
     T = zeros(n)
-    X_ = AggregateTransoform(X, dtypeX, Xparam)
-    U_ = AggregateTransoform(U, dtypeU, Uparam)
+    X_ = AggregateTransform(X, dtypeX, Xparam)
+    U_ = AggregateTransform(U, dtypeU, Uparam)
     for i in 1:n
         T[i] = normal(X_[i] + U_[i], tNoise)
     end
@@ -127,9 +127,9 @@ function generateY(X::Array{Float64}, U::Array{Float64}, T::Array{Float64},
     n = size(X)[1]
     Y = zeros(n)
     epsY = zeros(n)
-    X_ = AggregateTransoform(X, dtypeX, Xparam)
-    U_ = AggregateTransoform(U, dtypeU, Uparam)
-    T_ = AggregateTransoform(T, dtypeT, Tparam)
+    X_ = AggregateTransform(X, dtypeX, Xparam)
+    U_ = AggregateTransform(U, dtypeU, Uparam)
+    T_ = AggregateTransform(T, dtypeT, Tparam)
 
     for i in 1:n
         epsY[i] = normal(0, yNoise)
@@ -143,7 +143,7 @@ end
 
 function generate_ft(dtypeT::Array{String}, Tparam)
     function ft(T::Array{Float64})
-        T_ = AggregateTransoform(T, dtypeT, Tparam)
+        T_ = AggregateTransform(T, dtypeT, Tparam)
         return T_
     end
     return ft
@@ -151,8 +151,8 @@ end
 
 function generate_ftx(dtypeT::Array{String}, dtypeX::Array{String}, Tparam, Xparam)
     function ftx(T::Array{Float64}, X::Array{Float64})
-        T_ = AggregateTransoform(T, dtypeT, Tparam)
-        X_ = AggregateTransoform(X, dtypeX, Xparam)
+        T_ = AggregateTransform(T, dtypeT, Tparam)
+        X_ = AggregateTransform(X, dtypeX, Xparam)
         return T_ .+ X_
     end
     return ftx
@@ -162,9 +162,9 @@ function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String}, dtypeU::Arr
     Tparam, Xparam, Uparam)
 
     function ftxu(T::Array{Float64}, X::Array{Float64}, U::Array{Float64})
-        T_ = AggregateTransoform(T, dtypeT, Tparam)
-        X_ = AggregateTransoform(X, dtypeX, Xparam)
-        U_ = AggregateTransoform(U, dtypeU, Uparam)
+        T_ = AggregateTransform(T, dtypeT, Tparam)
+        X_ = AggregateTransform(X, dtypeX, Xparam)
+        U_ = AggregateTransform(U, dtypeU, Uparam)
         return T_ .+ X_ .+ U_
     end
     return ftxu
