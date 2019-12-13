@@ -44,7 +44,7 @@
         sin = [5.0, 2.0]
 
     [data.UYparams]
-        poly = [2.0]
+        poly = [1.0]
         exp = [0.5, 1.0]
         sin = [1.0, 2.0]
 
