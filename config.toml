@@ -3,7 +3,7 @@
     n = 100
 
     # Sigma U
-    obj_size = 2
+    obj_size = 10
     eps = 1e-13
     ucov = 0.9
 
@@ -11,39 +11,46 @@
     xvar = 1.0
 
     # noise for u, t, x, y (assuming Gaussian additive)
-    uNoise = 1.0
-    xNoise = 0.5
-    tNoise = 1.0
+    uNoise = 0.1
+    xNoise = 1.0
+    tNoise = 0.1
     yNoise = 0.1
 
     # this field change the data type: polynomial, sinusoidal, exponential
     XTAssignment = ["polynomial"]
     UTAssignment = ["polynomial"]
+    TaggOp = "+"    # if "+", T = g(X) + h(U) else g(X) * h(U)
     XYAssignment = ["polynomial"]
-    TYAssignment = ["sinusoidal", "polynomial"] # you can stuck multiple function X + sin(X)
+    TYAssignment = ["polynomial", "sinusoidal"] # you can stuck multiple function (X [TYOp] sin(X))
     UYAssignment = ["polynomial"]
+    YaggOp = "*"    # if "+", Y = f(T) + g(X) + h(U) else f(T) * g(X) * h(U)
 
     [data.XTparams]
-        poly = [1.0]   # poly[1] * X + poly[2] * X^2 + ... +
-        exp = [0.5, 1.0]    # exp[1] * exp(exp[2] * X)
-        sin = [2.0, 2.0]    # sin[1] * sin(sin[2] * X)
+        aggOp = "+"         # aggregation when there are multiple transformation
+        poly = [1.0]        # poly[1] * X + poly[2] * X^2 + ... +
+        exp = [1.0, 1.0]    # exp[1] * exp(exp[2] * X)
+        sin = [2.5, 2.0]    # sin[1] * sin(sin[2] * X)
 
     [data.UTparams]
+        aggOp = "+"
         poly = [1.0]
         exp = [0.5, 1.0]
-        sin = [1.0, 2.0]
+        sin = [1.0, 1.0]
 
     [data.XYparams]
+        aggOp = "+"
         poly = [1.0]
         exp = [0.5, 1.0]
         sin = [1.0, 2.0]
 
     [data.TYparams]
-        poly = [1.0, 0.3]
+        aggOp = "+"
+        poly = [1.0]
         exp = [0.5, 1.0]
-        sin = [5.0, 2.0]
+        sin = [1.5, 2.0]
 
     [data.UYparams]
+        aggOp = "+"
         poly = [1.0]
         exp = [0.5, 1.0]
         sin = [1.0, 2.0]
