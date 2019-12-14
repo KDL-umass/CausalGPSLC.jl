@@ -1,18 +1,10 @@
 module Synthetic
 
+import TOML
 using Gen
 using LinearAlgebra
-using PyPlot
-using Seaborn
 using StatsBase
-
-include("../src/inference.jl")
-include("../src/estimation.jl")
-include("../src/model.jl")
-using .Inference
-using .Estimation
-using .Model
-export generateSigmaU, generateSigmaX, generateT, generateY, generate_ft, generate_ftx, generate_ftxu
+export generate_synthetic
 
 
 function generateSigmaU(n::Int, nIndividualsArray::Array{Int}, eps::Float64, cov::Float64)
@@ -25,7 +17,7 @@ function generateSigmaU(n::Int, nIndividualsArray::Array{Int}, eps::Float64, cov
         SigmaU[i:i+nIndividuals-1,i:i+nIndividuals-1] = ones(nIndividuals, nIndividuals) * cov
         i+= nIndividuals
     end
-    
+
     SigmaU[diagind(SigmaU)] .= 1 + eps
     return SigmaU
 end
@@ -35,9 +27,9 @@ function generateSigmaX(n::Int, sigma, eps::Float64)
     """
     generate covariance matrix for X
     """
-    SigmaU = Matrix{Float64}(I, n, n)
-    SigmaU[diagind(SigmaU)] .= sigma .+ eps
-    return SigmaU
+    SigmaX = Matrix{Float64}(I, n, n)
+    SigmaX[diagind(SigmaX)] .= sigma .+ eps
+    return SigmaX
 end
 
 
@@ -87,23 +79,36 @@ function AggregateTransform(X::Array{Float64}, dtype::Array{String}, param)
     transform r.v input X via f(X) based on config
     """
     X_ = zeros(size(X))
-    for value in dtype
+    for (i, value) in enumerate(dtype)
         if value == "polynomial"
             beta = param["poly"]
-            X_ = X_ .+ PolyTransform(X, beta)
+            if (param["aggOp"] == "*") && (i != 1)
+                X_ = X_ .* PolyTransform(X, beta)
+            else
+                X_ = X_ .+ PolyTransform(X, beta)
+            end
         elseif value == "exponential"
             beta = param["exp"]
-            X_ = X_ .+ ExpTransform(X, beta[1], beta[2])
+            if (param["aggOp"] == "*") && (i != 1)
+                X_ = X_ .* ExpTransform(X, beta[1], beta[2])
+            else
+                X_ = X_ .+ ExpTransform(X, beta[1], beta[2])
+            end
         else
             beta = param["sin"]
-            X_ = X_ .+ SinTransform(X, beta[1], beta[2])
+            if (param["aggOp"] == "*") && (i != 1)
+                X_ = X_ .* SinTransform(X, beta[1], beta[2])
+            else
+                X_ = X_ .+ SinTransform(X, beta[1], beta[2])
+            end
         end
     end
     return X_
 end
 
+
 function generateT(X::Array{Float64}, U::Array{Float64}, dtypeX::Array{String}, dtypeU::Array{String},
-    Xparam, Uparam, tNoise)
+    Xparam, Uparam, tNoise::Float64, aggOp::String)
     """
     generate T with additive noise based on config. T = f(X) + g(U) + eps
     """
@@ -112,7 +117,11 @@ function generateT(X::Array{Float64}, U::Array{Float64}, dtypeX::Array{String}, 
     X_ = AggregateTransform(X, dtypeX, Xparam)
     U_ = AggregateTransform(U, dtypeU, Uparam)
     for i in 1:n
-        T[i] = normal(X_[i] + U_[i], tNoise)
+        if aggOp == "+"
+            T[i] = normal(X_[i] + U_[i], tNoise)
+        else
+            T[i] = normal(X_[i] * U_[i], tNoise)
+        end
     end
     return T
 end
@@ -120,7 +129,7 @@ end
 
 function generateY(X::Array{Float64}, U::Array{Float64}, T::Array{Float64},
     dtypeX::Array{String}, dtypeU::Array{String}, dtypeT::Array{String},
-    Xparam, Uparam, Tparam, yNoise)
+    Xparam, Uparam, Tparam, yNoise::Float64, aggOp::String)
     """
     generate Y with additive noise based on config. Y = f(X) + g(U) + h(T) + eps
     """
@@ -133,7 +142,11 @@ function generateY(X::Array{Float64}, U::Array{Float64}, T::Array{Float64},
 
     for i in 1:n
         epsY[i] = normal(0, yNoise)
-        Y[i] = X_[i] + U_[i] + T_[i] + epsY[i]
+        if aggOp == "+"
+            Y[i] = T_[i] + U_[i] + X_[i] + epsY[i]
+        else
+            Y[i] = T_[i] * U_[i] * X_[i] + epsY[i]
+        end
     end
     return Y, epsY
 end
@@ -141,34 +154,69 @@ end
 
 # generate causal queries based on config. Recover h(T), h(T)+f(X), h(T)+f(X)+g(U)
 
-function generate_ft(dtypeT::Array{String}, Tparam)
-    function ft(T::Array{Float64})
-        T_ = AggregateTransform(T, dtypeT, Tparam)
-        return T_
-    end
-    return ft
-end
-
-function generate_ftx(dtypeT::Array{String}, dtypeX::Array{String}, Tparam, Xparam)
-    function ftx(T::Array{Float64}, X::Array{Float64})
-        T_ = AggregateTransform(T, dtypeT, Tparam)
-        X_ = AggregateTransform(X, dtypeX, Xparam)
-        return T_ .+ X_
-    end
-    return ftx
-end
-
 function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String}, dtypeU::Array{String},
-    Tparam, Xparam, Uparam)
+    Tparam, Xparam, Uparam, aggOp::String)
 
     function ftxu(T::Array{Float64}, X::Array{Float64}, U::Array{Float64}, epsY::Array{Float64})
         T_ = AggregateTransform(T, dtypeT, Tparam)
         X_ = AggregateTransform(X, dtypeX, Xparam)
         U_ = AggregateTransform(U, dtypeU, Uparam)
-        return T_ .+ X_ .+ U_ .+ epsY
+        if aggOp == "+"
+            Y = T_ .+ X_ .+ U_
+        else
+            Y = T_ .* X_ .* U_
+        end
+        return Y .+ epsY
     end
     return ftxu
 end
 
+function generate_synthetic(config_path::String)
+    """
+    return SigmaU, U, T, X, Y, epsY, causal_query
+    """
+    config = TOML.parsefile(config_path)
+    n = config["data"]["n"]
+    obj_size = config["data"]["obj_size"]
+    eps = config["data"]["eps"]
+    ucov = config["data"]["ucov"]
+    xvar = config["data"]["xvar"]
+
+    # variance for data (used in additive noise model)
+    tNoise = config["data"]["tNoise"]
+    xNoise = config["data"]["xNoise"]
+    uNoise = config["data"]["uNoise"]
+    yNoise = config["data"]["yNoise"]
+
+    SigmaU = generateSigmaU(n, [obj_size for i in 1:n/obj_size], eps, ucov)
+    SigmaX = generateSigmaX(n, xvar, eps)
+
+    # generate X and U
+    X = mvnormal(zeros(size(SigmaU)[1]), SigmaX * xNoise)
+    U = mvnormal(zeros(size(SigmaU)[1]), SigmaU * uNoise)
+
+    # assignment for T
+    dtypex = config["data"]["XTAssignment"]
+    xtparams = config["data"]["XTparams"]
+    dtypeu = config["data"]["UTAssignment"]
+    utparams = config["data"]["UTparams"]
+    aggOp = config["data"]["TaggOp"]
+    T = generateT(X, U, dtypex, dtypeu, xtparams, utparams, xNoise, aggOp)
+
+    # assignment for Y
+    dtypex = config["data"]["XYAssignment"]
+    xyparams = config["data"]["XYparams"]
+    dtypeu = config["data"]["UYAssignment"]
+    uyparams = config["data"]["UYparams"]
+    dtypet = config["data"]["TYAssignment"]
+    typarams = config["data"]["TYparams"]
+    aggOp = config["data"]["YaggOp"]
+    Y, epsY = generateY(X, U, T, dtypex, dtypeu, dtypet, xyparams, uyparams, typarams, yNoise, aggOp)
+
+    # recover true causal assignment
+    ftxu = generate_ftxu(dtypet, dtypex, dtypeu, typarams, xyparams, uyparams, aggOp) # function of T and X and U
+
+    return SigmaU, U, T, X, Y, epsY, ftxu
+end
 
 end
