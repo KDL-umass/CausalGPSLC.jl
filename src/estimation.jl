@@ -41,91 +41,95 @@ export conditionalITE, conditionalSATE, ITE, LinearSATE, SATE, ITEsamples, SATEs
     
 #     return effectMean, effectVar
 # end
+
+# +
+# RBF kernel for X, T, and Y. Additive Gaussian Noise.
+# Also handles case where Xcol=nothing.
+
+function conditionalITE(uyLS::Float64, tyLS::Float64, xyLS::Array{Float64}, yNoise::Float64, yScale::Float64, Xcol, U, T, Y, doT)
+#   Generate a new post-intervention instance for each data instance in
+#   the dataset. This data instance has the same U_i and eps_i, but X[i] is replaced
+#   with doX.
+    
+#   This assumes that the confounder U and kernel hyperparameters are known. 
+#   To compute the SATE marginalized over P(U, lambda|X, Y) this function can
+#   be used to compute monte carlo estimates.
+    
+    n = length(U)
+    
+    CovWW = broadcast(y_kernel, U, U', uyLS, T, T', tyLS, Xcol, (xyLS,), yScale)
+    CovWW = Symmetric(CovWW)
+    
+    CovWWp = Symmetric(CovWW + (yNoise * 1I))
+    
+#   K(W, W_*) in the overleaf doc. The cross covariance block is not in general symettric.
+    CovWWs = broadcast(y_kernel, U, U', uyLS, T, doT, tyLS, Xcol, (xyLS,), yScale)
+    
+#   K(W_*, W_*) in the overleaf doc.
+    CovWsWs = broadcast(y_kernel, U, U', uyLS, doT, doT, tyLS, Xcol, (xyLS,), yScale)
+    CovWsWs = Symmetric(CovWsWs)
+    
+#   Intermediate inverse products to avoid repeated computation.
+    CovWWpInvCovWW = CovWWp \ CovWW
+    CovWWpInvCovWWs = CovWWp \ CovWWs
+    
+#   Covariance of P([f, f_*]|Y)
+    CovC11 = CovWW - (CovWW * CovWWpInvCovWW)
+    CovC12 = CovWWs - (CovWW * CovWWpInvCovWWs)
+    CovC21 = CovWWs' - (CovWWs' * CovWWpInvCovWW)
+    CovC22 = CovWsWs - (CovWWs' * CovWWpInvCovWWs)
+    
+    MeanITE = (CovWWs' - CovWW) * (CovWWp \ Y)
+    
+    CovITE = CovC11 - CovC12 - CovC21 + CovC22
+    
+    return MeanITE, CovITE
+end
+
+# +
+# Overloading function for the case where ty relationship is linear. Additive Gaussian Noise.
+# 
+
+function conditionalITE(uyLS::Float64, xyLS::Array{Float64}, yNoise::Float64, yScale::Float64, Xcol, U, T, Y, doT)
+#   Generate a new post-intervention instance for each data instance in
+#   the dataset. This data instance has the same U_i and eps_i, but X[i] is replaced
+#   with doX.
+    
+#   This assumes that the confounder U and kernel hyperparameters are known. 
+#   To compute the SATE marginalized over P(U, lambda|X, Y) this function can
+#   be used to compute monte carlo estimates.
+    
+    n = length(U)
+    
+    CovWW = broadcast(y_kernel, U, U', uyLS, T, T', Xcol, (xyLS,), yScale)
+    CovWW = Symmetric(CovWW)
+    
+    CovWWp = Symmetric(CovWW + (yNoise * 1I))
+    
+#   K(W, W_*) in the overleaf doc. The cross covariance block is not in general symettric.
+    CovWWs = broadcast(y_kernel, U, U', uyLS, T, doT, Xcol, (xyLS,), yScale)
+    
+#   K(W_*, W_*) in the overleaf doc.
+    CovWsWs = broadcast(y_kernel, U, U', uyLS, doT, doT, Xcol, (xyLS,), yScale)
+    CovWsWs = Symmetric(CovWsWs)
+    
+#   Intermediate inverse products to avoid repeated computation.
+    CovWWpInvCovWW = CovWWp \ CovWW
+    CovWWpInvCovWWs = CovWWp \ CovWWs
+    
+#   Covariance of P([f, f_*]|Y)
+    CovC11 = CovWW - (CovWW * CovWWpInvCovWW)
+    CovC12 = CovWWs - (CovWW * CovWWpInvCovWWs)
+    CovC21 = CovWWs' - (CovWWs' * CovWWpInvCovWW)
+    CovC22 = CovWsWs - (CovWWs' * CovWWpInvCovWWs)
+    
+    MeanITE = (CovWWs' - CovWW) * (CovWWp \ Y)
+    
+    CovITE = CovC11 - CovC12 - CovC21 + CovC22
+    
+    return MeanITE, CovITE
+end
 # -
-
-# Overloading the function depending on whether there is an exogenous noise term.
-
-function conditionalITE(uyLS::Float64, tyLS::Float64, yNoise::Float64, yScale::Float64, U, T, Y, doT)
-#   Generate a new post-intervention instance for each data instance in
-#   the dataset. This data instance has the same U_i and eps_i, but X[i] is replaced
-#   with doX.
-    
-#   This assumes that the confounder U and kernel hyperparameters are known. 
-#   To compute the SATE marginalized over P(U, lambda|X, Y) this function can
-#   be used to compute monte carlo estimates.
-    
-    n = length(U)
-    
-    CovWW = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, T, reshape(T, 1, n), tyLS, yScale)
-    CovWW = Symmetric(CovWW)
-    
-    CovWWp = Symmetric(CovWW + (yNoise * 1I))
-    
-#   K(W, W_*) in the overleaf doc. The cross covariance block is not in general symettric.
-    CovWWs = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, T, doT, tyLS, yScale)
-    
-#   K(W_*, W_*) in the overleaf doc.
-    CovWsWs = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, doT, doT, tyLS, yScale)
-    CovWsWs = Symmetric(CovWsWs)
-    
-#   Intermediate inverse products to avoid repeated computation.
-    CovWWpInvCovWW = CovWWp \ CovWW
-    CovWWpInvCovWWs = CovWWp \ CovWWs
-    
-#   Covariance of P([f, f_*]|Y)
-    CovC11 = CovWW - (CovWW * CovWWpInvCovWW)
-    CovC12 = CovWWs - (CovWW * CovWWpInvCovWWs)
-    CovC21 = CovWWs' - (CovWWs' * CovWWpInvCovWW)
-    CovC22 = CovWsWs - (CovWWs' * CovWWpInvCovWWs)
-    
-    MeanITE = (CovWWs' - CovWW) * (CovWWp \ Y)
-    
-    CovITE = CovC11 - CovC12 - CovC21 + CovC22
-    
-    return MeanITE, CovITE
-end
-
-# Overloading function for the case where ty relationship is linear
-
-function conditionalITE(uyLS::Float64, yNoise::Float64, yScale::Float64, U, T, Y, doT)
-#   Generate a new post-intervention instance for each data instance in
-#   the dataset. This data instance has the same U_i and eps_i, but X[i] is replaced
-#   with doX.
-    
-#   This assumes that the confounder U and kernel hyperparameters are known. 
-#   To compute the SATE marginalized over P(U, lambda|X, Y) this function can
-#   be used to compute monte carlo estimates.
-    
-    n = length(U)
-    
-    CovWW = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, T, reshape(T, 1, n), yScale)
-    CovWW = Symmetric(CovWW)
-    
-    CovWWp = Symmetric(CovWW + (yNoise * 1I))
-    
-#   K(W, W_*) in the overleaf doc. The cross covariance block is not in general symettric.
-    CovWWs = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, T, doT, yScale)
-    
-#   K(W_*, W_*) in the overleaf doc.
-    CovWsWs = broadcast(y_kernel, U, reshape(U, 1, n), uyLS, doT, doT, yScale)
-    CovWsWs = Symmetric(CovWsWs)
-    
-#   Intermediate inverse products to avoid repeated computation.
-    CovWWpInvCovWW = CovWWp \ CovWW
-    CovWWpInvCovWWs = CovWWp \ CovWWs
-    
-#   Covariance of P([f, f_*]|Y)
-    CovC11 = CovWW - (CovWW * CovWWpInvCovWW)
-    CovC12 = CovWWs - (CovWW * CovWWpInvCovWWs)
-    CovC21 = CovWWs' - (CovWWs' * CovWWpInvCovWW)
-    CovC22 = CovWsWs - (CovWWs' * CovWWpInvCovWWs)
-    
-    MeanITE = (CovWWs' - CovWW) * (CovWWp \ Y)
-    
-    CovITE = CovC11 - CovC12 - CovC21 + CovC22
-    
-    return MeanITE, CovITE
-end
 
 # Overloading the function depending on whether there is an exogenous noise term. 
 # If not, use the AdditiveNoiseGPROC model.
@@ -155,9 +159,12 @@ end
 # end
 
 # +
-function conditionalSATE(uyLS::Float64, tyLS::Float64, yNoise::Float64, yScale::Float64, U, T, Y, doT)
+# RBF Kernel for Y = f(U, T, X) with additive gaussian noise. 
+# Works with Xcol=nothing.
+function conditionalSATE(uyLS::Float64, tyLS::Float64, xyLS::Array{Float64}, yNoise::Float64, yScale::Float64, 
+                        Xcol, U, T, Y, doT)
     
-    MeanITE, CovITE = conditionalITE(uyLS, tyLS, yNoise, yScale, U, T, Y, doT)
+    MeanITE, CovITE = conditionalITE(uyLS, tyLS, xyLS, yNoise, yScale, Xcol, U, T, Y, doT)
     n = length(T)
     
     MeanSATE = sum(MeanITE)/n
@@ -165,11 +172,12 @@ function conditionalSATE(uyLS::Float64, tyLS::Float64, yNoise::Float64, yScale::
     return MeanSATE, VarSATE
 end
 
-# Overloading function for the case where ty relationship is linear
-
-function conditionalSATE(uyLS::Float64, yNoise::Float64, yScale::Float64, U, T, Y, doT)
+# RBF kernel for X -> Y and U -> Y. Linear kernel for T -> Y with additive gaussian noise. 
+# Works with Xcol=nothing.
+function conditionalSATE(uyLS::Float64, xyLS::Array{Float64}, yNoise::Float64, yScale::Float64, 
+                         Xcol, U, T, Y, doT)
     
-    MeanITE, CovITE = conditionalITE(uyLS, yNoise, yScale, U, T, Y, doT)
+    MeanITE, CovITE = conditionalITE(uyLS, xyLS, yNoise, yScale, Xcol, U, T, Y, doT)
     n = length(T)
     
     MeanSATE = sum(MeanITE)/n
@@ -178,18 +186,23 @@ function conditionalSATE(uyLS::Float64, yNoise::Float64, yScale::Float64, U, T, 
 end
 # -
 
-function ITE(PosteriorSamples, T, Y, doT)
+function ITE(PosteriorSamples, nX::Int, Xcol, T, Y, doT)
     nSamples = length(PosteriorSamples)
     n = length(T)
     MeanITEs = zeros(nSamples, n)
     CovITEs = zeros(nSamples, n, n)
     
     for i in 1:nSamples
-        MeanITEs[i, :], CovITEs[i, :, :] = conditionalITE(PosteriorSamples[i][:uyLS], 
+        
+        xyLS = [PosteriorSamples[i][:xyLS => j => :LS] for j in 1:nX]
+        
+        MeanITEs[i, :], CovITEs[i, :, :] = conditionalITE(PosteriorSamples[i][:uyLS],
+                                                          xyLS,
                                                           PosteriorSamples[i][:tyLS], 
                                                           PosteriorSamples[i][:yNoise], 
                                                           PosteriorSamples[i][:yScale],
                                                           PosteriorSamples[i][:U], 
+                                                          Xcol,
                                                           T, 
                                                           Y, 
                                                           doT)
@@ -199,40 +212,50 @@ function ITE(PosteriorSamples, T, Y, doT)
 end
 
 # +
-function SATE(PosteriorSamples, T, Y, doT)
+function SATE(PosteriorSamples, nX::Int, Xcol, T, Y, doT)
     
     nSamples = length(PosteriorSamples)
     MeanSATEs = zeros(nSamples)
     VarSATEs = zeros(nSamples)
     
     for i in 1:nSamples
-        MeanSATEs[i], VarSATEs[i] = conditionalSATE(PosteriorSamples[i][:uyLS], 
-                                                  PosteriorSamples[i][:tyLS], 
-                                                  PosteriorSamples[i][:yNoise], 
-                                                  PosteriorSamples[i][:yScale],
-                                                  PosteriorSamples[i][:U], 
-                                                  T, 
-                                                  Y, 
-                                                  doT)
+        
+        xyLS = [PosteriorSamples[i][:xyLS => j => :LS] for j in 1:nX]
+        
+        MeanSATEs[i], VarSATEs[i] = conditionalSATE(PosteriorSamples[i][:uyLS],
+                                                    PosteriorSamples[i][:tyLS], 
+                                                    xyLS,
+                                                    PosteriorSamples[i][:yNoise], 
+                                                    PosteriorSamples[i][:yScale],
+                                                    Xcol,
+                                                    PosteriorSamples[i][:U], 
+                                                    T, 
+                                                    Y, 
+                                                    doT)
     end
     
     return MeanSATEs, VarSATEs
 end
 
-function LinearSATE(PosteriorSamples, T, Y, doT)
+function LinearSATE(PosteriorSamples, nX::Int, Xcol, T, Y, doT)
     
     nSamples = length(PosteriorSamples)
     MeanSATEs = zeros(nSamples)
     VarSATEs = zeros(nSamples)
     
     for i in 1:nSamples
-        MeanSATEs[i], VarSATEs[i] = conditionalSATE(PosteriorSamples[i][:uyLS],  
-                                                  PosteriorSamples[i][:yNoise], 
-                                                  PosteriorSamples[i][:yScale],
-                                                  PosteriorSamples[i][:U], 
-                                                  T, 
-                                                  Y, 
-                                                  doT)
+        
+        xyLS = [PosteriorSamples[i][:xyLS => j => :LS] for j in 1:nX]
+        
+        MeanSATEs[i], VarSATEs[i] = conditionalSATE(PosteriorSamples[i][:uyLS],
+                                                    xyLS,
+                                                    PosteriorSamples[i][:yNoise], 
+                                                    PosteriorSamples[i][:yScale], 
+                                                    Xcol,
+                                                    PosteriorSamples[i][:U],
+                                                    T, 
+                                                    Y, 
+                                                    doT)
     end
     
     return MeanSATEs, VarSATEs
