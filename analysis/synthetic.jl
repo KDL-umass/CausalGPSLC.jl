@@ -33,50 +33,65 @@ end
 
 
 # transform input
-function PolyTransform(X::Array{Float64}, beta::Array{Float64})
+function PolyTransform(X, beta::Array{Float64})
     """
     X <- beta[1] * X + beta[2] * X^2 + ... + beta[p] * X^3
     """
     n = size(X)[1]
     p = size(beta)[1]
     Y = zeros(n)
+    isMat = (length(size(X)) > 1)
     for i in 1:n
         for d in 1:p
-            Y[i] += beta[d]*X[i]^d
+            if isMat
+                Y[i] += sum(beta[d].* X[i, :].^d)
+            else
+                Y[i] += beta[d]*X[i]^d
+            end
         end
     end
     return Y
 end
 
-function ExpTransform(X::Array{Float64}, beta1::Float64, beta2::Float64)
+function ExpTransform(X, beta1::Float64, beta2::Float64)
     """
     X <- beta1 * exp(beta2 * X)
     """
     n = size(X)[1]
     Y = zeros(n)
+    isMat = (length(size(X)) > 1)
     for i in 1:n
-        Y[i] = beta1 * exp(beta2 * X[i])
+        if isMat
+            Y[i] = sum(beta1 .* exp.(beta2 .* X[i, :]))
+        else
+            Y[i] = beta1 * exp(beta2 * X[i])
+        end
     end
     return Y
 end
 
-function SinTransform(X::Array{Float64}, beta1::Float64, beta2::Float64)
+function SinTransform(X, beta1::Float64, beta2::Float64)
     """
     X <- beta1 * sin(beta2 * X)
     """
     n = size(X)[1]
     Y = zeros(n)
+    isMat = (length(size(X)) > 1)
     for i in 1:n
-        Y[i] = beta1 * sin(beta2 * X[i])
+        if isMat
+            Y[i] = sum(beta1 .* sin.(beta2 .* X[i, :]))
+        else
+            Y[i] = beta1 * sin(beta2 * X[i])
+        end
     end
     return Y
 end
 
-function AggregateTransform(X::Array{Float64}, dtype::Array{String}, param)
+function AggregateTransform(X, dtype::Array{String}, param)
     """
     transform r.v input X via f(X) based on config
     """
-    X_ = zeros(size(X))
+    X_ = zeros(size(X)[1])
     for (i, value) in enumerate(dtype)
         if value == "polynomial"
             beta = param["poly"]
@@ -154,7 +169,7 @@ end
 function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String}, dtypeU::Array{String},
     Tparam, Xparam, Uparam, aggOp::String)
 
-    function ftxu(T::Array{Float64}, X::Array{Float64}, U::Array{Float64}, epsY::Array{Float64})
+    function ftxu(T::Array{Float64}, X, U::Array{Float64}, epsY::Array{Float64})
         T_ = AggregateTransform(T, dtypeT, Tparam)
         X_ = AggregateTransform(X, dtypeX, Xparam)
         U_ = AggregateTransform(U, dtypeU, Uparam)
@@ -189,7 +204,14 @@ function generate_synthetic(config_path::String)
     SigmaX = generateSigmaX(n, xvar, eps)
 
     # generate X and U
-    X = mvnormal(zeros(size(SigmaU)[1]), SigmaX * xNoise)
+    # assume indep X
+    xdim = config["data"]["xdim"]
+    X = zeros(size(SigmaX)[1], xdim)    # N x dim
+
+    for i in 1:xdim
+        X[:, i] .= mvnormal(zeros(size(SigmaX)[1]), SigmaX * xNoise)
+    end
+
     U = mvnormal(zeros(size(SigmaU)[1]), SigmaU * uNoise)
 
     # assignment for T
