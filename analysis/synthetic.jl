@@ -4,6 +4,7 @@ import TOML
 using Gen
 using LinearAlgebra
 using StatsBase
+using StatsFuns
 export generate_synthetic
 
 
@@ -44,16 +45,16 @@ function PolyTransform(X, beta::Array{Float64})
     for i in 1:n
         for d in 1:p
             if isMat
-                Y[i] += sum(beta[d].* X[i, :].^d)
+                Y[i] += sum(beta[d].* X[i, :].^(d-1))
             else
-                Y[i] += beta[d]*X[i]^d
+                Y[i] += beta[d]*X[i]^(d-1)
             end
         end
     end
     return Y
 end
 
-function ExpTransform(X, beta1::Float64, beta2::Float64)
+function ExpTransform(X, beta::Array{Float64})
     """
     X <- beta1 * exp(beta2 * X)
     """
@@ -62,15 +63,15 @@ function ExpTransform(X, beta1::Float64, beta2::Float64)
     isMat = (length(size(X)) > 1)
     for i in 1:n
         if isMat
-            Y[i] = sum(beta1 .* exp.(beta2 .* X[i, :]))
+            Y[i] = sum(beta[1] .+ beta[2] .* exp.(beta[3] .* X[i, :]))
         else
-            Y[i] = beta1 * exp(beta2 * X[i])
+            Y[i] = beta[1] + beta[2] * exp(beta[3] * X[i])
         end
     end
     return Y
 end
 
-function SinTransform(X, beta1::Float64, beta2::Float64)
+function SinTransform(X, beta::Array{Float64})
     """
     X <- beta1 * sin(beta2 * X)
     """
@@ -79,9 +80,9 @@ function SinTransform(X, beta1::Float64, beta2::Float64)
     isMat = (length(size(X)) > 1)
     for i in 1:n
         if isMat
-            Y[i] = sum(beta1 .* sin.(beta2 .* X[i, :]))
+            Y[i] = sum(beta[1] .+ beta[2] .* sin.(beta[3] .* X[i, :]))
         else
-            Y[i] = beta1 * sin(beta2 * X[i])
+            Y[i] = beta[1] + beta[2] * sin(beta[3] * X[i])
         end
     end
     return Y
@@ -92,35 +93,39 @@ function AggregateTransform(X, dtype::Array{String}, param)
     transform r.v input X via f(X) based on config
     """
     X_ = zeros(size(X)[1])
-    for (i, value) in enumerate(dtype)
-        if value == "polynomial"
-            beta = param["poly"]
-            if (param["aggOp"] == "*") && (i != 1)
-                X_ = X_ .* PolyTransform(X, beta)
+    if sum(X) == 0
+        return X
+    else
+        for (i, value) in enumerate(dtype)
+            if value == "polynomial"
+                beta = param["poly"]
+                if (param["aggOp"] == "*") && (i != 1)
+                    X_ = X_ .* PolyTransform(X, beta)
+                else
+                    X_ = X_ .+ PolyTransform(X, beta)
+                end
+            elseif value == "exponential"
+                beta = param["exp"]
+                if (param["aggOp"] == "*") && (i != 1)
+                    X_ = X_ .* ExpTransform(X, beta)
+                else
+                    X_ = X_ .+ ExpTransform(X, beta)
+                end
             else
-                X_ = X_ .+ PolyTransform(X, beta)
-            end
-        elseif value == "exponential"
-            beta = param["exp"]
-            if (param["aggOp"] == "*") && (i != 1)
-                X_ = X_ .* ExpTransform(X, beta[1], beta[2])
-            else
-                X_ = X_ .+ ExpTransform(X, beta[1], beta[2])
-            end
-        else
-            beta = param["sin"]
-            if (param["aggOp"] == "*") && (i != 1)
-                X_ = X_ .* SinTransform(X, beta[1], beta[2])
-            else
-                X_ = X_ .+ SinTransform(X, beta[1], beta[2])
+                beta = param["sin"]
+                if (param["aggOp"] == "*") && (i != 1)
+                    X_ = X_ .* SinTransform(X, beta)
+                else
+                    X_ = X_ .+ SinTransform(X, beta)
+                end
             end
         end
+        return X_
     end
-    return X_
 end
 
 function generateT(X::Array{Float64}, U::Array{Float64}, dtypeX::Array{String}, dtypeU::Array{String},
-    Xparam, Uparam, tNoise::Float64, aggOp::String)
+    Xparam, Uparam, tNoise::Float64, aggOp::String, Ttype::String)
     """
     generate T with additive noise based on config. T = f(X) + g(U) + eps
     """
@@ -134,6 +139,9 @@ function generateT(X::Array{Float64}, U::Array{Float64}, dtypeX::Array{String}, 
         else
             T[i] = normal(X_[i] * U_[i], tNoise)
         end
+    end
+    if Ttype == "binary"
+        T = Float64.(bernoulli.(logistic.(T)))
     end
     return T
 end
@@ -206,10 +214,13 @@ function generate_synthetic(config_path::String)
     # generate X and U
     # assume indep X
     xdim = config["data"]["xdim"]
-    X = zeros(size(SigmaX)[1], xdim)    # N x dim
-
-    for i in 1:xdim
-        X[:, i] .= mvnormal(zeros(size(SigmaX)[1]), SigmaX * xNoise)
+    if xdim == 0
+        X = zeros(size(SigmaX)[1], 1)
+    else
+        X = zeros(size(SigmaX)[1], xdim)    # N x dim
+        for i in 1:xdim
+            X[:, i] .= mvnormal(zeros(size(SigmaX)[1]), SigmaX * xNoise)
+        end
     end
 
     U = mvnormal(zeros(size(SigmaU)[1]), SigmaU * uNoise)
@@ -220,7 +231,8 @@ function generate_synthetic(config_path::String)
     dtypeu = config["data"]["UTAssignment"]
     utparams = config["data"]["UTparams"]
     aggOp = config["data"]["TaggOp"]
-    T = generateT(X, U, dtypex, dtypeu, xtparams, utparams, xNoise, aggOp)
+    Ttype = config["data"]["Ttype"]
+    T = generateT(X, U, dtypex, dtypeu, xtparams, utparams, xNoise, aggOp, Ttype)
 
     # assignment for Y
     dtypex = config["data"]["XYAssignment"]
