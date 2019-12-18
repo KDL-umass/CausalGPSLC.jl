@@ -1,0 +1,39 @@
+[data]
+n = 1000
+obj_size = 1000
+eps = 1e-13
+ucov = 1.0
+xvar = 1.0
+xdim = 1
+uNoise = 1.0
+xNoise = 1.0
+tNoise = 1.0
+yNoise = 1.0
+TaggOp = "x"
+YaggOp = "x"
+Ttype = "binary"
+XTAssignment = [ "polynomial",]
+UTAssignment = [ "polynomial",]
+XYAssignment = [ "polynomial",]
+TYAssignment = [ "polynomial",]
+UYAssignment = [ "polynomial",]
+
+[data.XTparams]
+aggOp = "+"
+poly = [ 0.1, 0.0, 0.0, 0.1,]
+
+[data.UTparams]
+aggOp = "+"
+poly = [ 0.1, 0.0, 0.0, 0.1,]
+
+[data.XYparams]
+aggOp = "+"
+poly = [ 0.1, 0.0, 0.0, 0.1,]
+
+[data.TYparams]
+aggOp = "+"
+poly = [ 0.1, 0.0, 0.0, 0.1,]
+
+[data.UYparams]
+aggOp = "+"
+poly = [ 0.1, 0.0, 0.0, 0.1,]
