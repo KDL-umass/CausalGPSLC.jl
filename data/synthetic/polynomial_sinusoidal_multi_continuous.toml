@@ -1,6 +1,6 @@
 [data]
-n = 1000
-obj_size = 1000
+n = 10000
+obj_size = 100
 eps = 1e-13
 ucov = 1.0
 xvar = 1.0
