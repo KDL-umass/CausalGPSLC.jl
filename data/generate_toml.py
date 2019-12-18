@@ -3,7 +3,7 @@ import numpy as np
 
 
 def generate_dict(noises, assignments, parameters, xdim=1, xvar=1.0, uconv=1.0, ttype="continuous", aggop="+",
-                  data_size=1000, obj_size=1000, eps=1e-13):
+                  data_size=10000, obj_size=100, eps=1e-13):
     data = dict()
     data_dict = dict()
     # total number of data
