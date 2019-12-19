@@ -24,10 +24,10 @@
     XYAssignment = ["polynomial"]
     TYAssignment = ["polynomial", "sinusoidal"] # you can stuck multiple function (X [TYOp] sin(X))
     UYAssignment = ["polynomial"]
-    YaggOp = "*"    # if "+", Y = f(T) + g(X) + h(U) else f(T) * g(X) * h(U)
+    YaggOp = "+"    # if "+", Y = f(T) + g(X) + h(U) else f(T) * g(X) * h(U)
 
     # set this
-    Ttype = "binary" # {continuous, binary}
+    Ttype = "continuous" # {continuous, binary}
 
     [data.XTparams]
         aggOp = "+"              # aggregation when there are multiple transformation
