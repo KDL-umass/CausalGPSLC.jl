@@ -1,8 +1,8 @@
 [data]
-n = 100
-obj_size = 10
+n = 1000000
+obj_size = 1000
 eps = 1e-13
-ucov = 0.95
+ucov = 1.0
 xvar = 1.0
 xdim = 1
 uNoise = 0.5
