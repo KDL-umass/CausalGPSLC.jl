@@ -2,15 +2,15 @@
 n = 100
 obj_size = 10
 eps = 1e-13
-ucov = 1.0
+ucov = 0.95
 xvar = 1.0
 xdim = 1
 uNoise = 1.0
 xNoise = 1.0
 tNoise = 1.0
 yNoise = 0.2
-TaggOp = "+"
-YaggOp = "+"
+TaggOp = "x"
+YaggOp = "x"
 Ttype = "binary"
 XTAssignment = [ "polynomial", "sinusoidal",]
 UTAssignment = [ "polynomial", "sinusoidal",]
@@ -20,25 +20,25 @@ UYAssignment = [ "polynomial", "sinusoidal",]
 
 [data.XTparams]
 aggOp = "*"
-poly = [ 1.0, 1.0,]
+poly = [ 0.0, 1.0,]
 sin = [ 0.0, 1.0, 1.0,]
 
 [data.UTparams]
 aggOp = "*"
-poly = [ 1.0, 1.0,]
-sin = [ 0.0, 1.0, 1.0,]
+poly = [ 1.0, 0.0,]
+sin = [ 0.0, 1.0, 1.5,]
 
 [data.XYparams]
 aggOp = "*"
-poly = [ 1.0, 1.0,]
+poly = [ 0.0, 1.0,]
 sin = [ 0.0, 1.0, 1.0,]
 
 [data.TYparams]
 aggOp = "*"
-poly = [ 1.0, 1.0,]
-sin = [ 0.0, 1.0, 1.0,]
+poly = [ 0.0, 1.0,]
+sin = [ 0.0, 1.0, 3.0,]
 
 [data.UYparams]
 aggOp = "*"
-poly = [ 1.0, 1.0,]
-sin = [ 0.0, 1.0, 1.0,]
+poly = [ 0.0, 10.0,]
+sin = [ 0.0, 1.0, 2.0,]
