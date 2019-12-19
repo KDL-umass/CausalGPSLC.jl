@@ -1,7 +1,7 @@
 import TOML
 using Gen
 using Serialization
-
+Random.seed!(1234)
 include("../src/model.jl")
 include("../src/inference.jl")
 include("../data/synthetic.jl")
