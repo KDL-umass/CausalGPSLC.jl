@@ -248,7 +248,7 @@ def main():
                 functions['XY'] = mech
                 functions['UY'] = mech
                 functions['TY'] = mech
-                raw_string = generate_dict(noises, functions, params, data_size=1000000, obj_size=1000, uconv=1.0,
+                raw_string = generate_dict(noises, functions, params, data_size=1000, obj_size=100, uconv=1.0,
                                            aggop=i, ttype=tt, xdim=1)
                 generate_toml("./synthetic/"+str(count)+'.toml', raw_string)
                 count += 1
