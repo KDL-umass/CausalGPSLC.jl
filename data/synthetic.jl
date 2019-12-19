@@ -426,7 +426,15 @@ function generate_synthetic_collider(config_path::String)
     # 2. generate U from T and Y
     uNoise = 0.1
     U = generateU(aggT, aggY, dtypet, dtypey, tuparams, yuparams, uNoise, aggOp)
-    return U, T, X, Y, ftxu
+
+    # 3. distribute U
+    U_ = zeros(n)
+    o = 1
+    for i in 1:Int(n/obj_size)
+        U_[o:o+obj_size-1] .= U[i] # you could add noise here
+        o += obj_size
+    end
+    return U_, T, X, Y, ftxu
 end
 
 end

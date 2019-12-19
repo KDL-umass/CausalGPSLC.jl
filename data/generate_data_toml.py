@@ -323,7 +323,7 @@ def main():
                 functions['TU'] = mech
                 functions['YU'] = mech
 
-                raw_string = generate_dict(noises, functions, params, data_size=1000, obj_size=100, uconv=0.95,
+                raw_string = generate_dict(noises, functions, params, data_size=20, obj_size=2, uconv=1.0,
                                            aggop=i, ttype=tt, xdim=1)
                 generate_toml("./synthetic/"+str(count)+'.toml', raw_string)
                 count += 1
