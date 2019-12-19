@@ -7,11 +7,7 @@ include("model.jl")
 using .Model
 
 import Base.show
-export AdditiveNoisePosterior, LinearAdditiveNoisePosterior
-# -
-
-u_selection = StaticSelection(select(:U))
-
+export ContinuousPosterior, BinaryPosterior
 
 # +
 #   Like a gaussian drift, we match the moments of our proposal
@@ -107,12 +103,13 @@ end
     
     @trace(inv_gamma(Shape, Scale), :yScale)
 end
-# -
 
-function AdditiveNoisePosterior(hyperparams::Dict, T::Array{Float64}, Y::Array{Float64}, 
+# +
+load_generated_functions()
+
+function ContinuousPosterior(hyperparams::Dict, T::Array{Float64}, Y::Array{Float64}, 
                                 Xcol, nX::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
-    load_generated_functions()
-    
+
     obs = Gen.choicemap()
     obs[:Tr] = T
     obs[:Y] = Y
@@ -121,7 +118,7 @@ function AdditiveNoisePosterior(hyperparams::Dict, T::Array{Float64}, Y::Array{F
     
     PosteriorSamples = []
     
-    (trace, _) = generate(AdditiveNoiseGPROC, (hyperparams, Xcol, nX), obs)
+    (trace, _) = generate(ContinuousGPROC, (hyperparams, Xcol, nX), obs)
     
     for i=1:nOuter    
         for j=1:nMHInner
@@ -138,10 +135,9 @@ function AdditiveNoisePosterior(hyperparams::Dict, T::Array{Float64}, Y::Array{F
             end
             
             (trace, _) = mh(trace, tScaleProposal, (0.5, ))
-            (trace, _) = mh(trace, yScaleProposal, (0.5, ))
-            
+            (trace, _) = mh(trace, yScaleProposal, (0.5, ))    
         end
-        
+             
         uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
         
         for j=1:nESInner
@@ -153,9 +149,8 @@ function AdditiveNoisePosterior(hyperparams::Dict, T::Array{Float64}, Y::Array{F
     PosteriorSamples, trace
 end
 
-
-function LinearAdditiveNoisePosterior(hyperparams::Dict, T::Array{Float64}, Y::Array{Float64}, 
-                                    Xcol, nX::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
+function BinaryPosterior(hyperparams::Dict, T::Array{Float64}, Y::Array{Float64}, 
+                                Xcol, nX::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
     load_generated_functions()
     
     obs = Gen.choicemap()
@@ -166,7 +161,7 @@ function LinearAdditiveNoisePosterior(hyperparams::Dict, T::Array{Float64}, Y::A
     
     PosteriorSamples = []
     
-    (trace, _) = generate(LinearAdditiveNoiseGPROC, (hyperparams, Xcol, nX), obs)
+    (trace, _) = generate(BinaryGPROC, (hyperparams, Xcol, nX), obs)
     
     for i=1:nOuter    
         for j=1:nMHInner
@@ -175,19 +170,31 @@ function LinearAdditiveNoisePosterior(hyperparams::Dict, T::Array{Float64}, Y::A
             (trace, _) = mh(trace, yNoiseProposal, (0.5, ))
             (trace, _) = mh(trace, utLSProposal, (0.5, ))
             (trace, _) = mh(trace, uyLSProposal, (0.5, ))
+            (trace, _) = mh(trace, tyLSProposal, (0.5, ))
             
             for k=1:nX
                 (trace, _) = mh(trace, xtLSProposal, (k, 0.5))
                 (trace, _) = mh(trace, xyLSProposal, (k, 0.5))
             end
             
-            (trace, _) = mh(trace, tScaleProposal, (0.5, ))
             (trace, _) = mh(trace, yScaleProposal, (0.5, ))
         end
         
-        uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
+        choices = get_choices(trace)
+        
+        U = choices[:U]
+        utLS = choices[:utLS]
+        xtLS = choices[:xtLS]
+        tScale = choices[:tScale]
+        tNoise = choices[:tNoise]
+        uNoise = choices[:uNoise]
+        
+        logitTCov = (broadcast(hyperparams["utKernel"], U, U', utLS) .* 
+                     broadcast(hyperparams["xtKernel"], Xcol, (xtLS,)) * tScale) + tNoise * 1I        
+        uCov = hyperparams["SigmaU"] * uNoise
         
         for j=1:nESInner
+            trace = elliptical_slice(trace, :logitT, zeros(n), logitTCov)
             trace = elliptical_slice(trace, :U, zeros(n), uCov)
         end
         
@@ -195,41 +202,7 @@ function LinearAdditiveNoisePosterior(hyperparams::Dict, T::Array{Float64}, Y::A
     end
     PosteriorSamples, trace
 end
-
-# +
-# TODO: Test this function 
-
-# TODO: Change Us to include epsY. We don't need epsT for 
-# estimating any causal estimates, but we do need to take mh steps
-# over epsX to make sure we sample from the marginal of epsY.
-
-# function Posterior(hyperparams, T, Y, nSteps, nESS)
-#     obs = Gen.choicemap()
-#     obs[:Tr] = T
-#     obs[:Y] = Y
-    
-#     n = length(T)
-    
-#     Us = zeros(nSteps, n)
-    
-#     (tr, _) = generate(AdditiveNoiseGPROC, (hyperparams,), obs)
-    
-#     for i=1:nSteps
-#         # Update U w/ ESS
-#         for j=1:nESS
-#             tr = elliptical_slice(tr, :U, zeros(n), hyperparams["uCov"])
-#         end
-
-#         # Update epsT and epsY with generic mh
-#         for k=1:n
-#             (tr, _) = mh(tr, select(:epsX => k => :eps))
-#             (tr, _) = mh(tr, select(:epsY => k => :eps))
-#         end
-
-#         Us[iter, :] = get_choices(tr)[:U]
-#     end
-#     Us, tr
-# end
 # -
+
 
 end
