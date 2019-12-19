@@ -225,7 +225,7 @@ def main():
     for m in function:
         for i in interactions:
             for tt in Ttype:
-                noises = [1.0, 1.0, 1.0, 0.2]
+                noises = [0.5, 0.5, 0.5, 0.5]
                 params = dict()
                 params['XT'] = XT_params(m, i)
                 params['UT'] = UT_params(m, i)
@@ -248,7 +248,8 @@ def main():
                 functions['XY'] = mech
                 functions['UY'] = mech
                 functions['TY'] = mech
-                raw_string = generate_dict(noises, functions, params, uconv=0.95, aggop=i, ttype=tt)
+                raw_string = generate_dict(noises, functions, params, data_size=100, obj_size=10, uconv=0.95,
+                                           aggop=i, ttype=tt, xdim=1)
                 generate_toml("./synthetic/"+str(count)+'.toml', raw_string)
                 count += 1
 
