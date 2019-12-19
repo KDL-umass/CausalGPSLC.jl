@@ -1,11 +1,14 @@
 module Synthetic
 
 import TOML
+using Random
+Random.seed!(1234)
 using Gen
 using LinearAlgebra
 using StatsBase
 using StatsFuns
 using Statistics
+
 export generate_synthetic_confounder, generate_synthetic_collider
 
 
@@ -115,7 +118,7 @@ function AggregateTransform(X, dtype::Array{String}, param)
             else
                 beta = float.(param["sin"])
                 if (param["aggOp"] == "*") && (i != 1)
-                    X_ = X_ .* SinTransform(X, beta)
+                    X_ = X_ .* SinTransform(X, beta) .+ 1
                 else
                     X_ = X_ .+ SinTransform(X, beta)
                 end
@@ -283,7 +286,7 @@ function generate_synthetic_confounder(config_path::String)
     end
 
     U = mvnormal(zeros(size(SigmaU)[1]), SigmaU * uNoise)
-    U = (U .- mean(U)) ./ std(U)
+#     U = (U .- mean(U)) ./ std(U)
 
     # assignment for T
     dtypex = string.(config["data"]["XTAssignment"])

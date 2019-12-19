@@ -3,7 +3,7 @@ import numpy as np
 
 
 def generate_dict(noises, assignments, parameters, xdim=1, xvar=1.0, uconv=1.0, ttype="continuous", aggop="+",
-                  data_size=10000, obj_size=100, eps=1e-13):
+                  data_size=100, obj_size=10, eps=1e-13):
     data = dict()
     data_dict = dict()
     # total number of data
@@ -31,50 +31,180 @@ def generate_dict(noises, assignments, parameters, xdim=1, xvar=1.0, uconv=1.0, 
     data_dict['Ttype'] = ttype
 
     # functional representation
-    data_dict['XTAssignment'] = assignments
-    data_dict['UTAssignment'] = assignments
-    data_dict['XYAssignment'] = assignments
-    data_dict['TYAssignment'] = assignments
-    data_dict['UYAssignment'] = assignments
+    data_dict['XTAssignment'] = assignments['XT']
+    data_dict['UTAssignment'] = assignments['UT']
+    data_dict['XYAssignment'] = assignments['XY']
+    data_dict['TYAssignment'] = assignments['TY']
+    data_dict['UYAssignment'] = assignments['UY']
 
     # put everything together
     data['data'] = data_dict
-    data_dict['XTparams'] = parameters
-    data_dict['UTparams'] = parameters
-    data_dict['XYparams'] = parameters
-    data_dict['TYparams'] = parameters
-    data_dict['UYparams'] = parameters
+    data_dict['XTparams'] = parameters['XT']
+    data_dict['UTparams'] = parameters['UT']
+    data_dict['XYparams'] = parameters['XY']
+    data_dict['TYparams'] = parameters['TY']
+    data_dict['UYparams'] = parameters['UY']
 
     return data
 
 
-def default_params(mechanisms, t, tt):
+def XT_params(mechanisms, operation):
+    """
+    :param mechanisms: {["linear"], ["polynomial"], ["polynomial", "sinusoidal"]}
+    :param operation: {"+", "*"}
+    :return:
+    """
     out = dict()
-    if len(mechanisms)>1:
+    if len(mechanisms) > 1:
         op = "*"
     else:
         op = "+"
     out["aggOp"] = op
-
-    if "polynomial" in mechanisms and len(mechanisms) > 1:
-        out["poly"] = [1.0, 1.0]
-        if tt != 'binary':
-            out["poly"][0] = 0.0
-
-    elif "polynomial" in mechanisms:
-        out["poly"] = [0.1, 0.0, 1.0, 1.0]
-        if t == "x":
-            out["poly"] = [0.1, 0.0, 0.0, 0.1]
-        if tt != 'binary':
-            out["poly"][0] = 0.0
-
     if "linear" in mechanisms:
-        out["poly"] = [1.0, 1.0]
-        if tt != 'binary':
-            out["poly"][0] = 0.0
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [1.0, 1.0]
+    elif "sinusoidal" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 1.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 1.0, 1.0]
+    else:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [-1.0, 1.0]
+    return out
 
-    if "sinusoidal" in mechanisms:
-        out["sin"] = [0.0, 1.0, 1.0]
+
+def UT_params(mechanisms, operation):
+    """
+    :param mechanisms: {["linear"], ["polynomial"], ["polynomial", "sinusoidal"]}
+    :param operation: {"+", "*"}
+    :return:
+    """
+    out = dict()
+    if len(mechanisms) > 1:
+        op = "*"
+    else:
+        op = "+"
+    out["aggOp"] = op
+    if "linear" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+    elif "sinusoidal" in mechanisms:
+        if operation == '+':
+            out["poly"] = [1.0, 0.0]
+            out["sin"] = [0.0, 1.0, 1.5]
+        else:
+            out["poly"] = [1.0, 0.0]
+            out["sin"] = [0.0, 1.0, 1.5]
+    else:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+    return out
+
+
+def XY_params(mechanisms, operation):
+    """
+    :param mechanisms: {["linear"], ["polynomial"], ["polynomial", "sinusoidal"]}
+    :param operation: {"+", "*"}
+    :return:
+    """
+    out = dict()
+    if len(mechanisms) > 1:
+        op = "*"
+    else:
+        op = "+"
+    out["aggOp"] = op
+    if "linear" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [1.0, 1.0]
+    elif "sinusoidal" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 1.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 1.0, 1.0]
+    else:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [1.0, 1.0]
+    return out
+
+
+def TY_params(mechanisms, operation):
+    """
+    :param mechanisms: {["linear"], ["polynomial"], ["polynomial", "sinusoidal"]}
+    :param operation: {"+", "*"}
+    :return:
+    """
+    out = dict()
+    if len(mechanisms) > 1:
+        op = "*"
+    else:
+        op = "+"
+    out["aggOp"] = op
+    if "linear" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [1.0, 1.0]
+    elif "sinusoidal" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 3.0]
+            out["sin"] = [0.0, 1.0, 2.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 1.0, 3.0]
+    else:
+        if operation == '+':
+            out["poly"] = [0.0, 0.0, 0.0, 1.0]
+        else:
+            out["poly"] = [1.0, 0.0, 1.0]
+    return out
+
+
+def UY_params(mechanisms, operation):
+    """
+    :param mechanisms: {["linear"], ["polynomial"], ["polynomial", "sinusoidal"]}
+    :param operation: {"+", "*"}
+    :return:
+    """
+    out = dict()
+    if len(mechanisms) > 1:
+        op = "*"
+    else:
+        op = "+"
+    out["aggOp"] = op
+    if "linear" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 3.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+    elif "sinusoidal" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 2.0]
+            out["sin"] = [0.0, 1.0, 3.0]
+        else:
+            out["poly"] = [0.0, 10.0]
+            out["sin"] = [0.0, 1.0, 2.0]
+    else:
+        if operation == '+':
+            out["poly"] = [0.0, 5.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
     return out
 
 
@@ -85,17 +215,23 @@ def generate_toml(fname, raw_data):
 
 
 def main():
-    mechanisms = (["linear"], ["polynomial"], ["polynomial", "sinusoidal"])
+    function = (["linear"], ["polynomial"], ["polynomial", "sinusoidal"])
     interactions = ["+", "x"]
     Ttype = ["continuous", "binary"]
     # xdim = [0, 1, 3, 5, 10, 30, 50, 100, 300, 500]
     # obj_dep = np.arange(11)/10
     # noise_level = [1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1, 1, 5, 1e1, 5e1, 1e2]
-    for m in mechanisms:
+    count = 1
+    for m in function:
         for i in interactions:
             for tt in Ttype:
-                noises = [1.0, 1.0, 1.0, 1.0]
-                params = default_params(m, i, tt)
+                noises = [1.0, 1.0, 1.0, 0.2]
+                params = dict()
+                params['XT'] = XT_params(m, i)
+                params['UT'] = UT_params(m, i)
+                params['XY'] = XY_params(m, i)
+                params['UY'] = UY_params(m, i)
+                params['TY'] = TY_params(m, i)
                 interaction = ('multi' if i == 'x' else 'additive')
 
                 name = np.copy(m).tolist()
@@ -106,11 +242,15 @@ def main():
 
                 name.append(interaction)
                 name.append(tt)
-                raw_string = generate_dict(noises, mech, params, aggop=i, ttype=tt)
-
-                fname = '_'.join(name)
-                fname = './synthetic/' + fname + '.toml'
-                generate_toml(fname, raw_string)
+                functions = dict()
+                functions['XT'] = mech
+                functions['UT'] = mech
+                functions['XY'] = mech
+                functions['UY'] = mech
+                functions['TY'] = mech
+                raw_string = generate_dict(noises, functions, params, uconv=0.95, aggop=i, ttype=tt)
+                generate_toml("./synthetic/"+str(count)+'.toml', raw_string)
+                count += 1
 
 
 if __name__ == '__main__':

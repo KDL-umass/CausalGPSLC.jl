@@ -1,6 +1,6 @@
 [data]
-n = 10000
-obj_size = 100
+n = 100
+obj_size = 1
 eps = 1e-13
 ucov = 1.0
 xvar = 1.0
@@ -8,7 +8,7 @@ xdim = 1
 uNoise = 1.0
 xNoise = 1.0
 tNoise = 1.0
-yNoise = 1.0
+yNoise = 0.2
 TaggOp = "+"
 YaggOp = "+"
 Ttype = "binary"
