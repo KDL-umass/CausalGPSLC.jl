@@ -8,6 +8,7 @@
     ucov = 0.9
 
     # Sigma X
+    xdim = 1
     xvar = 1.0
 
     # noise for u, t, x, y (assuming Gaussian additive)
@@ -25,17 +26,20 @@
     UYAssignment = ["polynomial"]
     YaggOp = "*"    # if "+", Y = f(T) + g(X) + h(U) else f(T) * g(X) * h(U)
 
+    # set this
+    Ttype = "binary" # {continuous, binary}
+
     [data.XTparams]
-        aggOp = "+"         # aggregation when there are multiple transformation
-        poly = [1.0]        # poly[1] * X + poly[2] * X^2 + ... +
-        exp = [1.0, 1.0]    # exp[1] * exp(exp[2] * X)
-        sin = [2.5, 2.0]    # sin[1] * sin(sin[2] * X)
+        aggOp = "+"              # aggregation when there are multiple transformation
+        poly = [0.0, 1.0]        # poly[1] + poly[2] * X + poly[3] * X^2 + ... +
+        exp = [0.0, 1.0, 1.0]    # exp[1] + exp[2] * exp(exp[3] * X)
+        sin = [0.0, 2.5, 2.0]    # sin[1] + sin[2] * sin(sin[3] * X)
 
     [data.UTparams]
         aggOp = "+"
-        poly = [1.0]
-        exp = [0.5, 1.0]
-        sin = [1.0, 1.0]
+        poly = [0.0, 1.0]
+        exp = [0.0, 0.5, 1.0]
+        sin = [0.0, 1.0, 1.0]
 
     [data.XYparams]
         aggOp = "+"
@@ -45,15 +49,15 @@
 
     [data.TYparams]
         aggOp = "+"
-        poly = [1.0]
-        exp = [0.5, 1.0]
-        sin = [1.5, 2.0]
+        poly = [1.0, 1.0]
+        exp = [0.0, 0.5, 1.0]
+        sin = [0.0, 1.5, 2.0]
 
     [data.UYparams]
         aggOp = "+"
-        poly = [1.0]
-        exp = [0.5, 1.0]
-        sin = [1.0, 2.0]
+        poly = [0.0, 1.0]
+        exp = [0.0, 0.5, 1.0]
+        sin = [0.0, 1.0, 2.0]
 
 
 [model]

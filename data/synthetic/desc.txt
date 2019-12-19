@@ -1,0 +1,13 @@
+# synthetic data
+1.toml - Additive Linear Continuous Treatment
+2.toml - Additive Linear Binary Treatment
+3.toml - Multiplicative Linear Continuous Treatment
+4.toml - Multiplicative Linear Binary Treatment
+5.toml - Additive Polynomial Continuous Treatment
+6.toml - Additive Polynomial Binary Treatment
+7.toml - Multiplicative Polynomial Continuous Treatment
+8.toml - Multiplicative Polynomial Binary Treatment
+9.toml - Additive Polynomial_Sinusoidal Continuous Treatment
+10.toml - Additive Polynomial_Sinusoidal Binary Treatment
+11.toml - Multiplicative Polynomial_Sinusoidal Continuous Treatment
+12.toml - Multiplicative Polynomial_Sinusoidal Binary Treatment
