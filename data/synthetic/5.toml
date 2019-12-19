@@ -1,6 +1,6 @@
 [data]
-n = 100
-obj_size = 10
+n = 1000
+obj_size = 100
 eps = 1e-13
 ucov = 0.95
 xvar = 1.0
@@ -11,12 +11,15 @@ tNoise = 0.5
 yNoise = 0.5
 TaggOp = "+"
 YaggOp = "+"
+UaggOp = "+"
 Ttype = "continuous"
 XTAssignment = [ "polynomial",]
 UTAssignment = [ "polynomial",]
 XYAssignment = [ "polynomial",]
 TYAssignment = [ "polynomial",]
 UYAssignment = [ "polynomial",]
+YUAssignment = [ "polynomial",]
+TUAssignment = [ "polynomial",]
 
 [data.XTparams]
 aggOp = "+"
@@ -37,3 +40,11 @@ poly = [ 0.0, 0.0, 0.0, 1.0,]
 [data.UYparams]
 aggOp = "+"
 poly = [ 0.0, 5.0, 1.0,]
+
+[data.YUparams]
+aggOp = "+"
+poly = [ 0.0, 1.0,]
+
+[data.TUparams]
+aggOp = "+"
+poly = [ 0.0, 1.0,]
