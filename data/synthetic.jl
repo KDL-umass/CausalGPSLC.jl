@@ -218,6 +218,43 @@ function generateY(X::Array{Float64}, T::Array{Float64},
     return Y, epsY
 end
 
+function generateY(T::Array{Float64}, yNoise::Float64)
+    """
+    generate Y with additive noise based on config. Y = f(X) + g(U) + h(T) + eps
+    """
+    n = size(T)[1]
+    Y = zeros(n)
+    epsY = zeros(n)
+
+    for i in 1:n
+        epsY[i] = normal(0, yNoise)
+        Y[i] = epsY[i]
+    end
+    return Y
+end
+
+function generateU(T::Array{Float64}, Y::Array{Float64},
+    dtypeT::Array{String}, dtypeY::Array{String},
+    Tparam, Yparam, uNoise::Float64, aggOp::String)
+    """
+    generate U with additive noise based on config. U = f(T) + g(Y) + eps
+    """
+    n = size(T)[1]
+    U = zeros(n)
+    epsU = zeros(n)
+    Y_ = AggregateTransform(Y, dtypeY, Yparam)
+    T_ = AggregateTransform(T, dtypeT, Tparam)
+
+    for i in 1:n
+        epsU[i] = normal(0, uNoise)
+        if aggOp == "+"
+            U[i] = T_[i] + Y_[i] + epsU[i]
+        else
+            U[i] = T_[i] * Y_[i] + epsU[i]
+        end
+    end
+    return U
+end
 
 # generate causal queries based on config. Recover h(T), h(T)+f(X), h(T)+f(X)+g(U)
 function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String}, dtypeU::Array{String},
@@ -361,12 +398,35 @@ function generate_synthetic_collider(config_path::String)
     dtypet = string.(config["data"]["TYAssignment"])
     typarams = config["data"]["TYparams"]
     aggOp = config["data"]["YaggOp"]
-    Y, epsY = generateY(X, T, dtypex, dtypet, xyparams, typarams, yNoise, aggOp)
+    Y = generateY(T, yNoise)
 
     # recover true causal assignment
     ftxu = generate_ftxu(dtypet, dtypex, typarams, xyparams, aggOp) # function of T and X and U
 
-    return SigmaU, U, T, X, Y, epsY, ftxu
+    # generate U as a function of T and Y
+    # 0. get config
+    dtypey = string.(config["data"]["YUAssignment"])
+    yuparams = config["data"]["YUparams"]
+    dtypet = string.(config["data"]["TUAssignment"])
+    tuparams = config["data"]["TUparams"]
+    aggOp = config["data"]["UaggOp"]
+    # 1. partition T and Y into objects
+    idx = shuffle([i for i in 1:n])
+    oidx = 1
+    aggT = zeros(Int(n/obj_size))
+    aggY = zeros(Int(n/obj_size))
+    for i in 1:Int(n/obj_size)
+        aggT[i] = mean(T[idx[oidx:oidx+obj_size-1]])
+        aggY[i] = mean(Y[idx[oidx:oidx+obj_size-1]])
+        oidx += obj_size
+    end
+    aggT = aggT ./ std(aggT)
+    aggY = aggY ./ std(aggY)
+
+    # 2. generate U from T and Y
+    uNoise = 0.1
+    U = generateU(aggT, aggY, dtypet, dtypey, tuparams, yuparams, uNoise, aggOp)
+    return U, T, X, Y, ftxu
 end
 
 end
