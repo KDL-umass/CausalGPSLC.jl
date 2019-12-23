@@ -190,6 +190,47 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Floa
     PosteriorSamples, trace
 end
 
+function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64}, 
+                   nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
+
+    n = length(T)
+    
+    obs = Gen.choicemap()
+    obs[:T] = T
+    obs[:Y] = Y
+    
+    PosteriorSamples = []
+    
+    (trace, _) = generate(ContinuousGPROC, (hyperparams, nU), obs)
+    for i=1:nOuter    
+        for j=1:nMHInner
+            (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, yNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, tyLSProposal, (0.5, ))
+            
+            for k=1:nU
+                (trace, _) = mh(trace, utLSProposal, (k, 0.5))
+                (trace, _) = mh(trace, uyLSProposal, (k, 0.5))
+            end
+            
+            (trace, _) = mh(trace, tScaleProposal, (0.5, ))
+            (trace, _) = mh(trace, yScaleProposal, (0.5, ))    
+        end
+             
+        uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
+        
+        for j=1:nESInner
+            for k=1:nU
+                trace = elliptical_slice(trace, :U => k => :U, zeros(n), uCov)
+            end
+        end
+        
+        push!(PosteriorSamples, get_choices(trace))
+    end
+    PosteriorSamples, trace
+end
+
 function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Bool}, Y::Array{Float64}, 
                    nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
     
@@ -249,6 +290,62 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Bool
         utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
         xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
         logitTcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
+       
+        uCov = hyperparams["SigmaU"] * uNoise
+        
+        for j=1:nESInner
+            trace = elliptical_slice(trace, :logitT, zeros(n), logitTcov)
+            for k=1:nU
+                trace = elliptical_slice(trace, :U => k => :U, zeros(n), uCov)
+            end
+        end
+        
+        push!(PosteriorSamples, get_choices(trace))
+    end
+    PosteriorSamples, trace
+end
+
+function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64}, 
+                   nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
+    
+    n = length(T)
+    
+    obs = Gen.choicemap()
+    
+    obs[:Y] = Y
+    for i in 1:n
+        obs[:T => i => :T] = T[i]
+    end
+    
+    PosteriorSamples = []
+    
+    (trace, _) = generate(BinaryGPROC, (hyperparams, nX, nU), obs)
+    for i=1:nOuter    
+        for j=1:nMHInner
+            (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, yNoiseProposal, (0.5, ))
+            (trace, _) = mh(trace, tyLSProposal, (0.5, ))
+            
+            for k=1:nU
+                (trace, _) = mh(trace, utLSProposal, (k, 0.5))
+                (trace, _) = mh(trace, uyLSProposal, (k, 0.5))
+            end
+            
+            (trace, _) = mh(trace, tScaleProposal, (0.5, ))
+            (trace, _) = mh(trace, yScaleProposal, (0.5, ))    
+        end
+        
+        choices = get_choices(trace)
+        
+        U = [choices[:U => i => :U] for i in 1:nU]
+        utLS = [choices[:utLS => i => :LS] for i in 1:nU]
+        tScale = choices[:tScale]
+        tNoise = choices[:tNoise]
+        uNoise = choices[:uNoise]
+        
+        utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
+        logitTcov = processCov(utCovLog, tScale, tNoise)
        
         uCov = hyperparams["SigmaU"] * uNoise
         
