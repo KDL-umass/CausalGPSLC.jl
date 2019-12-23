@@ -2,7 +2,7 @@ import toml
 import numpy as np
 
 
-def generate_dict(noises, assignments, parameters, xdim=1, xvar=1.0, uconv=1.0, ttype="continuous", aggop="+",
+def generate_dict(noises, assignments, parameters, udim=1, xdim=1, xvar=1.0, uconv=1.0, ttype="continuous", aggop="+",
                   data_size=100, obj_size=10, eps=1e-13):
     data = dict()
     data_dict = dict()
@@ -13,6 +13,7 @@ def generate_dict(noises, assignments, parameters, xdim=1, xvar=1.0, uconv=1.0, 
     data_dict['obj_size'] = obj_size
     data_dict['eps'] = eps
     data_dict['ucov'] = uconv
+    data_dict['udim'] = udim
 
     # sigma X
     data_dict['xvar'] = xvar
@@ -249,7 +250,7 @@ def main():
                 functions['UY'] = mech
                 functions['TY'] = mech
                 raw_string = generate_dict(noises, functions, params, data_size=1000, obj_size=100, uconv=1.0,
-                                           aggop=i, ttype=tt, xdim=1)
+                                           aggop=i, ttype=tt, xdim=100, udim=3)
                 generate_toml("./synthetic/"+str(count)+'.toml', raw_string)
                 count += 1
 
