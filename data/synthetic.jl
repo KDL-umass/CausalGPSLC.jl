@@ -9,7 +9,7 @@ using StatsBase
 using StatsFuns
 using Statistics
 
-export generate_synthetic_confounder, generate_synthetic_collider
+export generate_synthetic_confounder, generate_synthetic_collider, generateSigmaU
 
 
 function generateSigmaU(n::Int, nIndividualsArray::Array{Int}, eps::Float64, cov::Float64)
