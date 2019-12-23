@@ -129,7 +129,42 @@ load_generated_functions()
 
     return U
 end
-# -
+
+@gen (static) function ContinuousGPROC(hyperparams, nU)    
+    n = size(hyperparams["SigmaU"])[1]
+    
+#   Prior over Noise
+    uNoise = @trace(inv_gamma(hyperparams["uNoiseShape"], hyperparams["uNoiseScale"]), :uNoise)
+    tNoise = @trace(inv_gamma(hyperparams["tNoiseShape"], hyperparams["tNoiseScale"]), :tNoise)
+    yNoise = @trace(inv_gamma(hyperparams["yNoiseShape"], hyperparams["yNoiseScale"]), :yNoise)
+    
+#   Prior over Kernel Lengthscales
+    utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU), 
+                                   fill(hyperparams["utLSScale"], nU)), :utLS)
+    uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU), 
+                                   fill(hyperparams["uyLSScale"], nU)), :uyLS)
+    tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)
+    
+#   Prior over Kernel Scale
+    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+  
+#   Generate Data 
+    uCov = hyperparams["SigmaU"] * uNoise
+    U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
+    
+    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
+    Tcov = processCov(utCovLog, tScale, tNoise)
+    T = @trace(mvnormal(fill(0, n), Tcov), :T)
+    
+    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
+    tyCovLog = rbfKernelLog(T, T, tyLS)
+    Ycov = processCov(uyCovLog + tyCovLog, yScale, yNoise)
+    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+
+    return U
+end
+# + {}
 @gen (static) function BinaryGPROC(hyperparams, nX, nU)    
     n = size(hyperparams["SigmaU"])[1]
     
@@ -180,6 +215,43 @@ end
 
     return Y
 end
+
+@gen (static) function BinaryGPROC(hyperparams, nU)    
+    n = size(hyperparams["SigmaU"])[1]
+    
+#   Prior over Noise
+    uNoise = @trace(inv_gamma(hyperparams["uNoiseShape"], hyperparams["uNoiseScale"]), :uNoise)
+    tNoise = @trace(inv_gamma(hyperparams["tNoiseShape"], hyperparams["tNoiseScale"]), :tNoise)
+    yNoise = @trace(inv_gamma(hyperparams["yNoiseShape"], hyperparams["yNoiseScale"]), :yNoise)
+    
+#   Prior over Kernel Lengthscales
+    utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU), 
+                                   fill(hyperparams["utLSScale"], nU)), :utLS)
+    uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU), 
+                                   fill(hyperparams["uyLSScale"], nU)), :uyLS)
+    tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)
+    
+#   Prior over Kernel Scale
+    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+  
+#   Generate Data 
+    uCov = hyperparams["SigmaU"] * uNoise
+    U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
+    
+    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
+    logitTcov = processCov(utCovLog, tScale, tNoise)
+    logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
+    T = @trace(MappedGenerateBinaryT(logitT), :T)
+    
+    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
+    tyCovLog = rbfKernelLog(T, T, tyLS)
+    Ycov = processCov(uyCovLog + tyCovLog, yScale, yNoise)
+    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+
+    return Y
+end
+# -
 
 end
 
