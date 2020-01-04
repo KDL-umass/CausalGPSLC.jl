@@ -309,7 +309,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Bool
     PosteriorSamples = []
     
     (trace, _) = generate(BinaryGPROC, (hyperparams, nX, nU), obs)
-    for i=1:nOuter    
+    for i=1:nOuter
+        println("i=",i)
         for j=1:nMHInner
             (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
             (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
@@ -445,7 +446,6 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Bool
             for k=1:nX
                 (trace, _) = mh(trace, xtLSProposal, (k, 0.5))
                 (trace, _) = mh(trace, xyLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, xScaleProposal, (k, 0.5))
             end
             
             (trace, _) = mh(trace, tScaleProposal, (0.5, ))
