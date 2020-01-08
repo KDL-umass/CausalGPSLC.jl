@@ -1,15 +1,18 @@
 [paths]
-data_config = "../data/synthetic/1.toml"
-posterior_output = "results/synthetic/posterior_1.bin"
+data = "../data/synthetic/1.toml"
+posterior_dir = "results/synthetic/exp1/correct/"
 
 [model_hyperparameters]
+uNoiseShape = 4.0
+uNoiseScale = 4.0
+xNoiseShape = 4.0
+xNoiseScale = 4.0
 tNoiseShape = 4.0
 tNoiseScale = 4.0
 yNoiseShape = 4.0
 yNoiseScale = 4.0
-uNoiseShape = 4.0
-uNoiseScale = 4.0
-
+uxLSShape = 4.0
+uxLSScale = 4.0
 utLSShape = 4.0
 utLSScale = 4.0
 xtLSShape = 4.0
@@ -20,22 +23,18 @@ xyLSShape = 4.0
 xyLSScale = 4.0
 tyLSShape = 4.0
 tyLSScale = 4.0
-
+xScaleShape = 4.0
+xScaleScale = 4.0
 tScaleShape = 4.0
 tScaleScale = 4.0
 yScaleShape = 4.0
 yScaleScale = 4.0
 
-utKernel = "rbf"
-xtKernel = "rbf"
-uyKernel = "rbf"
-xyKernel = "rbf"
-tyKernel = "rbf"
-
 [model]
-SigmaU = "correct"
+type = "correct"
+nU = 3
 
 [inference]
-nOuter = 100
-nMHInner = 1
+nOuter = 5000
+nMHInner = 3
 nESInner = 5

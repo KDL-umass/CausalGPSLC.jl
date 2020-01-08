@@ -1,11 +1,11 @@
 [data]
-n = 1000
-obj_size = 100
+n = 200
+obj_size = 10
 eps = 1e-13
 ucov = 1.0
 udim = 3
 xvar = 1.0
-xdim = 100
+xdim = 3
 uNoise = 0.5
 xNoise = 0.5
 tNoise = 0.5
