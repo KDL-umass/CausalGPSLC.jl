@@ -15,8 +15,8 @@ using .Model
 using .Inference
 using .ProcessingIHDP
 
-# experiment = ARGS[1]
-experiment = 1
+experiment = ARGS[1]
+# experiment = 1
 
 config_path = "../experiments/config/IHDP/$(experiment).toml"
 config = TOML.parsefile(config_path)
