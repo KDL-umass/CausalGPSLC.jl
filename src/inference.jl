@@ -152,7 +152,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Floa
     PosteriorSamples = []
     
     (trace, _) = generate(ContinuousGPROC, (hyperparams, nX, nU), obs)
-    for i=1:nOuter    
+    for i=1:nOuter   
+        print(i)
         for j=1:nMHInner
             (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
             (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
