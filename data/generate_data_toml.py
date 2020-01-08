@@ -28,6 +28,7 @@ def generate_dict(noises, assignments, parameters, udim=1, xdim=1, xvar=1.0, uco
     # aggregation operation
     data_dict['TaggOp'] = aggop
     data_dict['YaggOp'] = aggop
+    data_dict['UaggOp'] = aggop
 
     data_dict['Ttype'] = ttype
 
@@ -37,6 +38,8 @@ def generate_dict(noises, assignments, parameters, udim=1, xdim=1, xvar=1.0, uco
     data_dict['XYAssignment'] = assignments['XY']
     data_dict['TYAssignment'] = assignments['TY']
     data_dict['UYAssignment'] = assignments['UY']
+    data_dict['YUAssignment'] = assignments['YU']
+    data_dict['TUAssignment'] = assignments['TU']
 
     # put everything together
     data['data'] = data_dict
@@ -45,6 +48,8 @@ def generate_dict(noises, assignments, parameters, udim=1, xdim=1, xvar=1.0, uco
     data_dict['XYparams'] = parameters['XY']
     data_dict['TYparams'] = parameters['TY']
     data_dict['UYparams'] = parameters['UY']
+    data_dict['YUparams'] = parameters['YU']
+    data_dict['TUparams'] = parameters['TU']
 
     return data
 
@@ -209,6 +214,70 @@ def UY_params(mechanisms, operation):
     return out
 
 
+def TU_params(mechanisms, operation):
+    """
+    :param mechanisms: {["linear"], ["polynomial"], ["polynomial", "sinusoidal"]}
+    :param operation: {"+", "*"}
+    :return:
+    """
+    out = dict()
+    if len(mechanisms) > 1:
+        op = "*"
+    else:
+        op = "+"
+    out["aggOp"] = op
+    if "linear" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+    elif "sinusoidal" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 0.0, 3.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 0.0, 2.0]
+    else:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+    return out
+
+
+def YU_params(mechanisms, operation):
+    """
+    :param mechanisms: {["linear"], ["polynomial"], ["polynomial", "sinusoidal"]}
+    :param operation: {"+", "*"}
+    :return:
+    """
+    out = dict()
+    if len(mechanisms) > 1:
+        op = "*"
+    else:
+        op = "+"
+    out["aggOp"] = op
+    if "linear" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+    elif "sinusoidal" in mechanisms:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 0.0, 3.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 0.0, 2.0]
+    else:
+        if operation == '+':
+            out["poly"] = [0.0, 1.0]
+        else:
+            out["poly"] = [0.0, 1.0]
+    return out
+
+
 def generate_toml(fname, raw_data):
     new_toml_string = toml.dumps(raw_data)
     with open(fname, 'w') as f:
@@ -233,6 +302,9 @@ def main():
                 params['XY'] = XY_params(m, i)
                 params['UY'] = UY_params(m, i)
                 params['TY'] = TY_params(m, i)
+                params['TU'] = TU_params(m, i)
+                params['YU'] = YU_params(m, i)
+
                 interaction = ('multi' if i == 'x' else 'additive')
 
                 name = np.copy(m).tolist()
@@ -249,6 +321,12 @@ def main():
                 functions['XY'] = mech
                 functions['UY'] = mech
                 functions['TY'] = mech
+                functions['TU'] = mech
+                functions['YU'] = mech
+
+                raw_string = generate_dict(noises, functions, params, data_size=20, obj_size=2, uconv=1.0,
+
+                                           aggop=i, ttype=tt, xdim=1)
                 raw_string = generate_dict(noises, functions, params, data_size=1000, obj_size=100, uconv=1.0,
                                            aggop=i, ttype=tt, xdim=100, udim=3)
                 generate_toml("./synthetic/"+str(count)+'.toml', raw_string)

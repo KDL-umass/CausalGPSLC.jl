@@ -12,12 +12,15 @@ tNoise = 0.5
 yNoise = 0.5
 TaggOp = "x"
 YaggOp = "x"
+UaggOp = "x"
 Ttype = "continuous"
 XTAssignment = [ "polynomial", "sinusoidal",]
 UTAssignment = [ "polynomial", "sinusoidal",]
 XYAssignment = [ "polynomial", "sinusoidal",]
 TYAssignment = [ "polynomial", "sinusoidal",]
 UYAssignment = [ "polynomial", "sinusoidal",]
+YUAssignment = [ "polynomial", "sinusoidal",]
+TUAssignment = [ "polynomial", "sinusoidal",]
 
 [data.XTparams]
 aggOp = "*"
@@ -43,3 +46,13 @@ sin = [ 0.0, 1.0, 3.0,]
 aggOp = "*"
 poly = [ 0.0, 10.0,]
 sin = [ 0.0, 1.0, 2.0,]
+
+[data.YUparams]
+aggOp = "*"
+poly = [ 0.0, 1.0,]
+sin = [ 0.0, 0.0, 2.0,]
+
+[data.TUparams]
+aggOp = "*"
+poly = [ 0.0, 1.0,]
+sin = [ 0.0, 0.0, 2.0,]
