@@ -8,8 +8,9 @@ using LinearAlgebra
 using StatsBase
 using StatsFuns
 using Statistics
+using SparseArrays
 
-export generate_synthetic_confounder, generate_synthetic_collider
+export generate_synthetic_confounder, generate_synthetic_collider, generateSigmaU
 
 
 function generateSigmaU(n::Int, nIndividualsArray::Array{Int}, eps::Float64, cov::Float64)
@@ -35,7 +36,6 @@ function generateSigmaX(n::Int, sigma, eps::Float64)
     SigmaX[diagind(SigmaX)] .= sigma .+ eps
     return SigmaX
 end
-
 
 # transform input
 function PolyTransform(X, beta::Array{Float64})
@@ -307,23 +307,28 @@ function generate_synthetic_confounder(config_path::String)
     uNoise = config["data"]["uNoise"]
     yNoise = config["data"]["yNoise"]
 
-    SigmaU = generateSigmaU(n, [obj_size for i in 1:n/obj_size], eps, ucov)
-    SigmaX = generateSigmaX(n, xvar, eps)
-
     # generate X and U
     # assume indep X
     xdim = config["data"]["xdim"]
+    SigmaX = generateSigmaX(n, xvar, eps)
+
+    udim = config["data"]["udim"]
+    SigmaU = generateSigmaU(n, [obj_size for i in 1:n/obj_size], eps, ucov)
+    U = zeros(size(SigmaU)[1], udim)    # N x dim
+    for i in 1:udim
+        U[:, i] .= mvnormal(zeros(size(SigmaU)[1]), SigmaU * uNoise)
+    end
     if xdim == 0
-        X = zeros(size(SigmaX)[1], 1)
+        X = zeros(n, 1)
     else
-        X = zeros(size(SigmaX)[1], xdim)    # N x dim
-        for i in 1:xdim
-            X[:, i] .= mvnormal(zeros(size(SigmaX)[1]), SigmaX * xNoise)
+        X = zeros(n, xdim)
+        W = Array(sprandn(udim, xdim, 0.5))  # random sparse weight matrix
+        for i in 1:n
+            for j in 1:xdim
+                X[i, j] = normal(sum(U[i, :] .* W[:, j]), xNoise)
+            end
         end
     end
-
-    U = mvnormal(zeros(size(SigmaU)[1]), SigmaU * uNoise)
-#     U = (U .- mean(U)) ./ std(U)
 
     # assignment for T
     dtypex = string.(config["data"]["XTAssignment"])
