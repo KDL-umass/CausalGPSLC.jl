@@ -14,4 +14,4 @@ echo "SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID
 
 echo "Start running experiments"
 
-julia run_inference_IHDB.jl $SLURM_ARRAY_TASK_ID
+julia run_inference_IHDP.jl $SLURM_ARRAY_TASK_ID
