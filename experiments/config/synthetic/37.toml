@@ -1,6 +1,6 @@
 [paths]
-data = "../data/synthetic/1.toml"
-posterior_dir = "results/synthetic/exp1/correct/"
+data = "../data/synthetic/10.toml"
+posterior_dir = "results/synthetic/exp10/correct/"
 
 [model_hyperparameters]
 uNoiseShape = 4.0

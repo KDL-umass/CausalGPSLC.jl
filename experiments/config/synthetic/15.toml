@@ -1,6 +1,6 @@
 [paths]
-data = "../data/synthetic/1.toml"
-posterior_dir = "results/synthetic/exp1/correct/"
+data = "../data/synthetic/4.toml"
+posterior_dir = "results/synthetic/exp4/no_objects/"
 
 [model_hyperparameters]
 uNoiseShape = 4.0
@@ -31,7 +31,7 @@ yScaleShape = 4.0
 yScaleScale = 4.0
 
 [model]
-type = "correct"
+type = "no_objects"
 nU = 3
 
 [inference]
