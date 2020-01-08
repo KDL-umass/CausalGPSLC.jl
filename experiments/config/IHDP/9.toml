@@ -1,6 +1,6 @@
 [paths]
 data = "../data/IHDP/csv/ihdp_npci_1.csv"
-posterior_dir = "results/IHDP/exp9"
+posterior_dir = "results/IHDP/exp9/"
 
 [data_params]
 pPair = 0.3
