@@ -1,0 +1,51 @@
+[paths]
+data = "../data/IHDP/csv/ihdp_npci_1.csv"
+posterior_dir = "results/IHDP/exp35/"
+
+[data_params]
+pPair = 0.3
+weights = [0.0, 0.1, 0.2, 0.3, 0.4]
+weightsP = [0.6, 0.1, 0.1, 0.1, 0.1]
+CATT = 4.0
+nData = 200
+seed = 1234
+
+[model_hyperparameters]
+uNoiseShape = 4.0
+uNoiseScale = 4.0
+xNoiseShape = 4.0
+xNoiseScale = 4.0
+tNoiseShape = 4.0
+tNoiseScale = 4.0
+yNoiseShape = 4.0
+yNoiseScale = 4.0
+
+uxLSShape = 4.0
+uxLSScale = 4.0
+utLSShape = 4.0
+utLSScale = 4.0
+xtLSShape = 4.0
+xtLSScale = 4.0
+uyLSShape = 4.0
+uyLSScale = 4.0
+xyLSShape = 4.0
+xyLSScale = 4.0
+tyLSShape = 4.0
+tyLSScale = 4.0
+
+xScaleShape = 4.0
+xScaleScale = 4.0
+tScaleShape = 4.0
+tScaleScale = 4.0
+yScaleShape = 4.0
+yScaleScale = 4.0
+
+[model]
+type = "GP_per_object"
+nU = 3
+
+[inference]
+nOuter = 500
+nMHInner = 3
+nESInner = 5
+seed = 5
