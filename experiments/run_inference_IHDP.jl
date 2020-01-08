@@ -82,8 +82,7 @@ end
 # GP model per group
 if config["model"]["type"] == "GP_per_object"
     PosteriorSamplesDict = Dict()
-    for (i, objectIndex) in enumerate(objectIndeces)
-        
+    for (i, objectIndex) in enumerate(objectIndeces) 
         PosteriorSamplesDict[i], _ = Posterior(hyperparameters, [X[j][objectIndex] for j in 1:nX], T[objectIndex], 
                                                Y[objectIndex], nothing, nOuter, nMHInner, nESInner)
     end
