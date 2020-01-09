@@ -70,7 +70,8 @@ def generate_toml(fname, raw_data):
 
 
 def main():
-    exps = [i for i in range(1,12)]
+    exps = [i for i in range(1,13)]
+    print(exps)
     model_types = ["correct", "no_confounding", "no_objects", "GP_per_object"]
     i = 1
     for exp in exps:
