@@ -19,6 +19,7 @@ using .Model
 using .Estimation
 using .Inference
 using .ProcessingIHDP
+logmeanexp(x) = logsumexp(x)-log(length(x))
 
 # +
 experiment = 3
@@ -136,7 +137,7 @@ for doT in [true, false]
         push!(truthLogLikelihoods[doT], truthLogLikelihood)
     end
 #   Normalize the log density by the number of instances within each group
-    scores[string(doT)] = logsumexp([Real(llh/sum(mask)) for llh in truthLogLikelihoods[doT]])
+    scores[string(doT)] = logmeanexp([Real(llh/sum(mask)) for llh in truthLogLikelihoods[doT]])
 end
 # scores
 save("IHDP_results/llh$(experiment).jld", scores)
