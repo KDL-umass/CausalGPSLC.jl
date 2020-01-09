@@ -22,7 +22,7 @@ using .ProcessingIHDP
 logmeanexp(x) = logsumexp(x)-log(length(x))
 
 # +
-experiment = 3
+experiment = 2
 experiments = [i for i in experiment*10-9:experiment*10]
 
 config_paths = ["../experiments/config/IHDP/$(experiment).toml" for experiment in experiments]
