@@ -429,7 +429,6 @@ function generate_synthetic_collider(config_path::String)
     aggY = aggY ./ std(aggY)
 
     # 2. generate U from T and Y
-    uNoise = 0.1
     U = generateU(aggT, aggY, dtypet, dtypey, tuparams, yuparams, uNoise, aggOp)
 
     # 3. distribute U
@@ -439,7 +438,9 @@ function generate_synthetic_collider(config_path::String)
         U_[o:o+obj_size-1] .= U[i] # you could add noise here
         o += obj_size
     end
-    return U_, T, X, Y, ftxu
+    SigmaU = generateSigmaU(n, [obj_size for i in 1:n/obj_size], eps, 1.0)
+    # currently only supports sigmaU with cov = 1.0
+    return SigmaU, U_, T, X, Y, ftxu
 end
 
 end
