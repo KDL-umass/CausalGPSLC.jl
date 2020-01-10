@@ -274,10 +274,10 @@ function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String}, dtypeU::Arr
     return ftxu
 end
 
-function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String},
+function generate_ftx(dtypeT::Array{String}, dtypeX::Array{String},
     Tparam, Xparam, aggOp::String)
 
-    function ftxu(T::Array{Float64}, X, U::Array{Float64}, epsY::Array{Float64})
+    function ftx(T::Array{Float64}, X, epsY::Array{Float64})
         T_ = AggregateTransform(T, dtypeT, Tparam)
         X_ = AggregateTransform(X, dtypeX, Xparam)
         if aggOp == "+"
@@ -287,7 +287,7 @@ function generate_ftxu(dtypeT::Array{String}, dtypeX::Array{String},
         end
         return Y .+ epsY
     end
-    return ftxu
+    return ftx
 end
 
 function generate_synthetic_confounder(config_path::String)
@@ -337,7 +337,7 @@ function generate_synthetic_confounder(config_path::String)
     utparams = config["data"]["UTparams"]
     aggOp = config["data"]["TaggOp"]
     Ttype = config["data"]["Ttype"]
-    T = generateT(X, U, dtypex, dtypeu, xtparams, utparams, xNoise, aggOp, Ttype)
+    T = generateT(X, U, dtypex, dtypeu, xtparams, utparams, tNoise, aggOp, Ttype)
 
     # assignment for Y
     dtypex = string.(config["data"]["XYAssignment"])
@@ -393,7 +393,7 @@ function generate_synthetic_collider(config_path::String)
     utparams = config["data"]["UTparams"]
     aggOp = config["data"]["TaggOp"]
     Ttype = config["data"]["Ttype"]
-    T = generateT(X, dtypex, xtparams, xNoise, Ttype)
+    T = generateT(X, dtypex, xtparams, tNoise, Ttype)
 
     # assignment for Y
     dtypex = string.(config["data"]["XYAssignment"])
@@ -403,10 +403,10 @@ function generate_synthetic_collider(config_path::String)
     dtypet = string.(config["data"]["TYAssignment"])
     typarams = config["data"]["TYparams"]
     aggOp = config["data"]["YaggOp"]
-    Y = generateY(T, yNoise)
+    Y, epsY = generateY(X, T, dtypex, dtypet, xyparams, typarams, yNoise, aggOp)
 
     # recover true causal assignment
-    ftxu = generate_ftxu(dtypet, dtypex, typarams, xyparams, aggOp) # function of T and X and U
+    ftx = generate_ftx(dtypet, dtypex, typarams, xyparams, aggOp) # function of T and X and U
 
     # generate U as a function of T and Y
     # 0. get config
@@ -416,17 +416,16 @@ function generate_synthetic_collider(config_path::String)
     tuparams = config["data"]["TUparams"]
     aggOp = config["data"]["UaggOp"]
     # 1. partition T and Y into objects
-    idx = shuffle([i for i in 1:n])
     oidx = 1
     aggT = zeros(Int(n/obj_size))
     aggY = zeros(Int(n/obj_size))
     for i in 1:Int(n/obj_size)
-        aggT[i] = mean(T[idx[oidx:oidx+obj_size-1]])
-        aggY[i] = mean(Y[idx[oidx:oidx+obj_size-1]])
+        aggT[i] = mean(T[oidx:oidx+obj_size-1])
+        aggY[i] = mean(Y[oidx:oidx+obj_size-1])
         oidx += obj_size
     end
-    aggT = aggT ./ std(aggT)
-    aggY = aggY ./ std(aggY)
+#     aggT = aggT ./ std(aggT)
+#     aggY = aggY ./ std(aggY)
 
     # 2. generate U from T and Y
     U = generateU(aggT, aggY, dtypet, dtypey, tuparams, yuparams, uNoise, aggOp)
@@ -440,7 +439,7 @@ function generate_synthetic_collider(config_path::String)
     end
     SigmaU = generateSigmaU(n, [obj_size for i in 1:n/obj_size], eps, 1.0)
     # currently only supports sigmaU with cov = 1.0
-    return SigmaU, U_, T, X, Y, ftxu
+    return SigmaU, U_, T, X, Y, epsY, ftx
 end
 
 end
