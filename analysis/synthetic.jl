@@ -25,8 +25,8 @@ logmeanexp(x) = logsumexp(x)-log(length(x))
 # -
 
 Random.seed!(1234)
-# experiment = 9
-experiment = ARGS[1]
+experiment = 48
+# experiment = ARGS[1]
 
 config_path = "../experiments/config/synthetic/$(experiment).toml"
 config = TOML.parsefile(config_path)

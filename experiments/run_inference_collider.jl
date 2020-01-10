@@ -5,7 +5,6 @@ using JLD
 using Random
 using LinearAlgebra
 using Statistics
-Random.seed!(1234)
 include("../src/model.jl")
 include("../src/inference.jl")
 include("../data/synthetic.jl")
@@ -14,33 +13,28 @@ using .Model
 using .Inference
 using .Synthetic
 
-experiment = ARGS[1]
+# experiment = ARGS[1]
+experiment = 1
 
-config_path = "../experiments/config/synthetic/$(experiment).toml"
+config_path = "../experiments/config/collider/$(experiment).toml"
 config = TOML.parsefile(config_path)
 
 # +
 # Generate synthetic data
+Random.seed!(1234)
 data_config_path = config["paths"]["data"]
-SigmaU, U_, T_, X_, Y, ftxu = generate_synthetic_collider(data_config_path)
+SigmaU, U, T, X, Y, epsY, ftx = generate_synthetic_collider(data_config_path)
+n = length(T)
 
-println()
-
-# +
-isBinary = maximum(T_) == 1.
-
-if isBinary
-    T = [Bool(t) for t in T_]
-else
-    T = T_
-end
 println()
 # -
 
-# Convert X to array of array format.
-nX = size(X_)[2]
-X = [X_[:, i] for i in 1:nX]
-println()
+if maximum(X) == 0.0
+    X = nothing
+    nX = 0
+else
+    save(config["paths"]["posterior_dir"] * "X.jld", "X", X)
+end
 
 # Load inference hyperparameters
 nOuter = config["inference"]["nOuter"]
@@ -169,7 +163,6 @@ end
 
 save(config["paths"]["posterior_dir"] * "T.jld", "T", T)
 save(config["paths"]["posterior_dir"] * "Y.jld", "Y", Y)
-save(config["paths"]["posterior_dir"] * "X.jld", "X", X)
 save(config["paths"]["posterior_dir"] * "SigmaU.jld", "SigmaU", SigmaU)
 save(config["paths"]["posterior_dir"] * "objectIndeces.jld", "objectIndeces", objectIndeces)
 # -

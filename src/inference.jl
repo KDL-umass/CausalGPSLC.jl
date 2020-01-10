@@ -206,6 +206,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     
     (trace, _) = generate(NoCovContinuousGPROC, (hyperparams, nU), obs)
     for i=1:nOuter    
+        println(i)
         for j=1:nMHInner
             (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
             (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
