@@ -76,7 +76,7 @@ def XT_params(mechanisms, operation):
             out["poly"] = [0.0, 1.0]
             out["sin"] = [0.0, 1.0, 1.0]
         else:
-            out["poly"] = [0.0, 1.0]
+            out["poly"] = [1.0, 0.0]
             out["sin"] = [0.0, 1.0, 1.0]
     else:
         if operation == '+':
@@ -140,7 +140,7 @@ def XY_params(mechanisms, operation):
             out["poly"] = [0.0, 1.0]
             out["sin"] = [0.0, 1.0, 1.0]
         else:
-            out["poly"] = [0.0, 1.0]
+            out["poly"] = [1.0, 0.0]
             out["sin"] = [0.0, 1.0, 1.0]
     else:
         if operation == '+':
@@ -172,8 +172,8 @@ def TY_params(mechanisms, operation):
             out["poly"] = [0.0, 3.0]
             out["sin"] = [0.0, 1.0, 2.0]
         else:
-            out["poly"] = [0.0, 1.0]
-            out["sin"] = [0.0, 1.0, 3.0]
+            out["poly"] = [0.5, 0.0]
+            out["sin"] = [0.0, 1.0, 2.0]
     else:
         if operation == '+':
             out["poly"] = [0.0, 0.0, 0.0, 1.0]
@@ -204,7 +204,7 @@ def UY_params(mechanisms, operation):
             out["poly"] = [0.0, 2.0]
             out["sin"] = [0.0, 1.0, 3.0]
         else:
-            out["poly"] = [0.0, 10.0]
+            out["poly"] = [0.5, 0.0]
             out["sin"] = [0.0, 1.0, 2.0]
     else:
         if operation == '+':
