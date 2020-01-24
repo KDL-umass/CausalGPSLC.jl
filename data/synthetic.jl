@@ -328,6 +328,7 @@ function generate_synthetic_confounder(config_path::String)
                 X[i, j] = normal(sum(U[i, :] .* W[:, j]), xNoise)
             end
         end
+
     end
 
     # assignment for T
