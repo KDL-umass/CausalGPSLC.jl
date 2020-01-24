@@ -16,6 +16,7 @@ include("../src/inference.jl")
 using .Model
 using .Estimation
 using .Inference
+logmeanexp(x) = logsumexp(x)-log(length(x))
 
 # +
 # experiment = ARGS[1]
@@ -57,10 +58,10 @@ ylabel("Y")
 
 
 # +
-LS = 0.25
+LS = 0.1
 yNoise = 0.2
 yScale = 1.
-doTs = [doT for doT in 0.2:0.01:0.8]
+doTs = [doT for doT in 0.25:0.01:0.75]
 
 truthIntMeans = Dict()
 truthIntVars = Dict()
@@ -83,12 +84,15 @@ for (i, region) in enumerate(regions)
     plot(doTs, means, color=colors[i])
     scatter(Ts[region], Ys[region], color=colors[i], label=region)
 end
-xlim(0.2, 0.8)
+xlim(0.25, 0.75)
 ylim(0, 4.2)
 legend()
 ylabel("E(Y|doT)")
 xlabel("doT")
 title("Smoothed Data - Ground Truth Causal Estimate")
+
+save("../experiments/" * config["paths"]["posterior_dir"] * "doTs.jld", "doTs", doTs)  
+save("../experiments/" * config["paths"]["posterior_dir"] * "Ycf.jld", "truthIntMeans", truthIntMeans)  
 
 # +
 for region in regions
@@ -106,7 +110,7 @@ ylim(0, 4.2)
 # +
 nOuter = 5000
 burnIn = 1000
-stepSize = 100
+stepSize = 10
 nSamplesPerPost = 100
 
 estIntSamples = Dict()
@@ -241,7 +245,7 @@ for (i, region) in enumerate(regions)
 end
 
 legend()
-xlim(20, 80)
+xlim(minimum(doTs)*100, maximum(doTs)*100)
 ylim(0, 4300)
 xlabel("Temperature (F)")
 ylabel("Average Daily Demand (MW)")
@@ -256,14 +260,25 @@ for region in regions
     scores[region] = 0
     
     for doT in doTs
-        scores[region] += logsumexp([Real(llh) for llh in estIntLogLikelihoods[region][doT]])
+        scores[region] += logmeanexp([Real(llh) for llh in estIntLogLikelihoods[region][doT]])
     end
     
     scores[region] /= length(doTs)
 end
 
+
 save("ISO_results/scores$(experiment).jld", scores)
 
+# +
+
+for region in regions
+    println(region)
+    println(load("ISO_results/scores1.jld")[region])
+    println(load("ISO_results/scores2.jld")[region])
+    println(load("ISO_results/scores3.jld")[region])
+    println(load("ISO_results/scores4.jld")[region])
+end
 # -
+
 
 

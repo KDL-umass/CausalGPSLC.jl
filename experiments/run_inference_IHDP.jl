@@ -159,7 +159,7 @@ if config["model"]["type"] == "GP_per_object"
 end
 
 
-save(config["paths"]["posterior_dir"] * "T.jld", "T", T)
+save(config["paths"]["posterior_dir"] * "T.jld", "T", T_)
 save(config["paths"]["posterior_dir"] * "Y.jld", "Y", Y)
 save(config["paths"]["posterior_dir"] * "Ycf.jld", "Ycf", Ycf)
 save(config["paths"]["posterior_dir"] * "X.jld", "X", X)
