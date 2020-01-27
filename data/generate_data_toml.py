@@ -76,13 +76,13 @@ def XT_params(mechanisms, operation):
             out["poly"] = [0.0, 1.0]
             out["sin"] = [0.0, 1.0, 1.0]
         else:
-            out["poly"] = [1.0, 0.0]
+            out["poly"] = [0.0, 1.0]
             out["sin"] = [0.0, 1.0, 1.0]
     else:
         if operation == '+':
             out["poly"] = [0.0, 1.0]
         else:
-            out["poly"] = [-1.0, 1.0]
+            out["poly"] = [0.1, 1.0]
     return out
 
 
@@ -100,21 +100,21 @@ def UT_params(mechanisms, operation):
     out["aggOp"] = op
     if "linear" in mechanisms:
         if operation == '+':
-            out["poly"] = [0.0, 1.0]
+            out["poly"] = [0.0, -1.0]
         else:
             out["poly"] = [0.0, 1.0]
     elif "sinusoidal" in mechanisms:
         if operation == '+':
-            out["poly"] = [1.0, 0.0]
-            out["sin"] = [0.0, 1.0, 1.5]
+            out["poly"] = [0.0, -1.0]
+            out["sin"] = [0.0, 1.0, 1.0]
         else:
-            out["poly"] = [1.0, 0.0]
-            out["sin"] = [0.0, 1.0, 1.5]
+            out["poly"] = [0.0, 0.1]
+            out["sin"] = [0.0, 1.0, 1.0]
     else:
         if operation == '+':
-            out["poly"] = [0.0, 1.0]
+            out["poly"] = [0.0, 0.0, -1.0]
         else:
-            out["poly"] = [0.0, 1.0]
+            out["poly"] = [0.0, 0.0, 1.0]
     return out
 
 
@@ -134,19 +134,19 @@ def XY_params(mechanisms, operation):
         if operation == '+':
             out["poly"] = [0.0, 1.0]
         else:
-            out["poly"] = [1.0, 1.0]
+            out["poly"] = [0.1, 1.0]
     elif "sinusoidal" in mechanisms:
         if operation == '+':
             out["poly"] = [0.0, 1.0]
             out["sin"] = [0.0, 1.0, 1.0]
         else:
-            out["poly"] = [1.0, 0.0]
+            out["poly"] = [0.0, 1.0]
             out["sin"] = [0.0, 1.0, 1.0]
     else:
         if operation == '+':
             out["poly"] = [0.0, 1.0]
         else:
-            out["poly"] = [1.0, 1.0]
+            out["poly"] = [0.1, 1.0]
     return out
 
 
@@ -166,19 +166,19 @@ def TY_params(mechanisms, operation):
         if operation == '+':
             out["poly"] = [0.0, 1.0]
         else:
-            out["poly"] = [1.0, 1.0]
+            out["poly"] = [0.0, 1.0]
     elif "sinusoidal" in mechanisms:
         if operation == '+':
-            out["poly"] = [0.0, 3.0]
+            out["poly"] = [0.0, 1.0]
             out["sin"] = [0.0, 1.0, 2.0]
         else:
-            out["poly"] = [0.5, 0.0]
+            out["poly"] = [0.0, 0.1]
             out["sin"] = [0.0, 1.0, 2.0]
     else:
         if operation == '+':
-            out["poly"] = [0.0, 0.0, 0.0, 1.0]
+            out["poly"] = [0.0, 0.0, 0.0, 0.2]
         else:
-            out["poly"] = [1.0, 0.0, 1.0]
+            out["poly"] = [0.0, 0.0, 0.2]
     return out
 
 
@@ -201,14 +201,14 @@ def UY_params(mechanisms, operation):
             out["poly"] = [0.0, 1.0]
     elif "sinusoidal" in mechanisms:
         if operation == '+':
-            out["poly"] = [0.0, 2.0]
-            out["sin"] = [0.0, 1.0, 3.0]
+            out["poly"] = [0.0, 3.0]
+            out["sin"] = [0.0, 1.0, 1.0]
         else:
-            out["poly"] = [0.5, 0.0]
-            out["sin"] = [0.0, 1.0, 2.0]
+            out["poly"] = [0.0, 1.0]
+            out["sin"] = [0.0, 1.0, 1.0]
     else:
         if operation == '+':
-            out["poly"] = [0.0, 5.0, 1.0]
+            out["poly"] = [0.0, 0.0, 3.0]
         else:
             out["poly"] = [0.0, 1.0]
     return out
@@ -326,7 +326,7 @@ def main():
 
                 raw_string = generate_dict(noises, functions, params, data_size=200, obj_size=10, uconv=1.0,
                                            aggop=i, ttype=tt, xdim=3, udim=3)
-                generate_toml("./synthetic/"+str(count)+'.toml', raw_string)
+                generate_toml("./synthetic2/"+str(count)+'.toml', raw_string)
                 count += 1
 
 
