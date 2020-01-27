@@ -1,12 +1,12 @@
 [downsampling]
-bias = 0
+bias = 9
 mean = 45
 newVar = 15
 nSamplesPerState = 25
 
 [paths]
 data = "../data/ISO/2018_smd_hourly.csv"
-posterior_dir = "results/ISO/bias0/no_confounding/"
+posterior_dir = "results/ISO/bias9/no_confounding/"
 
 [model_hyperparameters]
 uNoiseShape = 4.0
