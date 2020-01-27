@@ -21,12 +21,34 @@ config_path = "../experiments/config/ISO/$(experiment).toml"
 config = TOML.parsefile(config_path)
 
 # +
+bias = config["downsampling"]["bias"]
+mean = config["downsampling"]["mean"]
+newVar = config["downsampling"]["newVar"]
+
+new_means = Dict()
+
+new_means["CT"] = mean + 3 * bias
+new_means["MA"] = mean + 2 * bias
+new_means["ME"] = mean + bias
+new_means["NH"] = mean - bias
+new_means["RI"] = mean - 2 * bias
+new_means["VT"] = mean - 3 * bias
+
+
+new_vars = Dict()
+
+for state in ["CT", "MA", "ME", "NH", "RI", "VT"]
+    new_vars[state] = newVar
+end
+
+# +
 # Load and process data
 df = DataFrame(CSV.File(config["paths"]["data"]))
 weekday_df = df[df[!, :IsWeekday] .== "TRUE", :]
 
-importanceWeights = generateImportanceWeights(config["new_means"], config["new_vars"], weekday_df)
-T, Y, SigmaU, regions_key = resampleData(config["subsample_params"]["nSamplesPerState"], importanceWeights, weekday_df)
+# importanceWeights = generateImportanceWeights(config["new_means"], config["new_vars"], weekday_df)
+importanceWeights = generateImportanceWeights(new_means, new_vars, weekday_df)
+T, Y, SigmaU, regions_key = resampleData(config["downsampling"]["nSamplesPerState"], importanceWeights, weekday_df)
 # -
 
 # Scale T and Y
@@ -34,7 +56,7 @@ T /= 100
 Y /= 1000
 
 # Load inference hyperparameters
-nOuter = config["inference"]["nOuter"]
+nOuter   = config["inference"]["nOuter"]
 nMHInner = config["inference"]["nMHInner"]
 nESInner = config["inference"]["nESInner"]
 

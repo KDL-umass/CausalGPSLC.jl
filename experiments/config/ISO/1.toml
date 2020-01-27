@@ -1,25 +1,12 @@
-[paths]
-data = "../data/ISO/2019_smd_hourly.csv"
-posterior_dir = "results/ISO/exp1/"
-
-[new_means]
-VT = 30
-RI = 35
-ME = 60
-NH = 40
-NEMA = 45
-CT = 65
-
-[new_vars]
-VT = 10
-RI = 10
-ME = 10
-NH = 15
-NEMA = 15
-CT = 15
-
-[subsample_params]
+[downsampling]
+bias = 0
+mean = 45
+newVar = 15
 nSamplesPerState = 25
+
+[paths]
+data = "../data/ISO/2018_smd_hourly.csv"
+posterior_dir = "results/ISO/bias0/correct/"
 
 [model_hyperparameters]
 uNoiseShape = 4.0
@@ -30,7 +17,6 @@ tNoiseShape = 4.0
 tNoiseScale = 4.0
 yNoiseShape = 4.0
 yNoiseScale = 4.0
-
 uxLSShape = 4.0
 uxLSScale = 4.0
 utLSShape = 4.0
@@ -43,7 +29,6 @@ xyLSShape = 4.0
 xyLSScale = 4.0
 tyLSShape = 4.0
 tyLSScale = 4.0
-
 xScaleShape = 4.0
 xScaleScale = 4.0
 tScaleShape = 4.0
