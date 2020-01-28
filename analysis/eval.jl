@@ -66,7 +66,7 @@ end
 Fit GPR with full data before biased sub-sampling
 we use the predicted mean as "true" counterfactuals
 """
-function true_Ycf_ISO(doTs::Vector{Float64}, Ts::Vector{Float64}, Ys::Vector{Float64})
+function true_Ycf_ISO(doTs::Vector{Float64}, Ts, Ys)
     LS = 0.1
     yNoise = 0.2
     yScale = 1.
