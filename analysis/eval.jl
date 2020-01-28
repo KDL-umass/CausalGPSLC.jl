@@ -277,8 +277,20 @@ function main(args)
         end
     end
 
-    save("$(dataset)_results/model_scores.jld", model_scores)
-    save("$(dataset)_results/model_errors.jld", model_errors)
+    df = Dict()
+    df["model"] = []
+    df["obj"] = []
+    df["error"] = []
+    df["likelihood"] = []
+    for m in models
+        for obj in Set(obj_key)
+            push!(df["model"], m)
+            push!(df["obj"], obj)
+            push!(df["error"], model_errors[m][obj])
+            push!(df["likelihood"], model_scores[m][obj])
+        end
+    end
+    CSV.write("$(dataset)_results/statistics.csv", DataFrame(df))
 
 end
 
