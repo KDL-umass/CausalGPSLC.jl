@@ -123,6 +123,7 @@ function load_IHDP(experiment)
         push!(Ycfs[obj][doTs[i]], Ycf[i])
     end
     return T, doTs, X_, Y, Ycfs, obj_key
+end
 
 
 """
@@ -160,7 +161,8 @@ end
 evaluate model given T, doTs, X, Y, Ycfs, obj_key
 returns PEHE and Log likelihood per object (in Dict)
 """
-function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Float64}, Y::Vector{Float64}, Ycfs, obj_key)
+function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Float64}, 
+                    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int)
     # convert obj_key to Int index
     obj2id = Dict()
     init = 1
@@ -190,13 +192,16 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
     estIntLogLikelihoods = Dict() # obj -> doT
     estMeans = Dict() # obj -> doT -> list
     indecesDict = Dict()
-    for object in objects
-        indecesDict[object] = obj_key .== object
-        estIntLogLikelihoods[object] = Dict()
-        estMeans[object] = Dict()
+    samples = Dict()
+    for obj in objects
+        indecesDict[obj] = obj_key .== obj
+        estIntLogLikelihoods[obj] = Dict()
+        estMeans[obj] = Dict()
+        samples[obj] = Dict()
         for doT in doTs
-            estIntLogLikelihoods[object][doT] = []
-            estMeans[object][doT] = []
+            estIntLogLikelihoods[obj][doT] = []
+            estMeans[obj][doT] = []
+            samples[obj][doT] = []
         end
     end
 
@@ -264,8 +269,13 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
 
                 # aggregate loglikelihood and errors
                 truth = Ycfs[obj][j]
-                truthLogLikelihood = loglikelihood(Normal(m, v), [truth])
-                push!(estIntLogLikelihoods[obj][doT], truthLogLikelihood)
+                estIntLogLikelihood = loglikelihood(Normal(m, v), [truth])
+                
+                for sample in 1:nSamplesPerPost
+                    push!(samples[obj][doT], normal(m, v))
+                end
+                    
+                push!(estIntLogLikelihoods[obj][doT], estIntLogLikelihood)
                 append!(estMeans[obj][doT], m)
             end
         end
@@ -295,7 +305,7 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
         scores[obj] /= length(doTs)
     end
 
-    errors, scores
+    errors, scores, samples
 end
 
 
@@ -303,24 +313,25 @@ end
 Main method. Takes a path to config file
 """
 function main(args)
-
     config_path = args[1]
     config = TOML.parsefile(config_path)
     dataset = config["dataset"]
     experiment = config["experiment"]
+    nSamplesPerPost = config["nSamplesPerPost"]
 
     # load evaluation data
     T, doTs, X, Y, Ycfs, obj_key = load_data(config)
 
     models = config["models"]
-    model_errors, model_scores = Dict(), Dict()
+    model_errors, model_scores, model_samples = Dict(), Dict(), Dict()
 
     # evaluate per model
     for m in models
         if dataset == "ISO"
-            errors, scores = eval_model(config, m, T, doTs, Y, Ycfs, obj_key)
+            errors, scores, samples = eval_model(config, m, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost)
             model_errors[m] = errors
             model_scores[m] = scores
+            model_samples[m] = samples
         end
     end
 
@@ -338,7 +349,9 @@ function main(args)
             push!(df["likelihood"], model_scores[m][obj])
         end
     end
-    CSV.write("$(dataset)_results/statistics_$(experiment).csv", DataFrame(df))
+    CSV.write("results/$(dataset)/statistics_$(experiment).csv", DataFrame(df))
+    save("results/$(dataset)/model_samples_$(experiment).jld", model_samples)
+    save("results/$(dataset)/")
 end
 
 main(ARGS)
