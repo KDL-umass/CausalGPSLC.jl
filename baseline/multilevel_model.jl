@@ -6,7 +6,7 @@ using ProgressBars
 using LinearAlgebra
 using Statistics
 
-export posteriorLinearMLM, posteriorLinearMLMoffset
+export posteriorLinearMLM, posteriorLinearMLMoffset, predictionMLMoffset, predictionMLM
 
 # parameter with normal prior
 @gen function generateLS(mean, scale)
@@ -197,6 +197,26 @@ function posteriorLinearMLMoffset(n_samples::Int, T::Vector{Float64}, Y::Vector{
         push!(PosteriorSamples, get_choices(trace))
     end
     PosteriorSamples
+end
+
+
+function predictionMLMoffset(posterior, doT, obj_label)
+    nObj = length(Set(obj_label))
+    theta = posterior[:theta]
+    alpha = [posterior[:alpha=>i=>:LS] for i in 1:nObj]
+    noise = posterior[:noise]
+    Ypred = (theta * doT .+ alpha[obj_label])
+    Ypred, fill(noise, length(Ypred))
+end
+
+
+function predictionMLM(posterior, doT, obj_label)
+    nObj = length(Set(obj_label))
+    theta = [posterior[:theta=>i=>:LS] for i in 1:nObj]
+    alpha = [posterior[:alpha=>i=>:LS] for i in 1:nObj]
+    noise = posterior[:noise]
+    Ypred = (theta[obj_label] * doT .+ alpha[obj_label])
+    Ypred, fill(noise, length(Ypred))
 end
 
 end
