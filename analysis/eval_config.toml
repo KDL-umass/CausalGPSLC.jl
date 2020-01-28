@@ -1,10 +1,11 @@
 dataset = "ISO"
 
 # models to evaluate
-models = ["MLM", "MLM_offset"]
+models = ["correct", "no_confounding", "no_objects", "GP_per_object", "MLM", "MLM_offset"]
+posterior_dir = "results/ISO/bias0/"
 
 # posterior samples
-nOuter = 1000
-burnIn = 200
+nOuter = 5000
+burnIn = 1000
 stepSize = 100
 nSamplesPerPost = 100
