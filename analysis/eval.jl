@@ -101,6 +101,7 @@ end
 
 
 function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Float64}, Y::Vector{Float64}, Ycfs, obj_key)
+    # convert obj_key to Int index
     obj2id = Dict()
     init = 1
     for k in obj_key
@@ -111,6 +112,7 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
     end
     obj_label = [Int(obj2id[k]) for k in obj_key]
     objects = keys(obj2id)
+
 
     nOuter = config["nOuter"]
     burnIn = config["burnIn"]
@@ -140,6 +142,17 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
     for i in tqdm(burnIn:stepSize:nOuter)
         if occursin("MLM", model)
             post = posteriors[i]
+        elseif model == "GP_per_object"
+            post = nothing
+        else
+            post = load("../experiments/" * config["posterior_dir"] * "/$(model)" * "/Posterior$(i).jld")
+            if model == "no_confounding"
+                uyLS = nothing
+                U = nothing
+            else
+                uyLS = convert(Array{Float64,1}, post["uyLS"])
+                U = post["U"]
+            end
         end
         estMean = []
         for (j, doT) in enumerate(doTs)
@@ -147,11 +160,45 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
                 MeanITE, CovITE = predictionMLMoffset(post, doT, obj_label)
             elseif model == "MLM"
                 MeanITE, CovITE = predictionMLM(post, doT, obj_label)
+            elseif model == "GP_per_object"
+                MeanITE, CovITE = nothing, nothing
+            else
+                MeanITE, CovITE = conditionalITE(uyLS,
+                                              post["tyLS"],
+                                              nothing,
+                                              post["yNoise"],
+                                              post["yScale"],
+                                              U,
+                                              nothing,
+                                              T,
+                                              Y,
+                                              doT)
             end
             for obj in objects
                 indeces = indecesDict[obj]
-                m = mean(MeanITE[indeces])
-                v = mean(CovITE[indeces])
+                if model == "GP_per_object"
+                    post = load("../experiments/" * config["posterior_dir"] * "/$(model)" * "/$(obj)Posterior$(i).jld")
+                    MeanITE, CovITE = conditionalITE(nothing,
+                                              post["tyLS"],
+                                              nothing,
+                                              post["yNoise"],
+                                              post["yScale"],
+                                              nothing,
+                                              nothing,
+                                              T[indeces],
+                                              Y[indeces],
+                                              doT)
+                end
+                if occursin("MLM", model)
+                    m = mean(MeanITE[indeces])
+                    v = mean(CovITE[indeces])
+                elseif model == "GP_per_object"
+                    m = mean(MeanITE) + mean(Y[indeces])
+                    v = mean(CovITE)
+                else
+                    m = mean(MeanITE[indeces]) + mean(Y[indeces])
+                    v = mean(CovITE[indeces, indeces])
+                end
                 truth = Ycfs[obj][j]
                 truthLogLikelihood = loglikelihood(Normal(m, v), [truth])
                 push!(estIntLogLikelihoods[obj][doT], truthLogLikelihood)
@@ -187,6 +234,10 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
     errors, scores
 end
 
+
+"""
+Main method. Takes a path to config file
+"""
 function main(args)
 
     config_path = args[1]
@@ -197,6 +248,7 @@ function main(args)
 
     models = config["models"]
     model_errors, model_scores = Dict(), Dict()
+    # evaluate per model
     for m in models
         if dataset == "ISO"
             errors, scores = eval_model(config, m, T, doTs, Y, Ycfs, obj_key)
@@ -204,6 +256,7 @@ function main(args)
             model_scores[m] = scores
         end
     end
+
 
     save("$(dataset)_results/model_scores.jld", model_scores)
     save("$(dataset)_results/model_errors.jld", model_errors)
@@ -215,7 +268,7 @@ function main(args)
         println(m)
         for obj in Set(obj_key)
             println(obj)
-            println(errors[obj], " ", scores[obj])
+            println(scores[obj])
         end
         println()
     end
