@@ -1,0 +1,10 @@
+dataset = "ISO"
+
+# models to evaluate
+models = ["MLM", "MLM_offset"]
+
+# posterior samples
+nOuter = 1000
+burnIn = 200
+stepSize = 100
+nSamplesPerPost = 100
