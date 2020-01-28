@@ -57,7 +57,7 @@ function load_ISO()
 
     # Scale T and Y
     T /= 100
-    Y /= 1000
+    Y /= 10000
     T, Y, regions_key, df
 end
 
@@ -105,7 +105,7 @@ function load_data(dataset::String)
         Ys = Dict()
         for region in Set(obj_key)
             Ts[region] = weekday_df[weekday_df[!, :State] .== region, :DryBulbTemp]/100
-            Ys[region] = weekday_df[weekday_df[!, :State] .== region, :RealTimeDemand]/1000
+            Ys[region] = weekday_df[weekday_df[!, :State] .== region, :RealTimeDemand]/10000
         end
         Ycfs = true_Ycf_ISO(doTs, Ts, Ys)
     end
