@@ -14,6 +14,7 @@ Random.seed!(1234)
 include("../src/model.jl")
 include("../src/inference.jl")
 include("../data/processing_iso.jl")
+include("../data/processing_IHDP.jl")
 include("../src/estimation.jl")
 include("../baseline/multilevel_model.jl")
 
@@ -22,11 +23,12 @@ using .Inference
 using .ProcessingISO
 using .MultilevelModel
 using .Estimation
+using .ProcessingIHDP
 
 
 # load ISO data and subsample to bias observation
-function load_ISO()
-    config_path = "../experiments/config/ISO/1.toml"
+function load_ISO(experiment)
+    config_path = "../experiments/config/ISO/$(experiment).toml"
     config = TOML.parsefile(config_path)
 
     bias = config["downsampling"]["bias"]
@@ -52,8 +54,8 @@ function load_ISO()
     weekday_df = df[df[!, :IsWeekday] .== "TRUE", :]
 
     # importanceWeights = generateImportanceWeights(config["new_means"], config["new_vars"], weekday_df)
-    importanceWeights = generateImportanceWeights(new_means, new_vars, weekday_df)
-    T, Y, SigmaU, regions_key = resampleData(config["downsampling"]["nSamplesPerState"], importanceWeights, weekday_df)
+    importanceWeights = ProcessingISO.generateImportanceWeights(new_means, new_vars, weekday_df)
+    T, Y, SigmaU, regions_key = ProcessingISO.resampleData(config["downsampling"]["nSamplesPerState"], importanceWeights, weekday_df)
 
     # Scale T and Y
     T /= 100
@@ -86,6 +88,43 @@ function true_Ycf_ISO(doTs::Vector{Float64}, Ts, Ys)
 end
 
 
+# load IHDP data with counterfactuals
+function load_IHDP(experiment)
+    config_path = "../experiments/config/IHDP/$(experiment).toml"
+    config = TOML.parsefile(config_path)
+
+    data = DataFrame(CSV.File(config["paths"]["data"]))[1:config["data_params"]["nData"], :]
+    pairs = ProcessingIHDP.generatePairs(data, config["data_params"]["pPair"])
+    nData = size(data)[1]
+    n = nData + length(pairs)
+    SigmaU = ProcessingIHDP.generateSigmaU(pairs, nData)
+
+    SigmaU = ProcessingIHDP.generateSigmaU(pairs, nData)
+    T_ = ProcessingIHDP.generateT(data, pairs)
+    T = [Bool(t) for t in T_]
+    doTs = [Bool(1-t) for t in T_]
+
+    X_ = ProcessingIHDP.generateX(data, pairs)
+
+    U = ProcessingIHDP.generateU(data, pairs)
+    BetaX, BetaU = ProcessingIHDP.generateWeights(config["data_params"]["weights"], config["data_params"]["weightsP"])
+    Y_, Ycf = ProcessingIHDP.generateOutcomes(X_, U, T_, BetaX, BetaU, config["data_params"]["CATT"], n)
+    Y = [Float64(y) for y in Y_]
+    obj_key = vcat([i for i in 1:200], pairs)
+
+    Ycfs = Dict() # obj -> doT -> list
+    for (i, obj) in enumerate(obj_key)
+        Ycfs[obj] = Dict()
+        for doT in Set(doTs)
+            Ycfs[obj][doT] = []
+        end
+    end
+    for (i, obj) in enumerate(obj_key)
+        push!(Ycfs[obj][doTs[i]], Ycf[i])
+    end
+    return T, doTs, X_, Y, Ycfs, obj_key
+
+
 """
 Load data and return T, doTs, X, Y, Ycfs, obj_key
 T : observed treatment
@@ -95,11 +134,13 @@ Y : observed outcome
 Ycf : true counterfactuals
 obj_key : list of keys (can be any type) that represents the object e.g. ["obj1", "obj1", "obj2" ...]
 """
-function load_data(dataset::String)
+function load_data(config)
+    dataset = config["dataset"]
+    experiment = config["experiment"]
     T, doTs, Y, obj_key, X, Ycfs = nothing, nothing, nothing, nothing, nothing, nothing
     if dataset == "ISO"
         doTs = [doT for doT in 0.25:0.01:0.75]
-        T, Y, obj_key, df = load_ISO()
+        T, Y, obj_key, df = load_ISO(experiment)
         weekday_df = df[df[!, :IsWeekday] .== "TRUE", :]
         Ts = Dict()
         Ys = Dict()
@@ -108,6 +149,8 @@ function load_data(dataset::String)
             Ys[region] = weekday_df[weekday_df[!, :State] .== region, :RealTimeDemand]/10000
         end
         Ycfs = true_Ycf_ISO(doTs, Ts, Ys)
+    elseif dataset == "IHDP"
+        T, doTs, X, Y, Ycfs, obj_key = load_IHDP(experiment)
     end
     T, doTs, X, Y, Ycfs, obj_key
 end
@@ -139,6 +182,8 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
         posteriors = posteriorLinearMLMoffset(nOuter, T, Y, obj_label)
     elseif model == "MLM"
         posteriors = posteriorLinearMLM(nOuter, T, Y, obj_label)
+    else
+        posteriors = nothing
     end
 
     # data structure
@@ -262,8 +307,10 @@ function main(args)
     config_path = args[1]
     config = TOML.parsefile(config_path)
     dataset = config["dataset"]
+    experiment = config["experiment"]
+
     # load evaluation data
-    T, doTs, X, Y, Ycfs, obj_key = load_data(dataset)
+    T, doTs, X, Y, Ycfs, obj_key = load_data(config)
 
     models = config["models"]
     model_errors, model_scores = Dict(), Dict()
@@ -277,6 +324,7 @@ function main(args)
         end
     end
 
+    # generate CSV
     df = Dict()
     df["model"] = []
     df["obj"] = []
@@ -290,8 +338,7 @@ function main(args)
             push!(df["likelihood"], model_scores[m][obj])
         end
     end
-    CSV.write("$(dataset)_results/statistics.csv", DataFrame(df))
-
+    CSV.write("$(dataset)_results/statistics_$(experiment).csv", DataFrame(df))
 end
 
 main(ARGS)
