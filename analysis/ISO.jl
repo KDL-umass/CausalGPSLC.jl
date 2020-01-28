@@ -19,8 +19,8 @@ using .Inference
 logmeanexp(x) = logsumexp(x)-log(length(x))
 
 # +
-# experiment = ARGS[1]
-experiment = 4
+experiment = ARGS[1]
+# experiment = 1
 
 config_path = "../experiments/config/ISO/$(experiment).toml"
 config = TOML.parsefile(config_path)
@@ -45,17 +45,20 @@ Ts = Dict()
 Ys = Dict()
 
 for region in regions
-    Ts[region] = weekday_df[weekday_df[!, :Region] .== region, :DryBulbTemp]/100
-    Ys[region] = weekday_df[weekday_df[!, :Region] .== region, :RealTimeDemand]/1000
+    Ts[region] = weekday_df[weekday_df[!, :State] .== region, :DryBulbTemp]/100
+    Ys[region] = weekday_df[weekday_df[!, :State] .== region, :RealTimeDemand]/10000
     scatter(Ts[region], Ys[region], label=region)
 end
 legend()
 xlim(0.2, 0.8)
-ylim(0, 4.2)
+ylim(0, 12)
 title("Original Data")
 xlabel("T")
 ylabel("Y")
+# -
 
+
+Ys
 
 # +
 LS = 0.1
