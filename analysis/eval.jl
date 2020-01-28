@@ -24,8 +24,8 @@ using .MultilevelModel
 using .Estimation
 
 
+# load ISO data and subsample to bias observation
 function load_ISO()
-    # load experiment file
     config_path = "../experiments/config/ISO/1.toml"
     config = TOML.parsefile(config_path)
 
@@ -62,7 +62,11 @@ function load_ISO()
 end
 
 
-function true_kernel_Ycf(doTs, Ts, Ys)
+"""
+Fit GPR with full data before biased sub-sampling
+we use the predicted mean as "true" counterfactuals
+"""
+function true_Ycf_ISO(doTs::Vector{Float64}, Ts::Vector{Float64}, Ys::Vector{Float64})
     LS = 0.1
     yNoise = 0.2
     yScale = 1.
@@ -82,6 +86,15 @@ function true_kernel_Ycf(doTs, Ts, Ys)
 end
 
 
+"""
+Load data and return T, doTs, X, Y, Ycfs, obj_key
+T : observed treatment
+doTs : list of interventions
+X : observed confounding
+Y : observed outcome
+Ycf : true counterfactuals
+obj_key : list of keys (can be any type) that represents the object e.g. ["obj1", "obj1", "obj2" ...]
+"""
 function load_data(dataset::String)
     T, doTs, Y, obj_key, X, Ycfs = nothing, nothing, nothing, nothing, nothing, nothing
     if dataset == "ISO"
@@ -94,12 +107,16 @@ function load_data(dataset::String)
             Ts[region] = weekday_df[weekday_df[!, :State] .== region, :DryBulbTemp]/100
             Ys[region] = weekday_df[weekday_df[!, :State] .== region, :RealTimeDemand]/1000
         end
-        Ycfs = true_kernel_Ycf(doTs, Ts, Ys)
+        Ycfs = true_Ycf_ISO(doTs, Ts, Ys)
     end
     T, doTs, X, Y, Ycfs, obj_key
 end
 
 
+"""
+evaluate model given T, doTs, X, Y, Ycfs, obj_key
+returns PEHE and Log likelihood per object (in Dict)
+"""
 function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Float64}, Y::Vector{Float64}, Ycfs, obj_key)
     # convert obj_key to Int index
     obj2id = Dict()
@@ -113,11 +130,11 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
     obj_label = [Int(obj2id[k]) for k in obj_key]
     objects = keys(obj2id)
 
-
     nOuter = config["nOuter"]
     burnIn = config["burnIn"]
     stepSize = config["stepSize"]
 
+    # get posteriors for MLMs
     if model == "MLM_offset"
         posteriors = posteriorLinearMLMoffset(nOuter, T, Y, obj_label)
     elseif model == "MLM"
@@ -128,7 +145,6 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
     estIntLogLikelihoods = Dict() # obj -> doT
     estMeans = Dict() # obj -> doT -> list
     indecesDict = Dict()
-
     for object in objects
         indecesDict[object] = obj_key .== object
         estIntLogLikelihoods[object] = Dict()
@@ -139,6 +155,7 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
         end
     end
 
+    # get results from each posterior sample
     for i in tqdm(burnIn:stepSize:nOuter)
         if occursin("MLM", model)
             post = posteriors[i]
@@ -199,6 +216,8 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
                     m = mean(MeanITE[indeces]) + mean(Y[indeces])
                     v = mean(CovITE[indeces, indeces])
                 end
+
+                # aggregate loglikelihood and errors
                 truth = Ycfs[obj][j]
                 truthLogLikelihood = loglikelihood(Normal(m, v), [truth])
                 push!(estIntLogLikelihoods[obj][doT], truthLogLikelihood)
@@ -215,6 +234,7 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
         end
     end
 
+    # calculate statistics. Important that this is shared
     errors = Dict()
     for obj in objects
         errors[obj] = (mean((Ycf_pred[obj] .- Ycfs[obj]).^2))^0.5
@@ -227,7 +247,6 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
         for doT in doTs
             scores[obj] += logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]])
         end
-
         scores[obj] /= length(doTs)
     end
 
@@ -248,6 +267,7 @@ function main(args)
 
     models = config["models"]
     model_errors, model_scores = Dict(), Dict()
+
     # evaluate per model
     for m in models
         if dataset == "ISO"
@@ -257,21 +277,9 @@ function main(args)
         end
     end
 
-
     save("$(dataset)_results/model_scores.jld", model_scores)
     save("$(dataset)_results/model_errors.jld", model_errors)
 
-    # print errors
-    for m in models
-        errors = model_errors[m]
-        scores = model_scores[m]
-        println(m)
-        for obj in Set(obj_key)
-            println(obj)
-            println(scores[obj])
-        end
-        println()
-    end
 end
 
 main(ARGS)
