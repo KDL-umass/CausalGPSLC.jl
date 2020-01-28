@@ -53,7 +53,7 @@ T, Y, SigmaU, regions_key = resampleData(config["downsampling"]["nSamplesPerStat
 
 # Scale T and Y
 T /= 100
-Y /= 1000
+Y /= 10000
 
 # Load inference hyperparameters
 nOuter   = config["inference"]["nOuter"]
