@@ -1,0 +1,12 @@
+dataset = "synthetic"
+experiment = 1
+
+# models to evaluate
+models = ["MLM", "MLM_offset"]
+posterior_dir = "results/synthetic/bias0/"
+
+# posterior samples
+nOuter = 1000
+burnIn = 500
+stepSize = 10
+nSamplesPerPost = 100

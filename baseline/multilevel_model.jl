@@ -59,7 +59,7 @@ load_generated_functions()
 @gen function LinearMLMOffsetwithX(xs::Vector{Float64}, ts::Vector{Float64}, obj_label)
     n, nX = size(xs)
     nObj = length(Set(obj_label))
-    beta =  @trace(MappedGenerateLS(fill(0.0, nX), fill(1.0, nX)), :beta) #xyLS
+    beta =  @trace(MappedGenerateLS(fill(0.0, nX), fill(3.0, nX)), :beta) #xyLS
     theta = @trace(normal(0,1), :theta) #tyLS
     alpha = @trace(MappedGenerateLS(fill(0.0, nObj), fill(10.0, nObj)), :alpha) #alpha
     sigma = @trace(inv_gamma(4.0, 4.0), :noise) #tyLS
@@ -91,7 +91,7 @@ end
 @gen function LinearMLMwithX(xs::Vector{Float64}, ts::Vector{Float64}, obj_label)
     n, nX = size(xs)
     nObj = length(Set(obj_label))
-    beta =  @trace(MappedGenerateLS(fill(0.0, nX), fill(1.0, nX)), :beta) #xyLS
+    beta =  @trace(MappedGenerateLS(fill(0.0, nX), fill(3.0, nX)), :beta) #xyLS
     theta = @trace(MappedGenerateLS(fill(0.0, nObj), fill(1.0, nObj)),  :theta) #alpha
     alpha = @trace(MappedGenerateLS(fill(0.0, nObj), fill(10.0, nObj)), :alpha) #alpha
     sigma = @trace(inv_gamma(4.0, 4.0), :noise) #tyLS
@@ -124,6 +124,7 @@ function posteriorLinearMLM(n_samples::Int, T::Vector{Float64}, X::Array{Float64
     for (i, y) in enumerate(Y)
         constraints["y-$i"] = y
     end
+    n, nX = size(X)
     PosteriorSamples = []
     nObj = length(Set(obj_label))
     (trace, _) = generate(LinearMLMwithX, (X, T, obj_label), constraints)
@@ -132,6 +133,9 @@ function posteriorLinearMLM(n_samples::Int, T::Vector{Float64}, X::Array{Float64
         for k in 1:nObj
             (trace, _) = mh(trace, thetaProposal2, (k, 0.5))
             (trace, _) = mh(trace, alphaProposal, (k, 0.5))
+        end
+        for k in 1:nX
+            (trace, _) = mh(trace, betaProposal,  (k, 0.5))
         end
         push!(PosteriorSamples, get_choices(trace))
     end
@@ -166,6 +170,7 @@ function posteriorLinearMLMoffset(n_samples::Int, T::Vector{Float64}, X::Array{F
         constraints["y-$i"] = y
     end
     nObj = length(Set(obj_label))
+    n, nX = size(X)
     PosteriorSamples = []
     (trace, _) = generate(LinearMLMOffsetwithX, (X, T, obj_label), constraints)
     for iter=tqdm(1:n_samples)
@@ -173,6 +178,9 @@ function posteriorLinearMLMoffset(n_samples::Int, T::Vector{Float64}, X::Array{F
         (trace, _) = mh(trace, NoiseProposal, (0.5, ))
         for k in 1:nObj
             (trace, _) = mh(trace, alphaProposal, (k, 0.5))
+        end
+        for k in 1:nX
+            (trace, _) = mh(trace, betaProposal,  (k, 0.5))
         end
         push!(PosteriorSamples, get_choices(trace))
     end
@@ -210,12 +218,35 @@ function predictionMLMoffset(posterior, doT, obj_label)
 end
 
 
+function predictionMLMoffset(posterior, doT, X, obj_label)
+    n, nX = size(X)
+    nObj = length(Set(obj_label))
+    beta = [posterior[:beta=>k=>:LS] for k in 1:nX]
+    theta = posterior[:theta]
+    alpha = [posterior[:alpha=>i=>:LS] for i in 1:nObj]
+    noise = posterior[:noise]
+    Ypred = (X * beta .+ theta * doT .+ alpha[obj_label])
+    Ypred, fill(noise, length(Ypred))
+end
+
+
 function predictionMLM(posterior, doT, obj_label)
     nObj = length(Set(obj_label))
     theta = [posterior[:theta=>i=>:LS] for i in 1:nObj]
     alpha = [posterior[:alpha=>i=>:LS] for i in 1:nObj]
     noise = posterior[:noise]
     Ypred = (theta[obj_label] * doT .+ alpha[obj_label])
+    Ypred, fill(noise, length(Ypred))
+end
+
+function predictionMLM(posterior, doT, X, obj_label)
+    n, nX = size(X)
+    nObj = length(Set(obj_label))
+    beta = [posterior[:beta=>k=>:LS] for k in 1:nX]
+    theta = [posterior[:theta=>i=>:LS] for i in 1:nObj]
+    alpha = [posterior[:alpha=>i=>:LS] for i in 1:nObj]
+    noise = posterior[:noise]
+    Ypred = (X * beta .+ theta[obj_label] * doT .+ alpha[obj_label])
     Ypred, fill(noise, length(Ypred))
 end
 
