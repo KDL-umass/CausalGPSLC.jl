@@ -333,6 +333,7 @@ function main(args)
         if model != "control"
             # A terrible hack to not waste swarm2 runtime.
             return
+        end
         model = baseline_model
     end
 
