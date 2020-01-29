@@ -329,8 +329,9 @@ function main(args)
         posterior_dir = exp_config["paths"]["posterior_dir"]
     end
 
+
     if baseline_model != "nothing"
-        if model != "control"
+        if model != "correct"
             # A terrible hack to not waste swarm2 runtime.
             return
         end
