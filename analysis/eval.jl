@@ -240,7 +240,7 @@ function eval_model(posterior_dir,  model::String, T::Vector{Float64}, doTs::Vec
             for obj in objects
                 indeces = indecesDict[obj]
                 if model == "GP_per_object"
-                    post = load(posterior_dir * "/$(obj)Posterior$(i).jld")
+                    post = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
                     MeanITE, CovITE = conditionalITE(nothing,
                                               post["tyLS"],
                                               nothing,
