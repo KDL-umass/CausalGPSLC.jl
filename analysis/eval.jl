@@ -1,6 +1,5 @@
 using Gen
 using LinearAlgebra
-using PyPlot
 using TOML
 using JLD
 using CSV
@@ -136,9 +135,7 @@ Y : observed outcome
 Ycf : true counterfactuals
 obj_key : list of keys (can be any type) that represents the object e.g. ["obj1", "obj1", "obj2" ...]
 """
-function load_data(config)
-    dataset = config["dataset"]
-    experiment = config["experiment"]
+function load_data(dataset, experiment)
     T, doTs, Y, obj_key, X, Ycfs = nothing, nothing, nothing, nothing, nothing, nothing
     if dataset == "ISO"
         doTs = [doT for doT in 0.25:0.01:0.75]
@@ -163,8 +160,8 @@ evaluate model given T, doTs, X, Y, Ycfs, obj_key
 returns PEHE and Log likelihood per object (in Dict)
 """
 
-function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Float64}, 
-                    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int)
+function eval_model(posterior_dir,  model::String, T::Vector{Float64}, doTs::Vector{Float64}, 
+                    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int)
     # convert obj_key to Int index
     obj2id = Dict()
     init = 1
@@ -176,10 +173,6 @@ function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Flo
     end
     obj_label = [Int(obj2id[k]) for k in obj_key]
     objects = keys(obj2id)
-
-    nOuter = config["nOuter"]
-    burnIn = config["burnIn"]
-    stepSize = config["stepSize"]
 
     # get posteriors for MLMs
     if model == "MLM_offset"
@@ -215,7 +208,7 @@ function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Flo
         elseif model == "GP_per_object"
             post = nothing
         else
-            post = load("../experiments/" * config["posterior_dir"] * "/$(model)" * "/Posterior$(i).jld")
+            post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
             if model == "no_confounding"
                 uyLS = nothing
                 U = nothing
@@ -247,7 +240,7 @@ function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Flo
             for obj in objects
                 indeces = indecesDict[obj]
                 if model == "GP_per_object"
-                    post = load("../experiments/" * config["posterior_dir"] * "/$(model)" * "/$(obj)Posterior$(i).jld")
+                    post = load(posterior_dir * "/$(obj)Posterior$(i).jld")
                     MeanITE, CovITE = conditionalITE(nothing,
                                               post["tyLS"],
                                               nothing,
@@ -320,27 +313,35 @@ Main method. Takes a path to config file
 """
 function main(args)
 
-    config_path = args[1]
-    config = TOML.parsefile(config_path)
-    dataset = config["dataset"]
-    experiment = config["experiment"]
-    nSamplesPerPost = config["nSamplesPerPost"]
+    experiment = args[1]
+    baseline_model = args[2]
+    dataset = args[3]
+    nOuter = parse(Int64, args[4])
+    burnIn = parse(Int64, args[5])
+    stepSize = parse(Int64, args[6])
+    nSamplesPerPost = parse(Int64, args[7])
+
+    print(stepSize)
+
+
+    if dataset == "ISO"
+        exp_config_path = "../experiments/config/ISO/$(experiment).toml"
+        exp_config = TOML.parsefile(exp_config_path)
+        bias = exp_config["downsampling"]["bias"]
+        model = exp_config["model"]["type"]
+        posterior_dir = exp_config["paths"]["posterior_dir"]
+    end
+
+    if baseline_model != "nothing"
+        model = baseline_model
+    end
+
 
     # load evaluation data
-    T, doTs, X, Y, Ycfs, obj_key = load_data(config)
+    T, doTs, X, Y, Ycfs, obj_key = load_data(dataset, experiment)
 
-    models = config["models"]
-    model_errors, model_scores, model_samples = Dict(), Dict(), Dict()
-
-
-    # evaluate per model
-    for m in models
-        if dataset == "ISO"
-            errors, scores, samples = eval_model(config, m, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost)
-            model_errors[m] = errors
-            model_scores[m] = scores
-            model_samples[m] = samples
-        end
+    if dataset == "ISO"
+        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize)
     end
 
     # generate CSV
@@ -349,16 +350,18 @@ function main(args)
     df["obj"] = []
     df["error"] = []
     df["likelihood"] = []
-    for m in models
-        for obj in Set(obj_key)
-            push!(df["model"], m)
-            push!(df["obj"], obj)
-            push!(df["error"], model_errors[m][obj])
-            push!(df["likelihood"], model_scores[m][obj])
-        end
+
+    for obj in Set(obj_key)
+        push!(df["model"], model)
+        push!(df["obj"], obj)
+        push!(df["error"], errors[obj])
+        push!(df["likelihood"], scores[obj])
     end
-    CSV.write("results/$(dataset)/statistics_$(experiment).csv", DataFrame(df))
-    save("results/$(dataset)/model_samples_$(experiment).jld", model_samples)
+
+    if dataset == "ISO"
+        save("results/$(dataset)/bias$(bias)/$(model)_samples.jld", samples)
+        CSV.write("results/$(dataset)//bias$(bias)/$(model)_scores.csv", DataFrame(df))
+    end
 end
 
 main(ARGS)
