@@ -399,28 +399,59 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
         end
     end
 
-
     # get results from each posterior sample
+    n, nX = size(X)
+    X_lst = [X[:, i] for i in 1:nX]
     for i in tqdm(burnIn:stepSize:nOuter)
         if occursin("MLM", model)
             post = posteriors[i]
+        elseif model == "GP_per_object"
+            post = nothing
+        else
+            post = load("../experiments/" * config["posterior_dir"] * "/$(model)" * "/Posterior$(i).jld")
+            xyLS = convert(Array{Float64,1}, post["xyLS"])
+            if model == "no_confounding"
+                uyLS = nothing
+                U = nothing
+            else
+                uyLS = convert(Array{Float64,1}, post["uyLS"])
+                U = post["U"]
+            end
         end
 
         for (j, doT) in enumerate(doTs)
-            n, nX = size(X)
+
             if model == "MLM_offset"
                 MeanITE, CovITE = predictionMLMoffset(post, doT, X, obj_label)
             elseif model == "MLM"
                 MeanITE, CovITE = predictionMLM(post, doT, X, obj_label)
+            elseif model == "GP_per_object"
+                MeanITE, CovITE = nothing, nothing
+            else
+                MeanITE, CovITE = conditionalITE(uyLS,
+                                              post["tyLS"],
+                                              xyLS,
+                                              post["yNoise"],
+                                              post["yScale"],
+                                              U,
+                                              X_lst,
+                                              T,
+                                              Y,
+                                              doT)
             end
             for obj in objects
                 mask = indecesDict[obj][doT]
                 if sum(mask) != 0
-                    m = MeanITE[mask]
-                    v = Diagonal(CovITE[mask])
+                    if occursin("MLM", model)
+                        m = MeanITE[mask]
+                        v = Diagonal(CovITE[mask])
+                    else
+                        m = MeanITE[mask] .+ Y[mask]
+                        v = Symmetric(CovITE[mask, mask]) + I*(1e-10)
+                    end
                     # aggregate loglikelihood and errors
                     truth = Ycfs[obj][doT]
-                    truthLogLikelihood = Distributions.logpdf(MvNormal(m, v), truth)
+                    truthLogLikelihood = Distributions.logpdf(MvNormal(m, v), truth) / length(truth)
                     push!(estIntLogLikelihoods[obj][doT], truthLogLikelihood)
                     push!(estMeans[obj][doT], m)
                 end
@@ -430,15 +461,13 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
     errors, scores = Dict(), Dict()
     logmeanexp(x) = logsumexp(x)-log(length(x))
     for obj in objects
-        scores[obj] = 0
-        count = 0.0
+        scores[obj] = []
         for doT in doTs
             if length(estIntLogLikelihoods[obj][doT]) != 0
-                scores[obj] += logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]])
-                count += 1
+                push!(scores[obj], logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]]))
             end
         end
-        scores[obj] /= count
+        scores[obj] = mean(scores[obj])
     end
 
 
@@ -455,15 +484,13 @@ function eval_model(config, model::String, T::Vector{Float64}, doTs::Vector{Floa
 
     # # calculate statistics. Important that this is shared
     for obj in objects
-        errors[obj] = 0
-        count = 0
+        errors[obj] = []
         for doT in doTs
             if length(Ycf_pred[obj][doT]) != 0
-                errors[obj] += (mean((Ycf_pred[obj][doT] .- Ycfs[obj][doT]).^2))^0.5
-                count += 1
+                push!(errors[obj], (mean((Ycf_pred[obj][doT] .- Ycfs[obj][doT]).^2))^0.5)
             end
         end
-        errors[obj] /= count
+        errors[obj] = mean(errors[obj])
     end
     errors, scores
 end
