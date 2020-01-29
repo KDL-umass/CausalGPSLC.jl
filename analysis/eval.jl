@@ -351,7 +351,6 @@ function main(args)
     end
     CSV.write("results/$(dataset)/statistics_$(experiment).csv", DataFrame(df))
     save("results/$(dataset)/model_samples_$(experiment).jld", model_samples)
-    save("results/$(dataset)/")
 end
 
 main(ARGS)

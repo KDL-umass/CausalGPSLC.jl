@@ -7,6 +7,6 @@ posterior_dir = "results/ISO/bias1/"
 
 # posterior samples
 nOuter = 5000
-burnIn = 4000
-stepSize = 100
-nSamplesPerPost = 100
+burnIn = 500
+stepSize = 10
+nSamplesPerPost = 5
