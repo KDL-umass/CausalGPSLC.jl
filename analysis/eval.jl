@@ -161,6 +161,7 @@ end
 evaluate model given T, doTs, X, Y, Ycfs, obj_key
 returns PEHE and Log likelihood per object (in Dict)
 """
+
 function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Float64}, 
                     Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int)
     # convert obj_key to Int index
@@ -192,6 +193,7 @@ function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Flo
     estIntLogLikelihoods = Dict() # obj -> doT
     estMeans = Dict() # obj -> doT -> list
     indecesDict = Dict()
+
     samples = Dict()
     for obj in objects
         indecesDict[obj] = obj_key .== obj
@@ -269,6 +271,7 @@ function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Flo
 
                 # aggregate loglikelihood and errors
                 truth = Ycfs[obj][j]
+
                 estIntLogLikelihood = loglikelihood(Normal(m, v), [truth])
                 
                 for sample in 1:nSamplesPerPost
@@ -276,6 +279,7 @@ function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Flo
                 end
                     
                 push!(estIntLogLikelihoods[obj][doT], estIntLogLikelihood)
+
                 append!(estMeans[obj][doT], m)
             end
         end
@@ -306,6 +310,7 @@ function eval_model(config,  model::String, T::Vector{Float64}, doTs::Vector{Flo
     end
 
     errors, scores, samples
+
 end
 
 
@@ -313,6 +318,7 @@ end
 Main method. Takes a path to config file
 """
 function main(args)
+
     config_path = args[1]
     config = TOML.parsefile(config_path)
     dataset = config["dataset"]
@@ -324,6 +330,7 @@ function main(args)
 
     models = config["models"]
     model_errors, model_scores, model_samples = Dict(), Dict(), Dict()
+
 
     # evaluate per model
     for m in models
