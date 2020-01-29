@@ -321,9 +321,6 @@ function main(args)
     stepSize = parse(Int64, args[6])
     nSamplesPerPost = parse(Int64, args[7])
 
-    print(stepSize)
-
-
     if dataset == "ISO"
         exp_config_path = "../experiments/config/ISO/$(experiment).toml"
         exp_config = TOML.parsefile(exp_config_path)
@@ -333,6 +330,9 @@ function main(args)
     end
 
     if baseline_model != "nothing"
+        if model != "control"
+            # A terrible hack to not waste swarm2 runtime.
+            return
         model = baseline_model
     end
 
