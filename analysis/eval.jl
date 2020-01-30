@@ -93,6 +93,7 @@ end
 function load_IHDP(experiment)
     config_path = "../experiments/config/IHDP/$(experiment).toml"
     config = TOML.parsefile(config_path)
+    Random.seed!(config["data_params"]["seed"])
 
     data = DataFrame(CSV.File(config["paths"]["data"]))[1:config["data_params"]["nData"], :]
     pairs = ProcessingIHDP.generatePairs(data, config["data_params"]["pPair"])
@@ -102,10 +103,10 @@ function load_IHDP(experiment)
 
     SigmaU = ProcessingIHDP.generateSigmaU(pairs, nData)
     T_ = ProcessingIHDP.generateT(data, pairs)
-    T = [Bool(t) for t in T_]
-    doTs = [Bool(1-t) for t in T_]
+    T = [Float64(t) for t in T_]
+    doTs = [Float64(1-t) for t in T_]
 
-    X_ = ProcessingIHDP.generateX(data, pairs)
+    X_ = Array(ProcessingIHDP.generateX(data, pairs))
 
     U = ProcessingIHDP.generateU(data, pairs)
     BetaX, BetaU = ProcessingIHDP.generateWeights(config["data_params"]["weights"], config["data_params"]["weightsP"])
@@ -123,6 +124,7 @@ function load_IHDP(experiment)
     for (i, obj) in enumerate(obj_key)
         push!(Ycfs[obj][doTs[i]], Ycf[i])
     end
+    doTs = [1.0, 0.0]
     return T, doTs, X_, Y, Ycfs, obj_key
 end
 
@@ -149,8 +151,8 @@ function load_synthetic(experiment)
     obj_key = Int.(obj_label)
 
     if maximum(T_) == 1.0
-        T = [Bool(t) for t in T_]
-        doTs = [true, false]
+        T = [t for t in T_]
+        doTs = [1.0, 0.0]
         binary = true
     else
         T = T_
@@ -212,8 +214,8 @@ evaluate model given T, doTs, X, Y, Ycfs, obj_key
 returns PEHE and Log likelihood per object (in Dict)
 """
 
-function eval_model(posterior_dir,  model::String, T::Vector{Float64}, doTs::Vector{Float64}, 
-                    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int)
+function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, doTs::Vector{Float64},
+                    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool)
     # convert obj_key to Int index
     obj2id = Dict()
     init = 1
@@ -364,8 +366,8 @@ end
 evaluation with covariates
 model evalutes CATE
 """
-function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vector{Float64}, X, Y::Vector{Float64}, Ycfs, obj_key,
-    nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int)
+function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, doTs::Vector{Float64}, X, Y::Vector{Float64}, Ycfs, obj_key,
+    nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool)
 
     # convert obj_key to Int index
     obj2id = Dict()
@@ -483,17 +485,30 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
     end
     errors, scores = Dict(), Dict()
     logmeanexp(x) = logsumexp(x)-log(length(x))
-    for obj in objects
-        scores[obj] = []
+
+    if stats_by_doT
         for doT in doTs
-            if length(estIntLogLikelihoods[obj][doT]) != 0
-                push!(scores[obj], logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]]))
+            scores[doT] = []
+            for obj in objects
+                if length(estIntLogLikelihoods[obj][doT]) != 0
+                    push!(scores[doT], logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]]))
+                end
             end
+            scores[doT] = mean(scores[doT])
         end
-        scores[obj] = mean(scores[obj])
+    else
+        for obj in objects
+            scores[obj] = []
+            for doT in doTs
+                if length(estIntLogLikelihoods[obj][doT]) != 0
+                    push!(scores[obj], logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]]))
+                end
+            end
+            scores[obj] = mean(scores[obj])
+        end
     end
 
-
+    # average over posterior samples
     Ycf_pred = Dict()
     for obj in objects
         Ycf_pred[obj] = Dict()
@@ -505,16 +520,30 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
         end
     end
 
-    # # calculate statistics. Important that this is shared
-    for obj in objects
-        errors[obj] = []
+    # calculate statistics. Important that this is shared
+    if stats_by_doT
         for doT in doTs
-            if length(Ycf_pred[obj][doT]) != 0
-                push!(errors[obj], (mean((Ycf_pred[obj][doT] .- Ycfs[obj][doT]).^2))^0.5)
+            errors[doT] = []
+            for obj in objects
+                if length(Ycf_pred[obj][doT]) != 0
+                    push!(errors[doT], (mean((Ycf_pred[obj][doT] .- Ycfs[obj][doT]).^2))^0.5)
+                end
             end
+            # average over objects
+            errors[doT] = mean(errors[doT])
         end
-        errors[obj] = mean(errors[obj])
+    else
+        for obj in objects
+            errors[obj] = []
+            for doT in doTs
+                if length(Ycf_pred[obj][doT]) != 0
+                    push!(errors[obj], (mean((Ycf_pred[obj][doT] .- Ycfs[obj][doT]).^2))^0.5)
+                end
+            end
+            errors[obj] = mean(errors[obj])
+        end
     end
+
     errors, scores, samples
 end
 
@@ -551,10 +580,11 @@ function main(args)
 
     # load evaluation data
     T, doTs, X, Y, Ycfs, obj_key = load_data(dataset, experiment)
+    stats_by_doT = (dataset == "IHDP")
     if dataset == "ISO"
-        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize)
+        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT)
     else
-        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, X, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize)
+        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, X, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT)
     end
 
     # generate CSV
@@ -564,7 +594,12 @@ function main(args)
     df["error"] = []
     df["likelihood"] = []
 
-    for obj in Set(obj_key)
+    if stats_by_doT
+        label_keys = doTs
+    else
+        label_keys = obj_key
+    end
+    for obj in Set(label_keys)
         push!(df["model"], model)
         push!(df["obj"], obj)
         push!(df["error"], errors[obj])
@@ -574,7 +609,7 @@ function main(args)
     if dataset == "ISO"
         save("results/$(dataset)/bias$(bias)/$(model)_samples.jld", samples)
         CSV.write("results/$(dataset)/bias$(bias)/$(model)_scores.csv", DataFrame(df))
-    elseif dataset == "synthetic"
+    else
         data_config_path = exp_config["paths"]["data"]
         data_id = split(data_config_path, "/")[end]
         data_id = split(data_id, ".")[1]
