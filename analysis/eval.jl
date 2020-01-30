@@ -156,8 +156,8 @@ function load_synthetic(experiment)
     else
         T = T_
         doTnSteps = 20
-        lower = minimum(T) + 0.05
-        upper = maximum(T) - 0.05
+        lower = minimum(T) + 0.05 * (maximum(T) - minimum(T))
+        upper = maximum(T) - 0.05 * (maximum(T) - minimum(T))
 
         doTstepSize = (upper - lower)/doTnSteps
 
