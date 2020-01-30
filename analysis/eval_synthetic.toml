@@ -1,0 +1,12 @@
+dataset = "synthetic"
+experiment = 1
+
+# models to evaluate
+models = ["correct", "MLM"]
+posterior_dir = "results/synthetic/exp1/"
+
+# posterior samples
+nOuter = 5000
+burnIn = 1000
+stepSize = 10
+nSamplesPerPost = 100

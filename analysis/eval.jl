@@ -16,6 +16,7 @@ include("../data/processing_iso.jl")
 include("../data/processing_IHDP.jl")
 include("../src/estimation.jl")
 include("../baseline/multilevel_model.jl")
+include("../data/synthetic.jl")
 
 using .Model
 using .Inference
@@ -23,6 +24,7 @@ using .ProcessingISO
 using .MultilevelModel
 using .Estimation
 using .ProcessingIHDP
+using .Synthetic
 
 
 # load ISO data and subsample to bias observation
@@ -87,10 +89,11 @@ function true_Ycf_ISO(doTs::Vector{Float64}, Ts, Ys)
 end
 
 
-# load IHDP data with counterfactuals
+# load IHDP data with true counterfactuals
 function load_IHDP(experiment)
     config_path = "../experiments/config/IHDP/$(experiment).toml"
     config = TOML.parsefile(config_path)
+    Random.seed!(config["data_params"]["seed"])
 
     data = DataFrame(CSV.File(config["paths"]["data"]))[1:config["data_params"]["nData"], :]
     pairs = ProcessingIHDP.generatePairs(data, config["data_params"]["pPair"])
@@ -100,10 +103,10 @@ function load_IHDP(experiment)
 
     SigmaU = ProcessingIHDP.generateSigmaU(pairs, nData)
     T_ = ProcessingIHDP.generateT(data, pairs)
-    T = [Bool(t) for t in T_]
-    doTs = [Bool(1-t) for t in T_]
+    T = [Float64(t) for t in T_]
+    doTs = [Float64(1-t) for t in T_]
 
-    X_ = ProcessingIHDP.generateX(data, pairs)
+    X_ = Array(ProcessingIHDP.generateX(data, pairs))
 
     U = ProcessingIHDP.generateU(data, pairs)
     BetaX, BetaU = ProcessingIHDP.generateWeights(config["data_params"]["weights"], config["data_params"]["weightsP"])
@@ -112,7 +115,7 @@ function load_IHDP(experiment)
     obj_key = vcat([i for i in 1:200], pairs)
 
     Ycfs = Dict() # obj -> doT -> list
-    for (i, obj) in enumerate(obj_key)
+    for (i, obj) in enumerate(Set(obj_key))
         Ycfs[obj] = Dict()
         for doT in Set(doTs)
             Ycfs[obj][doT] = []
@@ -121,9 +124,58 @@ function load_IHDP(experiment)
     for (i, obj) in enumerate(obj_key)
         push!(Ycfs[obj][doTs[i]], Ycf[i])
     end
+    doTs = [1.0, 0.0]
     return T, doTs, X_, Y, Ycfs, obj_key
 end
 
+
+# load synthetic data with true counterfactuals
+function load_synthetic(experiment)
+    config_path = "../experiments/config/synthetic/$(experiment).toml"
+    config = TOML.parsefile(config_path)
+
+    data_config_path = config["paths"]["data"]
+    SigmaU, U_, T_, X_, Y_, epsY, ftxu = generate_synthetic_confounder(data_config_path)
+    nX = size(X_)[2]
+    n = length(T_)
+
+    obj_size = TOML.parsefile(data_config_path)["data"]["obj_size"]
+    label = 1
+    obj_label = zeros(n)
+    for i in 1:n
+        obj_label[i] = label
+        if (i % obj_size) == 0
+            label += 1
+        end
+    end
+    obj_key = Int.(obj_label)
+
+    if maximum(T_) == 1.0
+        T = [t for t in T_]
+        doTs = [1.0, 0.0]
+        binary = true
+    else
+        T = T_
+        doTnSteps = 20
+        lower = minimum(T) + 0.05 * (maximum(T) - minimum(T))
+        upper = maximum(T) - 0.05 * (maximum(T) - minimum(T))
+
+        doTstepSize = (upper - lower)/doTnSteps
+
+        doTs = [doT for doT in lower:doTstepSize:upper]
+        binary = false
+    end
+
+    Ycfs = Dict() # obj -> doT -> list
+    for (i, obj) in enumerate(Set(obj_key))
+        Ycfs[obj] = Dict()
+        for doT in Set(doTs)
+            indeces = (obj_key .== obj) .& (T_ .!= doT)
+            Ycfs[obj][doT] = ftxu(fill(doT, sum(indeces)), X_[indeces, :], U_[indeces, :], epsY[indeces])
+        end
+    end
+    return T_, doTs, X_, Y_, Ycfs, obj_key
+end
 
 
 """
@@ -150,6 +202,8 @@ function load_data(dataset, experiment)
         Ycfs = true_Ycf_ISO(doTs, Ts, Ys)
     elseif dataset == "IHDP"
         T, doTs, X, Y, Ycfs, obj_key = load_IHDP(experiment)
+    elseif dataset == "synthetic"
+        T, doTs, X, Y, Ycfs, obj_key = load_synthetic(experiment)
     end
     T, doTs, X, Y, Ycfs, obj_key
 end
@@ -160,8 +214,8 @@ evaluate model given T, doTs, X, Y, Ycfs, obj_key
 returns PEHE and Log likelihood per object (in Dict)
 """
 
-function eval_model(posterior_dir,  model::String, T::Vector{Float64}, doTs::Vector{Float64}, 
-                    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int)
+function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, doTs::Vector{Float64},
+                    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool)
     # convert obj_key to Int index
     obj2id = Dict()
     init = 1
@@ -309,6 +363,192 @@ end
 
 
 """
+evaluation with covariates
+model evalutes CATE
+"""
+function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, doTs::Vector{Float64}, X, Y::Vector{Float64}, Ycfs, obj_key,
+    nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool)
+
+    # convert obj_key to Int index
+    obj2id = Dict()
+    init = 1
+    for k in obj_key
+        if !(k in keys(obj2id))
+            obj2id[k] = init
+            init += 1
+        end
+    end
+    obj_label = [Int(obj2id[k]) for k in obj_key]
+    objects = keys(obj2id)
+
+    # get posteriors for MLMs
+    if model == "MLM_offset"
+        posteriors = posteriorLinearMLMoffset(nOuter, T, X, Y, obj_label)
+    elseif model == "MLM"
+        posteriors = posteriorLinearMLM(nOuter, T, X, Y, obj_label)
+    else
+        posteriors = nothing
+    end
+
+    # data structure
+    estIntLogLikelihoods = Dict() # obj -> doT
+    estMeans = Dict() # obj -> doT -> list
+    indecesDict = Dict()
+    samples = Dict()
+
+    for object in objects
+        indecesDict[object] = Dict()
+        estIntLogLikelihoods[object] = Dict()
+        estMeans[object] = Dict()
+        for doT in doTs
+            estIntLogLikelihoods[object][doT] = []
+            estMeans[object][doT] = []
+            indecesDict[object][doT] = (obj_label .== object) .& (T .!= doT)
+        end
+    end
+
+    # get results from each posterior sample
+    n, nX = size(X)
+    X_lst = [X[:, i] for i in 1:nX]
+    for i in tqdm(burnIn:stepSize:nOuter)
+        if occursin("MLM", model)
+            post = posteriors[i]
+        elseif model == "GP_per_object"
+            post = nothing
+        else
+            post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
+            xyLS = convert(Array{Float64,1}, post["xyLS"])
+            if model == "no_confounding"
+                uyLS = nothing
+                U = nothing
+            else
+                uyLS = convert(Array{Float64,1}, post["uyLS"])
+                U = post["U"]
+            end
+        end
+
+        for (j, doT) in enumerate(doTs)
+
+            if model == "MLM_offset"
+                MeanITE, CovITE = predictionMLMoffset(post, doT, X, obj_label)
+            elseif model == "MLM"
+                MeanITE, CovITE = predictionMLM(post, doT, X, obj_label)
+            elseif model == "GP_per_object"
+                MeanITE, CovITE = nothing, nothing
+            else
+                MeanITE, CovITE = conditionalITE(uyLS,
+                                              post["tyLS"],
+                                              xyLS,
+                                              post["yNoise"],
+                                              post["yScale"],
+                                              U,
+                                              X_lst,
+                                              T,
+                                              Y,
+                                              doT)
+            end
+            for obj in objects
+                mask = indecesDict[obj][doT]
+                if model == "GP_per_object"
+                    post = load("../experiments/" * posterior_dir * "/Object$(obj)Posterior$(i).jld")
+                    xyLS = convert(Array{Float64,1}, post["xyLS"])
+                    MeanITE, CovITE = conditionalITE(nothing,
+                                              post["tyLS"],
+                                              xyLS,
+                                              post["yNoise"],
+                                              post["yScale"],
+                                              nothing,
+                                              [x[mask] for x in X_lst],
+                                              T[mask],
+                                              Y[mask],
+                                              doT)
+                end
+                if sum(mask) != 0
+                    if occursin("MLM", model)
+                        m = MeanITE[mask]
+                        v = Diagonal(CovITE[mask])
+                    elseif model == "GP_per_object"
+                        m = MeanITE .+ Y[mask]
+                        v = Symmetric(CovITE) + I*(1e-10)
+                    else
+                        m = MeanITE[mask] .+ Y[mask]
+                        v = Symmetric(CovITE[mask, mask]) + I*(1e-10)
+                    end
+                    # aggregate loglikelihood and errors
+                    truth = Ycfs[obj][doT]
+                    truthLogLikelihood = Distributions.logpdf(MvNormal(m, v), truth) / length(truth)
+                    push!(estIntLogLikelihoods[obj][doT], truthLogLikelihood)
+                    push!(estMeans[obj][doT], m)
+                end
+            end
+        end
+    end
+    errors, scores = Dict(), Dict()
+    logmeanexp(x) = logsumexp(x)-log(length(x))
+
+    if stats_by_doT
+        for doT in doTs
+            scores[doT] = []
+            for obj in objects
+                if length(estIntLogLikelihoods[obj][doT]) != 0
+                    push!(scores[doT], logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]]))
+                end
+            end
+            scores[doT] = mean(scores[doT])
+        end
+    else
+        for obj in objects
+            scores[obj] = []
+            for doT in doTs
+                if length(estIntLogLikelihoods[obj][doT]) != 0
+                    push!(scores[obj], logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]]))
+                end
+            end
+            scores[obj] = mean(scores[obj])
+        end
+    end
+
+    # average over posterior samples
+    Ycf_pred = Dict()
+    for obj in objects
+        Ycf_pred[obj] = Dict()
+        for (j, doT) in enumerate(doTs)
+            Ycf_pred[obj][doT] = zeros(sum(indecesDict[obj][doT]))
+            for n in 1:length(estMeans[obj][doT])
+                Ycf_pred[obj][doT] .+= (estMeans[obj][doT][n]./length(estMeans[obj][doT]))
+            end
+        end
+    end
+
+    # calculate statistics. Important that this is shared
+    if stats_by_doT
+        for doT in doTs
+            errors[doT] = []
+            for obj in objects
+                if length(Ycf_pred[obj][doT]) != 0
+                    push!(errors[doT], (mean((Ycf_pred[obj][doT] .- Ycfs[obj][doT]).^2))^0.5)
+                end
+            end
+            # average over objects
+            errors[doT] = mean(errors[doT])
+        end
+    else
+        for obj in objects
+            errors[obj] = []
+            for doT in doTs
+                if length(Ycf_pred[obj][doT]) != 0
+                    push!(errors[obj], (mean((Ycf_pred[obj][doT] .- Ycfs[obj][doT]).^2))^0.5)
+                end
+            end
+            errors[obj] = mean(errors[obj])
+        end
+    end
+
+    errors, scores, samples
+end
+
+
+"""
 Main method. Takes a path to config file
 """
 function main(args)
@@ -321,14 +561,14 @@ function main(args)
     stepSize = parse(Int64, args[6])
     nSamplesPerPost = parse(Int64, args[7])
 
-    if dataset == "ISO"
-        exp_config_path = "../experiments/config/ISO/$(experiment).toml"
-        exp_config = TOML.parsefile(exp_config_path)
-        bias = exp_config["downsampling"]["bias"]
-        model = exp_config["model"]["type"]
-        posterior_dir = exp_config["paths"]["posterior_dir"]
-    end
+    exp_config_path = "../experiments/config/$(dataset)/$(experiment).toml"
+    exp_config = TOML.parsefile(exp_config_path)
+    model = exp_config["model"]["type"]
+    posterior_dir = exp_config["paths"]["posterior_dir"]
 
+    if dataset == "ISO"
+        bias = exp_config["downsampling"]["bias"]
+    end
 
     if baseline_model != "nothing"
         if model != "correct"
@@ -338,12 +578,13 @@ function main(args)
         model = baseline_model
     end
 
-
     # load evaluation data
     T, doTs, X, Y, Ycfs, obj_key = load_data(dataset, experiment)
-
+    stats_by_doT = (dataset == "IHDP")
     if dataset == "ISO"
-        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize)
+        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT)
+    else
+        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, X, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT)
     end
 
     # generate CSV
@@ -353,7 +594,12 @@ function main(args)
     df["error"] = []
     df["likelihood"] = []
 
-    for obj in Set(obj_key)
+    if stats_by_doT
+        label_keys = doTs
+    else
+        label_keys = obj_key
+    end
+    for obj in Set(label_keys)
         push!(df["model"], model)
         push!(df["obj"], obj)
         push!(df["error"], errors[obj])
@@ -362,7 +608,12 @@ function main(args)
 
     if dataset == "ISO"
         save("results/$(dataset)/bias$(bias)/$(model)_samples.jld", samples)
-        CSV.write("results/$(dataset)//bias$(bias)/$(model)_scores.csv", DataFrame(df))
+        CSV.write("results/$(dataset)/bias$(bias)/$(model)_scores.csv", DataFrame(df))
+    else
+        data_config_path = exp_config["paths"]["data"]
+        data_id = split(data_config_path, "/")[end]
+        data_id = split(data_id, ".")[1]
+        CSV.write("results/$(dataset)/$(data_id)_$(model)_scores.csv", DataFrame(df))
     end
 end
 
