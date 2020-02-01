@@ -1,0 +1,46 @@
+[downsampling]
+bias = 9
+mean = 45
+newVar = 15
+nSamplesPerState = 25
+
+[paths]
+data = "../data/ISO/2018_smd_hourly.csv"
+posterior_dir = "results/ISO/nSamplesPerState25/no_objects/"
+
+[model_hyperparameters]
+uNoiseShape = 4.0
+uNoiseScale = 4.0
+xNoiseShape = 4.0
+xNoiseScale = 4.0
+tNoiseShape = 4.0
+tNoiseScale = 4.0
+yNoiseShape = 4.0
+yNoiseScale = 4.0
+uxLSShape = 4.0
+uxLSScale = 4.0
+utLSShape = 4.0
+utLSScale = 4.0
+xtLSShape = 4.0
+xtLSScale = 4.0
+uyLSShape = 4.0
+uyLSScale = 4.0
+xyLSShape = 4.0
+xyLSScale = 4.0
+tyLSShape = 4.0
+tyLSScale = 4.0
+xScaleShape = 4.0
+xScaleScale = 4.0
+tScaleShape = 4.0
+tScaleScale = 4.0
+yScaleShape = 4.0
+yScaleScale = 4.0
+
+[model]
+type = "no_objects"
+nU = 3
+
+[inference]
+nOuter = 5000
+nMHInner = 3
+nESInner = 5
