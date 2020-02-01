@@ -90,11 +90,11 @@ def main():
             i += 1
 
     for nSamplesPerState in nSamplesPerStates:
-    	for model_type in model_types:
-    		posterior_dir = "results/ISO/nSamplesPerState{}/{}/".format(nSamplesPerState, model_type)
-    		raw_string = generate_dict(model_type, 9, posterior_dir, nSamplesPerState=nSamplesPerState)
-    		generate_toml("./config/ISO/{}.toml".format(i, raw_string))
-    		os.makedirs(posterior_dir, exist_ok=True)
+        for model_type in model_types:
+            posterior_dir = "results/ISO/nSamplesPerState{}/{}/".format(nSamplesPerState, model_type)
+            raw_string = generate_dict(model_type, 9, posterior_dir, n_samples_per_state=nSamplesPerState)
+            generate_toml("./config/ISO/{}.toml".format(i), raw_string)
+            os.makedirs(posterior_dir, exist_ok=True)
             i += 1
 
 
