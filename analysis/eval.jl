@@ -260,7 +260,10 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
         if occursin("MLM", model)
             post = posteriors[i]
         elseif model == "GP_per_object"
-            post = nothing
+            posts = Dict()
+            for obj in objects
+            	posts[obj] = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
+            end
         else
             post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
             if model == "no_confounding"
@@ -294,7 +297,7 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
             for obj in objects
                 indeces = indecesDict[obj]
                 if model == "GP_per_object"
-                    post = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
+                    post = posts[obj]
                     MeanITE, CovITE = conditionalITE(nothing,
                                               post["tyLS"],
                                               nothing,
@@ -414,7 +417,10 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
         if occursin("MLM", model)
             post = posteriors[i]
         elseif model == "GP_per_object"
-            post = nothing
+            posts = Dict()
+            for obj in objects
+            	posts[obj] = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
+            end
         else
             post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
             xyLS = convert(Array{Float64,1}, post["xyLS"])
@@ -450,7 +456,7 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
             for obj in objects
                 mask = indecesDict[obj][doT]
                 if model == "GP_per_object"
-                    post = load("../experiments/" * posterior_dir * "/Object$(obj)Posterior$(i).jld")
+                    post = posts[obj]
                     xyLS = convert(Array{Float64,1}, post["xyLS"])
                     MeanITE, CovITE = conditionalITE(nothing,
                                               post["tyLS"],
@@ -568,6 +574,7 @@ function main(args)
 
     if dataset == "ISO"
         bias = exp_config["downsampling"]["bias"]
+        nSamplesPerState = exp_config["downsampling"]["nSamplesPerState"]
     end
 
     if baseline_model != "nothing"
@@ -607,8 +614,13 @@ function main(args)
     end
 
     if dataset == "ISO"
-        save("results/$(dataset)/bias$(bias)/$(model)_samples.jld", samples)
-        CSV.write("results/$(dataset)/bias$(bias)/$(model)_scores.csv", DataFrame(df))
+    	if parse(Int64, experiment) < 41
+        	save("results/$(dataset)/bias$(bias)/$(model)_samples.jld", samples)
+        	CSV.write("results/$(dataset)/bias$(bias)/$(model)_scores.csv", DataFrame(df))
+        else
+        	save("results/$(dataset)/nSamplesPerState$(nSamplesPerState)/$(model)_samples.jld", samples)
+        	CSV.write("results/$(dataset)/nSamplesPerState$(nSamplesPerState)/$(model)_scores.csv", DataFrame(df))
+        end
     else
         data_config_path = exp_config["paths"]["data"]
         data_id = split(data_config_path, "/")[end]
