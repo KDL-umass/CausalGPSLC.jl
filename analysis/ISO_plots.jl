@@ -14,8 +14,8 @@ using .ProcessingISO
 using .Model
 
 # +
-SMALL_SIZE = 16
-MEDIUM_SIZE = 22
+SMALL_SIZE = 10
+MEDIUM_SIZE = 12
 
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 
@@ -28,17 +28,19 @@ rcParams["legend.framealpha"] = 1.
 rcParams["text.usetex"] = true
 
 # +
-models = ["correct", "no_confounding", "no_objects", "GP_per_object", "MLM", "MLM_offset"]
+models = ["correct", "no_confounding", "no_objects", "GP_per_object", "MLM", "MLM_offset", "BART"]
 
 model_key = Dict()
-model_key["correct"] = "GP-SLC"
-model_key["no_confounding"] = "NoConf"
-model_key["no_objects"] = "NoObj"
-model_key["GP_per_object"] = "GPperObj"
+model_key["correct"] = L"\textbf{GP-SLC}"
+model_key["no_confounding"] = "GP-NoConf"
+model_key["no_objects"] = "GP-NoObj"
+model_key["GP_per_object"] = "GP-PerObj"
 model_key["MLM"] = "MLM 1"
 model_key["MLM_offset"] = "MLM 2"
+model_key["BART"] = "BART"
 
-states = ["CT", "MA", "ME", "NH", "RI", "VT"]
+# states = ["CT", "MA", "ME", "NH", "RI", "VT"]
+states = ["CT", "VT"]
 
 
 println()
@@ -103,7 +105,7 @@ estimate_color = "green"
 truth_color = "red"
 
 linewidth = 2
-marker_size = 3
+marker_size = 6
 alpha = 0.2
 
 # +
@@ -113,13 +115,13 @@ estIntMean = Dict()
 estIntLower = Dict()
 estIntUpper = Dict()
 
-nModels = length(keys(model_samples))
-nStates = length(keys(model_samples["correct"]))
+nModels = length(models)
+nStates = length(states)
 
-lower_bound = 0.005
-upper_bound = 0.995
+lower_bound = 0.05
+upper_bound = 0.95
 
-fig, axes = subplots(nStates, nModels, figsize=(10,10), constrained_layout=true, sharey="row")
+fig, axes = subplots(nStates, nModels, figsize=(8,3), constrained_layout=true, sharey="row")
 
 samples = 0
 
@@ -151,50 +153,60 @@ for (i, model) in enumerate(models)
              estIntMean[model][state] * 10000,
              color = estimate_color,
              linewidth=linewidth,
-             label = "Estimate")
+             label = L"$E[Y|do(T)]$ - Estimate")
         
         ax.plot(doTs*100,
              truthIntMeans[state]*10000, 
              color=truth_color, 
              linewidth=linewidth,
-             label = "Ground Truth")
+             linestyle="--",
+             label = L"$E[Y|do(T)]$ - Ground Truth")
         
         in_state = regions_key .== state
-        ax.scatter(allTs[state] * 100, 
-            allYs[state] * 10000, 
-            s=marker_size, 
-            color=scatter_color, 
-            alpha=alpha, 
-            label="Heldout Data")
+#         ax.scatter(allTs[state] * 100, 
+#             allYs[state] * 10000, 
+#             s=marker_size, 
+#             color=scatter_color, 
+#             alpha=alpha, 
+#             label="Heldout Data")
         ax.scatter(T[in_state] * 100, 
             Y[in_state] * 10000, 
             s=marker_size, 
             c=scatter_color, 
             marker="o", 
-            label="Observed Data")
+            label="Observational Data")
 
         ax.set_xlim(25, 75)
-#         ylim(0, 100000)
+        
+        if state == "CT" 
+            ax.set_ylim(60000, 100000)
+        end
+        
+        if state == "VT"
+            ax.set_ylim(0, 40000)
+        end
         
         if i == 1
             ax.set_ylabel(state)
         end
-        
+            
         if j == 1
             ax.set_title(model_key[model])
         end
         
-        ax.set_xticks([])
         ax.set_yticks([])
+        ax.set_xticks([])
+        
     end
 end
 
 handles, labels = axes[1,1].get_legend_handles_labels()
-fig.legend(handles, labels, loc=8, bbox_to_anchor=[0.8, 0.13], ncol=2)
+fig.legend(handles, labels, loc=8, bbox_to_anchor=[0.6, 0.35])
 
 tight_layout(pad=0.4, w_pad=0.2, h_pad=0.2)
 fig.text(0.5, -0.02, "Temperature", ha="center", va="center")
 fig.text(-0.02, 0.5, "Energy Consumption", ha="center", va="center", rotation="vertical")
-fig.savefig("../figures/NEED_multiples.png", dpi=200, bbox_inches="tight")
+fig.text(0.1, 1.03, L"\textit{This Paper}", ha="center", va="center")
+fig.savefig("../figures/NEEC_multiples.png", dpi=200, bbox_inches="tight")
 # -
 
