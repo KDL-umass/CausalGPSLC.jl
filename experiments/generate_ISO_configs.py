@@ -77,6 +77,7 @@ def generate_toml(fname, raw_data):
 
 def main():
     biases = [i for i in range(10)]
+    nSamplesPerStates = [2, 5, 10, 15, 20, 25]
 
     model_types = ["correct", "no_confounding", "no_objects", "GP_per_object"]
     i = 1
@@ -87,6 +88,15 @@ def main():
             generate_toml("./config/ISO/{}.toml".format(i), raw_string)
             os.makedirs(posterior_dir, exist_ok=True)
             i += 1
+
+    for nSamplesPerState in nSamplesPerStates:
+        for model_type in model_types:
+            posterior_dir = "results/ISO/nSamplesPerState{}/{}/".format(nSamplesPerState, model_type)
+            raw_string = generate_dict(model_type, 9, posterior_dir, n_samples_per_state=nSamplesPerState)
+            generate_toml("./config/ISO/{}.toml".format(i), raw_string)
+            os.makedirs(posterior_dir, exist_ok=True)
+            i += 1
+
 
 if __name__ == "__main__":
     main()

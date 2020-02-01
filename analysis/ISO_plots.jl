@@ -6,46 +6,58 @@ using TOML
 using CSV
 using DataFrames
 
+
 include("../data/processing_iso.jl")
+include("../src/model.jl")
 
 using .ProcessingISO
+using .Model
 
 # +
-SMALL_SIZE = 16
-MEDIUM_SIZE = 22
+SMALL_SIZE = 10
+MEDIUM_SIZE = 12
 
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 
 rcParams["font.size"] = MEDIUM_SIZE         # controls default text sizes
 rcParams["axes.titlesize"] = MEDIUM_SIZE     # fontsize of the axes title
-# rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+rcParams["legend.fontsize"]= SMALL_SIZE    # legend fontsize
+rcParams["legend.framealpha"] = 1.
 
 # rc('text', usetex=True)
 rcParams["text.usetex"] = true
 
 # +
+models = ["correct", "no_confounding", "no_objects", "GP_per_object", "MLM", "MLM_offset", "BART"]
+
+model_key = Dict()
+model_key["correct"] = L"\textbf{GP-SLC}"
+model_key["no_confounding"] = "GP-NoConf"
+model_key["no_objects"] = "GP-NoObj"
+model_key["GP_per_object"] = "GP-PerObj"
+model_key["MLM"] = "MLM 1"
+model_key["MLM_offset"] = "MLM 2"
+model_key["BART"] = "BART"
+
+# states = ["CT", "MA", "ME", "NH", "RI", "VT"]
+states = ["CT", "VT"]
+
+
+println()
+
+# +
 bias = 9
 
-model_samples = load("results/ISO/model_samples_$(bias).jld")
+model_samples = Dict()
+
+for model in models
+    model_samples[model] = load("results/ISO/bias$(bias)/$(model)_samples.jld")
+end
+    
+doTs   = sort([doT for doT in keys(model_samples["correct"]["CT"])])
 config_path = "../experiments/config/ISO/$(bias).toml"
 config = TOML.parsefile(config_path)
 
-
-# +
-models = ["correct", "no_confounding", "no_objects", "GP_per_object", "MLM", "MLM_offset"]
-
-model_key = Dict()
-model_key["correct"] = "GP-SLC"
-model_key["no_confounding"] = "NoConf"
-model_key["no_objects"] = "NoObj"
-model_key["GP_per_object"] = "GPperObj"
-model_key["MLM"] = "MLM 1"
-model_key["MLM_offset"] = "MLM 2"
-
-states = ["CT", "MA", "ME", "NH", "RI", "VT"]
-doTs   = sort([doT for doT in keys(model_samples["correct"]["CT"])])
-
-println()
 
 # +
 df = DataFrame(CSV.File(config["paths"]["data"]))
@@ -57,20 +69,44 @@ allYs = Dict()
 
 for state in states
     in_state = weekday_df[!, :State] .== state
-    allTs[state] = weekday_df[in_state, :][!, :DryBulbTemp]
-    allYs[state] = weekday_df[in_state, :][!, :RealTimeDemand]
+    allTs[state] = weekday_df[in_state, :][!, :DryBulbTemp]/100
+    allYs[state] = weekday_df[in_state, :][!, :RealTimeDemand]/10000
 end
 # -
+function true_Ycf_ISO(doTs::Vector{Float64}, Ts, Ys, LS, yNoise, yScale)
+    truthIntMeans = Dict()
+    for (i, region) in enumerate(keys(Ts))
+        kTT = processCov(rbfKernelLog(Ts[region], Ts[region], LS), yScale, yNoise)
+        means = []
+        vars = []
+        for doT in doTs
+            kTTs = processCov(rbfKernelLog(Ts[region], [doT], LS), yScale, nothing)
+            kTsTs = processCov(rbfKernelLog([doT], [doT], LS), yScale, nothing)
+            push!(means, (kTTs' * (kTT \ Ys[region]))[1])
+        end
+        truthIntMeans[region] = means
+        scatter(Ts[region], Ys[region], color="black")
+        plot(doTs, means, color="red")
+    end
+    truthIntMeans
+end
 
 
+truthIntMeans = true_Ycf_ISO(doTs, allTs, allYs, 0.2, 0.3, 1.)
 
 T = load("../experiments/results/ISO/bias$(bias)/correct/T.jld")["T"]
 Y = load("../experiments/results/ISO/bias$(bias)/correct/Y.jld")["Y"]
 regions_key = load("../experiments/results/ISO/bias$(bias)/correct/regions_key.jld")["regions_key"]
 println()
 
+# +
 scatter_color = "blue"
 estimate_color = "green"
+truth_color = "red"
+
+linewidth = 2
+marker_size = 6
+alpha = 0.2
 
 # +
 # Get Mean, Lower Bound, and Upper Bounds
@@ -79,14 +115,13 @@ estIntMean = Dict()
 estIntLower = Dict()
 estIntUpper = Dict()
 
-nModels = length(keys(model_samples))
-nStates = length(keys(model_samples["correct"]))
+nModels = length(models)
+nStates = length(states)
 
-lower_bound = 0.005
-upper_bound = 0.995
+lower_bound = 0.05
+upper_bound = 0.95
 
-fig, axes = subplots(nStates, nModels, figsize=(10,10), constrained_layout=true)
-xlabel("Temperature")
+fig, axes = subplots(nStates, nModels, figsize=(8,3), constrained_layout=true, sharey="row")
 
 samples = 0
 
@@ -106,43 +141,72 @@ for (i, model) in enumerate(models)
             push!(estIntUpper[model][state], quantile(samples, upper_bound))
         end
         
-        index = (j-1) * nModels + i
-        subplot(nStates, nModels, index)
+#         index = (j-1) * nModels + i
+        ax = axes[j, i]
 
-        fill_between(doTs * 100, 
+        ax.fill_between(doTs * 100, 
                      estIntUpper[model][state] * 10000, 
                      estIntLower[model][state] * 10000, 
                      alpha = 0.1,
                      color = estimate_color)
-        plot(doTs * 100,
+        ax.plot(doTs * 100,
              estIntMean[model][state] * 10000,
+             color = estimate_color,
+             linewidth=linewidth,
+             label = L"$E[Y|do(T)]$ - Estimate")
+        
+        ax.plot(doTs*100,
+             truthIntMeans[state]*10000, 
+             color=truth_color, 
+             linewidth=linewidth,
              linestyle="--",
-             color = estimate_color)
+             label = L"$E[Y|do(T)]$ - Ground Truth")
+        
         in_state = regions_key .== state
-        scatter(allTs[state], allYs[state], s=1, color=scatter_color, alpha=0.1)
-        scatter(T[in_state] * 100, Y[in_state] * 10000, s=1, c=scatter_color, marker="o")
+#         ax.scatter(allTs[state] * 100, 
+#             allYs[state] * 10000, 
+#             s=marker_size, 
+#             color=scatter_color, 
+#             alpha=alpha, 
+#             label="Heldout Data")
+        ax.scatter(T[in_state] * 100, 
+            Y[in_state] * 10000, 
+            s=marker_size, 
+            c=scatter_color, 
+            marker="o", 
+            label="Observational Data")
 
-        xlim(25, 75)
-#         ylim(0, 100000)
+        ax.set_xlim(25, 75)
+        
+        if state == "CT" 
+            ax.set_ylim(60000, 100000)
+        end
+        
+        if state == "VT"
+            ax.set_ylim(0, 40000)
+        end
         
         if i == 1
-            ylabel(state)
+            ax.set_ylabel(state)
         end
-        
+            
         if j == 1
-            title(model_key[model])
+            ax.set_title(model_key[model])
         end
         
-        xticks([])
-        yticks([])
+        ax.set_yticks([])
+        ax.set_xticks([])
+        
     end
 end
 
+handles, labels = axes[1,1].get_legend_handles_labels()
+fig.legend(handles, labels, loc=8, bbox_to_anchor=[0.6, 0.35])
 
 tight_layout(pad=0.4, w_pad=0.2, h_pad=0.2)
-savefig("../figures/NEED_multiples.png", dpi=200)
+fig.text(0.5, -0.02, "Temperature", ha="center", va="center")
+fig.text(-0.02, 0.5, "Energy Consumption", ha="center", va="center", rotation="vertical")
+fig.text(0.1, 1.03, L"\textit{This Paper}", ha="center", va="center")
+fig.savefig("../figures/NEEC_multiples.png", dpi=200, bbox_inches="tight")
 # -
-
-
-
 
