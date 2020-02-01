@@ -216,7 +216,7 @@ returns PEHE and Log likelihood per object (in Dict)
 
 function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, doTs::Vector{Float64},
                     Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int,
-                    nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool, bias)
+                    nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool, bart_pred)
     # convert obj_key to Int index
     obj2id = Dict()
     init = 1
@@ -257,41 +257,16 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
     end
 
     # get results from each posterior sample
-<<<<<<< HEAD
     if model != "BART"
         for i in tqdm(burnIn:stepSize:nOuter)
             if occursin("MLM", model)
                 post = posteriors[i]
-=======
-    for i in tqdm(burnIn:stepSize:nOuter)
-        if occursin("MLM", model)
-            post = posteriors[i]
-        elseif model == "GP_per_object"
-            posts = Dict()
-            for obj in objects
-            	posts[obj] = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
-            end
-        else
-            post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
-            if model == "no_confounding"
-                uyLS = nothing
-                U = nothing
-            else
-                uyLS = convert(Array{Float64,1}, post["uyLS"])
-                U = post["U"]
-            end
-        end
-        estMean = []
-        for (j, doT) in enumerate(doTs)
-            if model == "MLM_offset"
-                MeanITE, CovITE = predictionMLMoffset(post, doT, obj_label)
-            elseif model == "MLM"
-                MeanITE, CovITE = predictionMLM(post, doT, obj_label)
->>>>>>> 02c01934408b9367c70fc171775437ea3f19af6a
             elseif model == "GP_per_object"
-                post = nothing
+                posts = Dict()
+                for obj in objects
+                    posts[obj] = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
+                end
             else
-<<<<<<< HEAD
                 post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
                 if model == "no_confounding"
                     uyLS = nothing
@@ -299,33 +274,6 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
                 else
                     uyLS = convert(Array{Float64,1}, post["uyLS"])
                     U = post["U"]
-=======
-                MeanITE, CovITE = conditionalITE(uyLS,
-                                              post["tyLS"],
-                                              nothing,
-                                              post["yNoise"],
-                                              post["yScale"],
-                                              U,
-                                              nothing,
-                                              T,
-                                              Y,
-                                              doT)
-            end
-            for obj in objects
-                indeces = indecesDict[obj]
-                if model == "GP_per_object"
-                    post = posts[obj]
-                    MeanITE, CovITE = conditionalITE(nothing,
-                                              post["tyLS"],
-                                              nothing,
-                                              post["yNoise"],
-                                              post["yScale"],
-                                              nothing,
-                                              nothing,
-                                              T[indeces],
-                                              Y[indeces],
-                                              doT)
->>>>>>> 02c01934408b9367c70fc171775437ea3f19af6a
                 end
             end
             estMean = []
@@ -351,7 +299,7 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
                 for obj in objects
                     indeces = indecesDict[obj]
                     if model == "GP_per_object"
-                        post = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
+                        post = posts[obj]
                         MeanITE, CovITE = conditionalITE(nothing,
                                                   post["tyLS"],
                                                   nothing,
@@ -397,9 +345,8 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
                 append!(Ycf_pred[obj], mean(estMeans[obj][doT]))
             end
         end
-
     else # BART
-        Ycf_pred = load("BART_results/ISO/bias_$(bias).jld")
+        Ycf_pred = bart_pred
     end
 
 
@@ -425,9 +372,7 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
         scores[obj] /= length(doTs)
     end
 
-
     errors, scores, samples
-
 end
 
 
@@ -436,7 +381,7 @@ evaluation with covariates
 model evalutes CATE
 """
 function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, doTs::Vector{Float64}, X, Y::Vector{Float64}, Ycfs, obj_key,
-    nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool, bias)
+    nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool, bart_pred)
 
     # convert obj_key to Int index
     obj2id = Dict()
@@ -475,7 +420,7 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
             indecesDict[object][doT] = (obj_label .== object) .& (T .!= doT)
         end
     end
-<<<<<<< HEAD
+
     if model != "BART"
         # get results from each posterior sample
         n, nX = size(X)
@@ -484,27 +429,10 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
             if occursin("MLM", model)
                 post = posteriors[i]
             elseif model == "GP_per_object"
-                post = nothing
-=======
-
-    # get results from each posterior sample
-    n, nX = size(X)
-    X_lst = [X[:, i] for i in 1:nX]
-    for i in tqdm(burnIn:stepSize:nOuter)
-        if occursin("MLM", model)
-            post = posteriors[i]
-        elseif model == "GP_per_object"
-            posts = Dict()
-            for obj in objects
-            	posts[obj] = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
-            end
-        else
-            post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
-            xyLS = convert(Array{Float64,1}, post["xyLS"])
-            if model == "no_confounding"
-                uyLS = nothing
-                U = nothing
->>>>>>> 02c01934408b9367c70fc171775437ea3f19af6a
+                posts = Dict()
+                for obj in objects
+                    posts[obj] = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
+                end
             else
                 post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
                 xyLS = convert(Array{Float64,1}, post["xyLS"])
@@ -518,8 +446,6 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
             end
 
             for (j, doT) in enumerate(doTs)
-
-<<<<<<< HEAD
                 if model == "MLM_offset"
                     MeanITE, CovITE = predictionMLMoffset(post, doT, X, obj_label)
                 elseif model == "MLM"
@@ -537,46 +463,12 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
                                                   T,
                                                   Y,
                                                   doT)
-=======
-            if model == "MLM_offset"
-                MeanITE, CovITE = predictionMLMoffset(post, doT, X, obj_label)
-            elseif model == "MLM"
-                MeanITE, CovITE = predictionMLM(post, doT, X, obj_label)
-            elseif model == "GP_per_object"
-                MeanITE, CovITE = nothing, nothing
-            else
-                MeanITE, CovITE = conditionalITE(uyLS,
-                                              post["tyLS"],
-                                              xyLS,
-                                              post["yNoise"],
-                                              post["yScale"],
-                                              U,
-                                              X_lst,
-                                              T,
-                                              Y,
-                                              doT)
-            end
-            for obj in objects
-                mask = indecesDict[obj][doT]
-                if model == "GP_per_object"
-                    post = posts[obj]
-                    xyLS = convert(Array{Float64,1}, post["xyLS"])
-                    MeanITE, CovITE = conditionalITE(nothing,
-                                              post["tyLS"],
-                                              xyLS,
-                                              post["yNoise"],
-                                              post["yScale"],
-                                              nothing,
-                                              [x[mask] for x in X_lst],
-                                              T[mask],
-                                              Y[mask],
-                                              doT)
->>>>>>> 02c01934408b9367c70fc171775437ea3f19af6a
                 end
+
                 for obj in objects
                     mask = indecesDict[obj][doT]
                     if model == "GP_per_object"
-                        post = load("../experiments/" * posterior_dir * "/Object$(obj)Posterior$(i).jld")
+                        post = posts[obj]
                         xyLS = convert(Array{Float64,1}, post["xyLS"])
                         MeanITE, CovITE = conditionalITE(nothing,
                                                   post["tyLS"],
@@ -610,7 +502,7 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
             end
         end
     end
-    errors, scores = Dict(), Dict()
+    error_ite, error_sate = Dict(), Dict()
     logmeanexp(x) = logsumexp(x)-log(length(x))
     if model != "BART"
         if stats_by_doT
@@ -647,13 +539,14 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
             end
         end
     else # BART
-        Ycf_pred = load(bias)
+        Ycf_pred = bart_pred
     end
 
     # calculate statistics. Important that this is shared
     if stats_by_doT
         for (i, doT) in enumerate(sort(doTs))
-            errors[doT] = []
+            error_ite[doT] = []
+            error_sate[doT] = []
             for obj in objects
                 if model == "BART"
                     obj_b = string(obj)
@@ -663,15 +556,18 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
                     doT_b = doT
                 end
                 if length(Ycf_pred[obj_b][doT_b]) != 0
-                    push!(errors[doT], (mean((Ycf_pred[obj_b][doT_b] .- Ycfs[obj][doT]).^2))^0.5)
+                    push!(error_ite[doT], mean((Ycf_pred[obj_b][doT_b] .- Ycfs[obj][doT]).^2))
+                    push!(error_sate[doT], (mean(Ycf_pred[obj_b][doT_b]) - mean(Ycfs[obj][doT])).^2)
                 end
             end
             # average over objects
-            errors[doT] = mean(errors[doT])
+            error_ite[doT] = mean(error_ite[doT])^0.5
+            error_sate[doT] = mean(error_sate[doT])^0.5
         end
     else
         for obj in objects
-            errors[obj] = []
+            error_ite[obj] = []
+            error_sate[obj] = []
             for (i, doT) in enumerate(sort(doTs))
                 if model == "BART"
                     obj_b = string(obj)
@@ -680,16 +576,17 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
                     obj_b = obj
                     doT_b = doT
                 end
-#                 println(bias, " ", doT, " ", doT_b)
                 if length(Ycf_pred[obj_b][doT_b]) != 0
-                    push!(errors[obj], (mean((Ycf_pred[obj_b][doT_b] .- Ycfs[obj][doT]).^2))^0.5)
+                    push!(error_ite[obj], mean((Ycf_pred[obj_b][doT_b] .- Ycfs[obj][doT]).^2))
+                    push!(error_sate[obj], (mean(Ycf_pred[obj_b][doT_b]) - mean(Ycfs[obj][doT])).^2)
+
                 end
             end
-            errors[obj] = mean(errors[obj])
+            error_ite[obj] = mean(error_ite[obj])^0.5
+            error_sate[obj] = mean(error_sate[obj])^0.5
         end
     end
-
-    errors, scores, samples
+    error_sate, error_ite, samples
 end
 
 
@@ -713,15 +610,12 @@ function main(args)
 
     if dataset == "ISO"
         bias = exp_config["downsampling"]["bias"]
-<<<<<<< HEAD
+        nSamplesPerState = exp_config["downsampling"]["nSamplesPerState"]
     else
         data_config_path = exp_config["paths"]["data"]
         data_id = split(data_config_path, "/")[end]
-        bias = split(data_id, ".")[1]
-        bias = "BART_results/$(dataset)/$(bias).jld"
-=======
-        nSamplesPerState = exp_config["downsampling"]["nSamplesPerState"]
->>>>>>> 02c01934408b9367c70fc171775437ea3f19af6a
+        data_id = split(data_id, ".")[1]
+        bias = "BART_results/$(dataset)/$(data_id).jld"
     end
 
     if baseline_model != "nothing"
@@ -735,20 +629,37 @@ function main(args)
     # load evaluation data
     T, doTs, X, Y, Ycfs, obj_key = load_data(dataset, experiment)
     stats_by_doT = (dataset == "IHDP")
+
+    # load pretrained BART file
+    if model == "BART"
+        if dataset == "ISO"
+            if parse(Int64, experiment) < 41
+                bart_pred = load("BART_results/ISO/bias_$(bias).jld")
+            else
+                bart_pred = load("BART_results/ISO/nSamplesPerState_$(nSamplesPerState).jld")
+            end
+        elseif dataset == "synthetic"
+            bart_pred = load("BART_results/synthetic/$(data_id).jld")
+        end
+    end
+
     if dataset == "ISO"
-        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT, bias)
+        error_sate, scores, samples = eval_model(posterior_dir, model, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT, bart_pred)
     else
         println(data_id)
-        errors, scores, samples = eval_model(posterior_dir, model, T, doTs, X, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT, bias)
+        error_sate, error_ite, samples = eval_model(posterior_dir, model, T, doTs, X, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT, bart_pred)
     end
 
     # generate CSV
     df = Dict()
     df["model"] = []
     df["obj"] = []
-    df["error"] = []
-    if model != "BART"
+    df["error_sate"] = []
+    if (model != "BART") & (dataset == "ISO")
         df["likelihood"] = []
+    end
+    if dataset != "ISO"
+        df["error_ite"] = []
     end
 
     if stats_by_doT
@@ -759,18 +670,25 @@ function main(args)
     for obj in Set(label_keys)
         push!(df["model"], model)
         push!(df["obj"], obj)
-        push!(df["error"], errors[obj])
-        if model != "BART"
+        push!(df["error_sate"], error_sate[obj])
+        if (model != "BART") & (dataset == "ISO")
             push!(df["likelihood"], scores[obj])
+        end
+        if dataset != "ISO"
+            push!(df["error_ite"], error_ite[obj])
         end
     end
 
     if dataset == "ISO"
     	if parse(Int64, experiment) < 41
-        	save("results/$(dataset)/bias$(bias)/$(model)_samples.jld", samples)
+            if model != "BART"
+        	    save("results/$(dataset)/bias$(bias)/$(model)_samples.jld", samples)
+            end
         	CSV.write("results/$(dataset)/bias$(bias)/$(model)_scores.csv", DataFrame(df))
         else
-        	save("results/$(dataset)/nSamplesPerState$(nSamplesPerState)/$(model)_samples.jld", samples)
+            if model != "BART"
+        	    save("results/$(dataset)/nSamplesPerState$(nSamplesPerState)/$(model)_samples.jld", samples)
+            end
         	CSV.write("results/$(dataset)/nSamplesPerState$(nSamplesPerState)/$(model)_scores.csv", DataFrame(df))
         end
     else
