@@ -460,7 +460,7 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
                     if postislst
                         posts[obj] = [load("../experiments/" * p * "/$(obj)Posterior$(i).jld") for p in posterior_dir]
                     else
-                        posts[obj] = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
+                        posts[obj] = load("../experiments/" * posterior_dir * "/Object$(obj)Posterior$(i).jld")
                     end
                 end
             else
