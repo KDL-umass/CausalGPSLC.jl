@@ -431,7 +431,7 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
             elseif model == "GP_per_object"
                 posts = Dict()
                 for obj in objects
-                    posts[obj] = load("../experiments/" * posterior_dir * "/$(obj)Posterior$(i).jld")
+                    posts[obj] = load("../experiments/" * posterior_dir * "/Object$(obj)Posterior$(i).jld")
                 end
             else
                 post = load("../experiments/" * posterior_dir * "/Posterior$(i).jld")
