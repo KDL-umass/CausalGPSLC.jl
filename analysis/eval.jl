@@ -505,28 +505,6 @@ function eval_model(posterior_dir::String, model::String, T::Vector{Float64}, do
     error_ite, error_sate = Dict(), Dict()
     logmeanexp(x) = logsumexp(x)-log(length(x))
     if model != "BART"
-        if stats_by_doT
-            for doT in doTs
-                scores[doT] = []
-                for obj in objects
-                    if length(estIntLogLikelihoods[obj][doT]) != 0
-                        push!(scores[doT], logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]]))
-                    end
-                end
-                scores[doT] = mean(scores[doT])
-            end
-        else
-            for obj in objects
-                scores[obj] = []
-                for doT in doTs
-                    if length(estIntLogLikelihoods[obj][doT]) != 0
-                        push!(scores[obj], logmeanexp([Real(llh) for llh in estIntLogLikelihoods[obj][doT]]))
-                    end
-                end
-                scores[obj] = mean(scores[obj])
-            end
-        end
-
         # average over posterior samples
         Ycf_pred = Dict()
         for obj in objects
@@ -631,6 +609,7 @@ function main(args)
     stats_by_doT = (dataset == "IHDP")
 
     # load pretrained BART file
+    bart_pred = nothing
     if model == "BART"
         if dataset == "ISO"
             if parse(Int64, experiment) < 41
