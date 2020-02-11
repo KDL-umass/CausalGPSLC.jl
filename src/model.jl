@@ -7,8 +7,8 @@ import Base.show
 import FunctionalCollections
 
 export processCov, rbfKernelLog, 
-       ContinuousGPROC, NoCovContinuousGPROC, NoUContinuousGPROC, NoCovNoUContinuousGPROC, 
-       BinaryGPROC, NoCovBinaryGPROC, NoUBinaryGPROC, NoCovNoUBinaryGPROC
+       ContinuousGPSLC, NoCovContinuousGPSLC, NoUContinuousGPSLC, NoCovNoUContinuousGPSLC,
+       BinaryGPSLC, NoCovBinaryGPSLC, NoUBinaryGPSLC, NoCovNoUBinaryGPSLC
 
 # +
 function rbfKernelLog(X1::Array{Float64, 1}, X2::Array{Float64, 1}, LS::Array{Float64, 1})
@@ -86,7 +86,7 @@ MappedGenerateX = Map(generateX)
 
 load_generated_functions()
 
-@gen (static) function ContinuousGPROC(hyperparams, nX, nU)    
+@gen (static) function ContinuousGPSLC(hyperparams, nX, nU)
     n = size(hyperparams["SigmaU"])[1]
     
 #   Prior over Noise
@@ -137,7 +137,7 @@ load_generated_functions()
 end
 
 # Covariates omitted.
-@gen (static) function NoCovContinuousGPROC(hyperparams, nU)    
+@gen (static) function NoCovContinuousGPSLC(hyperparams, nU)
     n = size(hyperparams["SigmaU"])[1]
     
 #   Prior over Noise
@@ -172,7 +172,7 @@ end
     return Y
 end
 
-@gen (static) function NoUContinuousGPROC(hyperparams, X)    
+@gen (static) function NoUContinuousGPSLC(hyperparams, X)
     n = length(X[1])
     nX = length(X)
     
@@ -205,7 +205,7 @@ end
 end
 
 # Covariates and U omitted.
-@gen (static) function NoCovNoUContinuousGPROC(hyperparams, T)    
+@gen (static) function NoCovNoUContinuousGPSLC(hyperparams, T)
     n = length(T)
     
 #   Prior over Noise
@@ -225,7 +225,7 @@ end
     return Y
 end
 # + {}
-@gen (static) function BinaryGPROC(hyperparams, nX, nU)    
+@gen (static) function BinaryGPSLC(hyperparams, nX, nU)
     n = size(hyperparams["SigmaU"])[1]
     
 #   Prior over Noise
@@ -276,7 +276,7 @@ end
     return Y
 end
 
-@gen (static) function NoCovBinaryGPROC(hyperparams, nU)    
+@gen (static) function NoCovBinaryGPSLC(hyperparams, nU)
     n = size(hyperparams["SigmaU"])[1]
     
 #   Prior over Noise
@@ -312,7 +312,7 @@ end
     return Y
 end
 
-@gen (static) function NoUBinaryGPROC(hyperparams, X)    
+@gen (static) function NoUBinaryGPSLC(hyperparams, X)
     n = size(X[1])
     nX = size(X)
     
@@ -345,7 +345,7 @@ end
     return Y
 end
 
-@gen (static) function NoCovNoUBinaryGPROC(hyperparams, T)    
+@gen (static) function NoCovNoUBinaryGPSLC(hyperparams, T)
     n = size(T)
     
 #   Prior over Noise

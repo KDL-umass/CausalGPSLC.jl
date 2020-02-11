@@ -150,8 +150,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Floa
     end
     
     PosteriorSamples = []
-    
-    (trace, _) = generate(ContinuousGPROC, (hyperparams, nX, nU), obs)
+
+    (trace, _) = generate(ContinuousGPSLC, (hyperparams, nX, nU), obs)
     for i=1:nOuter   
         print(i)
         for j=1:nMHInner
@@ -204,7 +204,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     
     PosteriorSamples = []
     
-    (trace, _) = generate(NoCovContinuousGPROC, (hyperparams, nU), obs)
+    (trace, _) = generate(NoCovContinuousGPSLC, (hyperparams, nU), obs)
     for i=1:nOuter    
         println(i)
         for j=1:nMHInner
@@ -248,7 +248,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Floa
     
     PosteriorSamples = []
     
-    (trace, _) = generate(NoUContinuousGPROC, (hyperparams, X), obs)
+    (trace, _) = generate(NoUContinuousGPSLC, (hyperparams, X), obs)
     for i=1:nOuter    
         (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
         (trace, _) = mh(trace, yNoiseProposal, (0.5, ))
@@ -278,7 +278,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     
     PosteriorSamples = []
     
-    (trace, _) = generate(NoCovNoUContinuousGPROC, (hyperparams, T), obs)
+    (trace, _) = generate(NoCovNoUContinuousGPSLC, (hyperparams, T), obs)
     for i=1:nOuter    
         (trace, _) = mh(trace, yNoiseProposal, (0.5, ))
         (trace, _) = mh(trace, tyLSProposal, (0.5, ))
@@ -309,8 +309,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Bool
     end
     
     PosteriorSamples = []
-    
-    (trace, _) = generate(BinaryGPROC, (hyperparams, nX, nU), obs)
+
+    (trace, _) = generate(BinaryGPSLC, (hyperparams, nX, nU), obs)
     for i=1:nOuter
         println("i=",i)
         for j=1:nMHInner
@@ -380,7 +380,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
     
     PosteriorSamples = []
     
-    (trace, _) = generate(NoCovBinaryGPROC, (hyperparams, nU), obs)
+    (trace, _) = generate(NoCovBinaryGPSLC, (hyperparams, nU), obs)
     for i=1:nOuter    
         for j=1:nMHInner
             (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
@@ -438,7 +438,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Bool
     
     PosteriorSamples = []
     
-    (trace, _) = generate(NoUBinaryGPROC, (hyperparams, X), obs)
+    (trace, _) = generate(NoUBinaryGPSLC, (hyperparams, X), obs)
     for i=1:nOuter    
         for j=1:nMHInner
             (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
@@ -484,7 +484,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
     
     PosteriorSamples = []
     
-    (trace, _) = generate(NoCovNoUBinaryGPROC, (hyperparams, T), obs)
+    (trace, _) = generate(NoCovNoUBinaryGPSLC, (hyperparams, T), obs)
     for i=1:nOuter    
         (trace, _) = mh(trace, yNoiseProposal, (0.5, ))
         (trace, _) = mh(trace, tyLSProposal, (0.5, ))
