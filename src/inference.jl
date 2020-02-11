@@ -2,6 +2,7 @@ module Inference
 
 # +
 using Gen
+using ProgressBars
 
 include("model.jl")
 using .Model
@@ -152,8 +153,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Floa
     PosteriorSamples = []
 
     (trace, _) = generate(ContinuousGPSLC, (hyperparams, nX, nU), obs)
-    for i=1:nOuter   
-        print(i)
+    for i in tqdm(1:nOuter)
         for j=1:nMHInner
             (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
             (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
@@ -205,8 +205,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     PosteriorSamples = []
     
     (trace, _) = generate(NoCovContinuousGPSLC, (hyperparams, nU), obs)
-    for i=1:nOuter    
-        println(i)
+    for i in tqdm(1:nOuter)
         for j=1:nMHInner
             (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
             (trace, _) = mh(trace, tNoiseProposal, (0.5, ))
@@ -311,8 +310,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64, 1}}, T::Array{Bool
     PosteriorSamples = []
 
     (trace, _) = generate(BinaryGPSLC, (hyperparams, nX, nU), obs)
-    for i=1:nOuter
-        println("i=",i)
+    for i in tqdm(1:nOuter)
         for j=1:nMHInner
             (trace, _) = mh(trace, uNoiseProposal, (0.5, ))
             (trace, _) = mh(trace, tNoiseProposal, (0.5, ))

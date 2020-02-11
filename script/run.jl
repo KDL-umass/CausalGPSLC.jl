@@ -3,10 +3,16 @@ using CSV
 using ArgParse
 using DataFrames
 using LinearAlgebra
+using ProgressBars
+using Statistics
+using Distributions
 Random.seed!(1234)
 
 include("../src/inference.jl")
 using .Inference
+
+include("../src/estimation.jl")
+using .Estimation
 
 function generateSigmaU(nIndividualsArray::Array{Int}, eps::Float64=1e-13, cov::Float64=1.0)
     """
@@ -46,6 +52,7 @@ function parse_commandline()
             help = "a path to the data"
             arg_type = String
             required = true
+        # posterior updates
         "--nOuter"
             help = "the number of posterior steps"
             default = 5000
@@ -54,116 +61,130 @@ function parse_commandline()
             help = "the number of metropolis hastings sampling steps"
             default = 3
             arg_type = Int
-        "--nU"
-            help = "the number of metropolis hastings sampling steps"
-            default = 3
-            arg_type = Int
         "--nESInner"
             help = "the number of elliptical slice sampling steps"
             default = 2
             arg_type = Int
+        "--nU"
+            help = "the dimension of latent confounders to model"
+            default = 3
+            arg_type = Int
+        # inference
+        "--burnIn"
+            help = "the number of posterior samples for burn-in"
+            default = 10
+            arg_type = Int
+        "--stepSize"
+            help = "the step size during the inference step"
+            default = 10
+            arg_type = Int
+        "--samplesPerPost"
+            help = "the number of samples from each posterior for treatment effect approximation"
+            default = 100
+            arg_type = Int
+        # parameters for priors
         "--uNoiseShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over the noise of U"
             default = 4.0
             arg_type = Float64
         "--uNoiseScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over the noise of U"
             default = 4.0
             arg_type = Float64
         "--xNoiseShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over the noise of X"
             default = 4.0
             arg_type = Float64
         "--xNoiseScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over the noise of X"
             default = 4.0
             arg_type = Float64
         "--tNoiseShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over the noise of T"
             default = 4.0
             arg_type = Float64
         "--tNoiseScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over the noise of T"
             default = 4.0
             arg_type = Float64
         "--yNoiseShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over the noise of Y"
             default = 4.0
             arg_type = Float64
         "--yNoiseScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over the noise of Y"
             default = 4.0
             arg_type = Float64
         "--xScaleShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel scale of X"
             default = 4.0
             arg_type = Float64
         "--xScaleScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel scale of X"
             default = 4.0
             arg_type = Float64
         "--tScaleShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel scale of T"
             default = 4.0
             arg_type = Float64
         "--tScaleScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel scale of T"
             default = 4.0
             arg_type = Float64
         "--yScaleShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel scale of Y"
             default = 4.0
             arg_type = Float64
         "--yScaleScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel scale of Y"
             default = 4.0
             arg_type = Float64
         "--uxLSShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel lengthscale of U and X"
             default = 4.0
             arg_type = Float64
         "--uxLSScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel lengthscale of U and X"
             default = 4.0
             arg_type = Float64
         "--utLSShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel lengthscale of U and T"
             default = 4.0
             arg_type = Float64
         "--utLSScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel lengthscale of U and T"
             default = 4.0
             arg_type = Float64
         "--xtLSShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel lengthscale of X and T"
             default = 4.0
             arg_type = Float64
         "--xtLSScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel lengthscale of X and T"
             default = 4.0
             arg_type = Float64
         "--uyLSShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel lengthscale of U and Y"
             default = 4.0
             arg_type = Float64
         "--uyLSScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel lengthscale of U and Y"
             default = 4.0
             arg_type = Float64
         "--xyLSShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel lengthscale of X and Y"
             default = 4.0
             arg_type = Float64
         "--xyLSScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel lengthscale of X and Y"
             default = 4.0
             arg_type = Float64
         "--tyLSShape"
-            help = "the number of elliptical slice sampling steps"
+            help = "the shape parameter of the prior inv gamma over kernel lengthscale of T and Y"
             default = 4.0
             arg_type = Float64
         "--tyLSScale"
-            help = "the number of elliptical slice sampling steps"
+            help = "the scale parameter of the prior inv gamma over kernel lengthscale of T and Y"
             default = 4.0
             arg_type = Float64
     end
@@ -193,6 +214,7 @@ function main()
     sigU = generateSigmaU(obj_count)
     parsed_args["SigmaU"] = sigU
 
+    # prepare inputs
     T = Array(df[!, :T])
     Y = Array(df[!, :Y])
 
@@ -209,12 +231,62 @@ function main()
     end
 
 
+    # running GPSLC
     nOuter = parsed_args["nOuter"]
     nMHInner = parsed_args["nMHInner"]
     nESInner = parsed_args["nESInner"]
     nU = parsed_args["nU"]
 
-    Posterior(parsed_args, X, T, Y, nU, nOuter, nMHInner, nESInner)
+    println("posterior sampling...")
+    posteriorsample, _ = Posterior(parsed_args, X, T, Y, nU, nOuter, nMHInner, nESInner)
+
+    # inference of treatment effects
+    burnIn = parsed_args["burnIn"]
+    stepSize = parsed_args["stepSize"]
+    samplesPerPost = parsed_args["samplesPerPost"]
+
+    println("inference...")
+    ITEsamples = zeros(length(T), samplesPerPost*length(burnIn:stepSize:nOuter)) # output in Algorithm 3
+    idx = 1
+    for i in tqdm(burnIn:stepSize:nOuter)
+        uyLS = []
+        U = []
+        for u in 1:nU
+            push!(uyLS, posteriorsample[i][:uyLS => u => :LS])
+            push!(U, posteriorsample[i][:U => u => :U])
+        end
+
+        # Intervention assignment in algorithm 3. Use the mean of observed T as demo
+        doT = mean(T)
+
+        if X == nothing
+            xyLS = nothing
+        else
+            xyLS = convert(Array{Float64,1}, posteriorsample[i][:xyLS])
+        end
+        uyLS = convert(Array{Float64,1}, uyLS)
+
+        MeanITE, CovITE = conditionalITE(uyLS,
+                          posteriorsample[i][:tyLS],
+                          xyLS,
+                          posteriorsample[i][:yNoise],
+                          posteriorsample[i][:yScale],
+                          U,
+                          X,
+                          T,
+                          Y,
+                          doT)
+        m = MeanITE .+ Y
+        v = Symmetric(CovITE[:, :]) + I*(1e-10)
+        for j in 1:samplesPerPost
+            samples = rand(MvNormal(m, v)) # Yobs+ITE for all data when intervened to be T = doT
+            ITEsamples[:, idx] = samples
+            idx += 1
+        end
+    end
+    # n x m matrix where n is the number of data,
+    # and m is the number of samples
+    ITEsamples
 end
 
 main()
