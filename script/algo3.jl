@@ -52,6 +52,10 @@ function parse_commandline()
             help = "a path to the data"
             arg_type = String
             required = true
+        "--doT"
+            help = "treatment value to intervene"
+            arg_type = Float64
+            required = true
         # posterior updates
         "--nOuter"
             help = "the number of posterior steps"
@@ -256,8 +260,7 @@ function main()
             push!(U, posteriorsample[i][:U => u => :U])
         end
 
-        # Intervention assignment in algorithm 3. Use the mean of observed T as demo
-        doT = mean(T)
+        doT = parsed_args["doT"]
 
         if X == nothing
             xyLS = nothing
