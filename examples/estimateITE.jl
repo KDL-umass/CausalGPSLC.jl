@@ -33,14 +33,17 @@ function parse_commandline()
         help = "a path to the data"
         default = "examples/data/NEEC_sampled.csv"
         arg_type = String
+
         "--output_filepath"
         help = "filepath for inference results"
         default = "examples/results/NEEC_sampled_80.csv"
         arg_type = String
+
         "--doT"
         help = "treatment value to intervene"
         default = 0.8
         arg_type = Float64
+
         # posterior updates
         "--nOuter"
         help = "the number of posterior steps"
@@ -58,6 +61,7 @@ function parse_commandline()
         help = "the dimension of latent confounders to model"
         default = 1
         arg_type = Int
+
         # inference
         "--burnIn"
         help = "the number of posterior samples for burn-in"
@@ -71,6 +75,7 @@ function parse_commandline()
         help = "the number of samples from each posterior for treatment effect approximation"
         default = 10
         arg_type = Int
+
         # parameters for priors
         "--uNoiseShape"
         help = "the shape parameter of the prior inv gamma over the noise of U"
