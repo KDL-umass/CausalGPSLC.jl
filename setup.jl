@@ -2,7 +2,7 @@ using Pkg
 
 Pkg.activate("GPSLCenv")
 
-Pkg.add(PackageSpec(url="https://github.com/probcomp/Gen"))
+Pkg.add("Gen")
 
 Pkg.add("Random")
 Pkg.add("CSV")
