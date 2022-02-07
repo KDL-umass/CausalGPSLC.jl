@@ -34,28 +34,28 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     (trace, _) = generate(ContinuousGPSLC, (hyperparams, nX, nU), obs)
     for i in tqdm(1:nOuter)
         for j = 1:nMHInner
-            (trace, _) = mh(trace, uNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, yNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tyLSProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
-            for k = 1:nU
-                (trace, _) = mh(trace, utLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, uyLSProposal, (k, 0.5))
+            for k::Int = 1:nU
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
                 for l = 1:nX
-                    (trace, _) = mh(trace, uxLSProposal, (k, l, 0.5))
+                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i = k, j = l)))
                 end
             end
 
             for k = 1:nX
-                (trace, _) = mh(trace, xNoiseProposal, (k, 0.5))
-                (trace, _) = mh(trace, xtLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, xyLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, xScaleProposal, (k, 0.5))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i = k)))
             end
 
-            (trace, _) = mh(trace, tScaleProposal, (0.5,))
-            (trace, _) = mh(trace, yScaleProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
         end
 
         uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
@@ -86,18 +86,18 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     (trace, _) = generate(NoCovContinuousGPSLC, (hyperparams, nU), obs)
     for i in tqdm(1:nOuter)
         for j = 1:nMHInner
-            (trace, _) = mh(trace, uNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, yNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tyLSProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise"),))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, utLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, uyLSProposal, (k, 0.5))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
             end
 
-            (trace, _) = mh(trace, tScaleProposal, (0.5,))
-            (trace, _) = mh(trace, yScaleProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
         end
 
         uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
@@ -128,17 +128,17 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     (trace, _) = generate(NoUContinuousGPSLC, (hyperparams, X), obs)
     for i = 1:nOuter
-        (trace, _) = mh(trace, tNoiseProposal, (0.5,))
-        (trace, _) = mh(trace, yNoiseProposal, (0.5,))
-        (trace, _) = mh(trace, tyLSProposal, (0.5,))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
         for k = 1:nX
-            (trace, _) = mh(trace, xtLSProposal, (k, 0.5))
-            (trace, _) = mh(trace, xyLSProposal, (k, 0.5))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
         end
 
-        (trace, _) = mh(trace, tScaleProposal, (0.5,))
-        (trace, _) = mh(trace, yScaleProposal, (0.5,))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
 
         push!(PosteriorSamples, get_choices(trace))
     end
@@ -158,9 +158,9 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
 
     (trace, _) = generate(NoCovNoUContinuousGPSLC, (hyperparams, T), obs)
     for i = 1:nOuter
-        (trace, _) = mh(trace, yNoiseProposal, (0.5,))
-        (trace, _) = mh(trace, tyLSProposal, (0.5,))
-        (trace, _) = mh(trace, yScaleProposal, (0.5,))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
 
         push!(PosteriorSamples, get_choices(trace))
     end
@@ -191,28 +191,28 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
     (trace, _) = generate(BinaryGPSLC, (hyperparams, nX, nU), obs)
     for i in tqdm(1:nOuter)
         for j = 1:nMHInner
-            (trace, _) = mh(trace, uNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, yNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tyLSProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, utLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, uyLSProposal, (k, 0.5))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
                 for l = 1:nX
-                    (trace, _) = mh(trace, uxLSProposal, (k, l, 0.5))
+                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i = k, j = l)))
                 end
             end
 
             for k = 1:nX
-                (trace, _) = mh(trace, xNoiseProposal, (k, 0.5))
-                (trace, _) = mh(trace, xtLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, xyLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, xScaleProposal, (k, 0.5))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i = k)))
             end
 
-            (trace, _) = mh(trace, tScaleProposal, (0.5,))
-            (trace, _) = mh(trace, yScaleProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
         end
 
         choices = get_choices(trace)
@@ -260,18 +260,18 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
     (trace, _) = generate(NoCovBinaryGPSLC, (hyperparams, nU), obs)
     for i = 1:nOuter
         for j = 1:nMHInner
-            (trace, _) = mh(trace, uNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, yNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tyLSProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, utLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, uyLSProposal, (k, 0.5))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
             end
 
-            (trace, _) = mh(trace, tScaleProposal, (0.5,))
-            (trace, _) = mh(trace, yScaleProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
         end
 
         choices = get_choices(trace)
@@ -318,17 +318,17 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
     (trace, _) = generate(NoUBinaryGPSLC, (hyperparams, X), obs)
     for i = 1:nOuter
         for j = 1:nMHInner
-            (trace, _) = mh(trace, tNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, yNoiseProposal, (0.5,))
-            (trace, _) = mh(trace, tyLSProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nX
-                (trace, _) = mh(trace, xtLSProposal, (k, 0.5))
-                (trace, _) = mh(trace, xyLSProposal, (k, 0.5))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
             end
 
-            (trace, _) = mh(trace, tScaleProposal, (0.5,))
-            (trace, _) = mh(trace, yScaleProposal, (0.5,))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
         end
 
         choices = get_choices(trace)
@@ -363,9 +363,9 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     (trace, _) = generate(NoCovNoUBinaryGPSLC, (hyperparams, T), obs)
     for i = 1:nOuter
-        (trace, _) = mh(trace, yNoiseProposal, (0.5,))
-        (trace, _) = mh(trace, tyLSProposal, (0.5,))
-        (trace, _) = mh(trace, yScaleProposal, (0.5,))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
 
         push!(PosteriorSamples, get_choices(trace))
     end
