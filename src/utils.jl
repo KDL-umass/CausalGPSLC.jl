@@ -1,6 +1,5 @@
 module Utils
 
-
 using LinearAlgebra
 
 export generateSigmaU, uniq

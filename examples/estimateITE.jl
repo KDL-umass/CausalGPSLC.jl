@@ -1,6 +1,6 @@
 using Pkg
 
-Pkg.activate("GPSLCenv")
+Pkg.activate(".")
 
 println("Adding packages")
 using Random
@@ -15,15 +15,15 @@ using Distributions
 Random.seed!(1234)
 
 println("Loading Inference")
-include("src/inference.jl")
+include("../src/inference.jl")
 using .Inference
 
 println("Loading Estimation")
-include("src/estimation.jl")
+include("../src/estimation.jl")
 using .Estimation
 
 println("Loading Utilities")
-include("utils.jl")
+include("../src/utils.jl")
 using .Utils
 
 function parse_commandline()
@@ -31,11 +31,11 @@ function parse_commandline()
     @add_arg_table! s begin
         "--datapath"
         help = "a path to the data"
-        default = "data/NEEC_sampled.csv"
+        default = "examples/data/NEEC_sampled.csv"
         arg_type = String
         "--output_filepath"
         help = "filepath for inference results"
-        default = "results/NEEC_sampled_80.csv"
+        default = "examples/results/NEEC_sampled_80.csv"
         arg_type = String
         "--doT"
         help = "treatment value to intervene"

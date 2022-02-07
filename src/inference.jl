@@ -299,7 +299,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
     PosteriorSamples, trace
 end
 
-# Binary Treatment No Confounders
+"""Binary Treatment with No Confounders"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Int, nESInner::Int)
 
@@ -349,7 +349,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
     PosteriorSamples, trace
 end
 
-# Binary Treatment No Confounders No Covariates
+"""Binary Treatment No Confounders No Covariates"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
 

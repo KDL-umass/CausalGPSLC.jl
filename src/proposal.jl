@@ -3,8 +3,6 @@ module Proposal
 using Gen
 using ProgressBars
 
-
-
 export getProposalAddress, paramProposal
 
 function getProposalAddress(name::String; i::Int = -1, j::Int = -1)
