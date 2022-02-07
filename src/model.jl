@@ -5,71 +5,35 @@ using LinearAlgebra
 import Base.show
 import FunctionalCollections
 
-export processCov, rbfKernelLog,
-    ContinuousGPSLC, NoCovContinuousGPSLC, NoUContinuousGPSLC, NoCovNoUContinuousGPSLC,
+include("./kernel.jl")
+using .Kernel
+
+export ContinuousGPSLC, NoCovContinuousGPSLC, NoUContinuousGPSLC, NoCovNoUContinuousGPSLC,
     BinaryGPSLC, NoCovBinaryGPSLC, NoUBinaryGPSLC, NoCovNoUBinaryGPSLC
 
-function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1}, LS::Array{Float64,1})
-    return -broadcast(/, ((X1 .- X2') .^ 2,), LS .^ 2)
+
+@gen function generateLS(shape, scale)
+    @trace(inv_gamma(shape, scale), :LS)
 end
 
-function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1},
-    LS::FunctionalCollections.PersistentVector{Float64})
-    return -broadcast(/, ((X1 .- X2') .^ 2,), LS .^ 2)
+@gen function generateScale(shape, scale)
+    @trace(inv_gamma(shape, scale), :Scale)
 end
 
-function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1}, LS::Float64)
-    return -((X1 .- X2') / LS) .^ 2
+@gen function generateNoise(shape, scale)
+    @trace(inv_gamma(shape, scale), :Noise)
 end
 
-function rbfKernelLog(X1::Array{Bool,1}, X2::Array{Bool,1}, LS::Float64)
-    return -((X1 .- X2') / LS) .^ 2
+@gen function generateBinaryT(logitT)
+    @trace(bernoulli(expit(logitT)), :T)
 end
 
-function rbfKernelLog(X1::FunctionalCollections.PersistentVector{Bool},
-    X2::FunctionalCollections.PersistentVector{Bool}, LS::Float64)
-    return -((X1 .- X2') / LS) .^ 2
+@gen function generateU(Ucov::Array{Float64}, n::Int)
+    @trace(mvnormal(fill(0, n), Ucov), :U)
 end
 
-
-expit(x::Real) = exp(x) / (1.0 + exp(x))
-
-function processCov(logCov::Array{Float64}, scale::Float64, noise::Float64)
-    return exp.(logCov) * scale + 1I * noise
-end
-
-function processCov(logCov::Array{Float64}, scale::Float64, noise::Nothing)
-    return exp.(logCov) * scale
-end
-
-@gen (static) function generateLS(shape, scale)
-    LS = @trace(inv_gamma(shape, scale), :LS)
-    return LS
-end
-
-@gen (static) function generateScale(shape, scale)
-    Scale = @trace(inv_gamma(shape, scale), :Scale)
-    return Scale
-end
-
-@gen (static) function generateNoise(shape, scale)
-    Noise = @trace(inv_gamma(shape, scale), :Noise)
-    return Noise
-end
-
-@gen (static) function generateBinaryT(logitT)
-    T = @trace(bernoulli(expit(logitT)), :T)
-    return T
-end
-
-@gen (static) function generateU(Ucov::Array{Float64}, n::Int)
-    U = @trace(mvnormal(fill(0, n), Ucov), :U)
-    return U
-end
-
-@gen (static) function generateX(Xcov::Array{Float64}, n::Int)
-    X = @trace(mvnormal(fill(0, n), Xcov), :X)
-    return X
+@gen function generateX(Xcov::Array{Float64}, n::Int)
+    @trace(mvnormal(fill(0, n), Xcov), :X)
 end
 
 MappedGenerateLS = Map(generateLS)
@@ -82,7 +46,9 @@ MappedGenerateX = Map(generateX)
 
 load_generated_functions()
 
-@gen (static) function ContinuousGPSLC(hyperparams, nX, nU)
+
+"""Continous GPSLC, with Latent Confounders (U) and Covariates."""
+@gen function ContinuousGPSLC(hyperparams, nX, nU)
     n = size(hyperparams["SigmaU"])[1]
 
     #   Prior over Noise
@@ -132,7 +98,7 @@ load_generated_functions()
     return Y
 end
 
-# Covariates omitted.
+"""No Covariates, Continuous GPSLC"""
 @gen function NoCovContinuousGPSLC(hyperparams, nU)
     n = size(hyperparams["SigmaU"])[1]
 
@@ -168,7 +134,9 @@ end
     return Y
 end
 
-@gen (static) function NoUContinuousGPSLC(hyperparams, X)
+
+"""No Latent Confounders (U), Continuous GPSLC"""
+@gen function NoUContinuousGPSLC(hyperparams, X)
     n = length(X[1])
     nX = length(X)
 
@@ -200,8 +168,9 @@ end
     return Y
 end
 
-# Covariates and U omitted.
-@gen (static) function NoCovNoUContinuousGPSLC(hyperparams, T)
+
+"""No Covariates, No Latent Confounders (U), Continuous GPSLC"""
+@gen function NoCovNoUContinuousGPSLC(hyperparams, T)
     n = length(T)
 
     #   Prior over Noise
@@ -220,8 +189,10 @@ end
 
     return Y
 end
-# + {}
-@gen (static) function BinaryGPSLC(hyperparams, nX, nU)
+
+
+"""Binary GPSLC with Covariates and Latent Confounders (U)"""
+@gen function BinaryGPSLC(hyperparams, nX, nU)
     n = size(hyperparams["SigmaU"])[1]
 
     #   Prior over Noise
@@ -272,7 +243,9 @@ end
     return Y
 end
 
-@gen (static) function NoCovBinaryGPSLC(hyperparams, nU)
+
+"""No Covariates, Binary GPSLC"""
+@gen function NoCovBinaryGPSLC(hyperparams, nU)
     n = size(hyperparams["SigmaU"])[1]
 
     #   Prior over Noise
@@ -308,7 +281,8 @@ end
     return Y
 end
 
-@gen (static) function NoUBinaryGPSLC(hyperparams, X)
+"""No latent confounders U, Binary GPSLC"""
+@gen function NoUBinaryGPSLC(hyperparams, X)
     n = size(X[1])
     nX = size(X)
 
@@ -341,7 +315,8 @@ end
     return Y
 end
 
-@gen (static) function NoCovNoUBinaryGPSLC(hyperparams, T)
+"""No covariates, No latent confounders U, Binary GPSLC"""
+@gen function NoCovNoUBinaryGPSLC(hyperparams, T)
     n = size(T)
 
     #   Prior over Noise

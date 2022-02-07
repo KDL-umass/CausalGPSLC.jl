@@ -3,136 +3,18 @@ module Inference
 using Gen
 using ProgressBars
 
-include("model.jl")
+include("./model.jl")
 using .Model
+
+include("./proposal.jl")
+using .Proposal
 
 import Base.show
 export Posterior
 
-#   Like a gaussian drift, we match the moments of our proposal
-#   with the previous noise sample with a fixed variance.
-#   See https://arxiv.org/pdf/1605.01019.pdf.
-
-@gen function uNoiseProposal(trace, var::Float64)
-    cur = trace[:uNoise]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :uNoise)
-end
-
-@gen function tNoiseProposal(trace, var::Float64)
-    cur = trace[:tNoise]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :tNoise)
-end
-
-@gen function xNoiseProposal(trace, i::Int, var::Float64)
-    cur = trace[:xNoise=>i=>:Noise]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :xNoise => i => :Noise)
-end
-
-@gen function yNoiseProposal(trace, var::Float64)
-    cur = trace[:yNoise]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :yNoise)
-end
-
-@gen function utLSProposal(trace, i::Int, var::Float64)
-    cur = trace[:utLS=>i=>:LS]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :utLS => i => :LS)
-end
-
-@gen function uyLSProposal(trace, i::Int, var::Float64)
-    cur = trace[:uyLS=>i=>:LS]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :uyLS => i => :LS)
-end
-
-@gen function tyLSProposal(trace, var::Float64)
-    cur = trace[:tyLS]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :tyLS)
-end
-
-@gen function xtLSProposal(trace, i::Int, var::Float64)
-    cur = trace[:xtLS=>i=>:LS]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :xtLS => i => :LS)
-end
-
-@gen function uxLSProposal(trace, i::Int, j::Int, var::Float64)
-    cur = trace[:uxLS=>i=>j=>:LS]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :uxLS => i => j => :LS)
-end
-
-@gen function xyLSProposal(trace, i::Int, var::Float64)
-    cur = trace[:xyLS=>i=>:LS]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :xyLS => i => :LS)
-end
-
-@gen function xScaleProposal(trace, i::Int, var::Float64)
-    cur = trace[:xScale=>i=>:Scale]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :xScale => i => :Scale)
-end
-
-@gen function tScaleProposal(trace, var::Float64)
-    cur = trace[:tScale]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :tScale)
-end
-
-@gen function yScaleProposal(trace, var::Float64)
-    cur = trace[:yScale]
-
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
-
-    @trace(inv_gamma(Shape, Scale), :yScale)
-end
-
 load_generated_functions()
 
-# Full Model
+"""Full Model"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
@@ -189,7 +71,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     PosteriorSamples, trace
 end
 
-# No Covariates
+"""No Covariates"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
@@ -232,7 +114,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     PosteriorSamples, trace
 end
 
-# No latent confounder
+"""No latent confounder"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
 
@@ -264,7 +146,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     PosteriorSamples, trace
 end
 
-# No Covariates or latent confounders
+"""No Covariates or latent confounders"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
 
@@ -287,7 +169,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
 end
 
 
-# Binary Treatment Full Model
+"""Binary Treatment Full Model"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
@@ -361,7 +243,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
     PosteriorSamples, trace
 end
 
-# Binary Treatment No Covariates
+"""Binary Treatment No Covariates"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
