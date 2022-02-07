@@ -3,10 +3,10 @@ module Inference
 using Gen
 using ProgressBars
 
-include("./model.jl")
+include("model.jl")
 using .Model
 
-include("./proposal.jl")
+include("proposal.jl")
 using .Proposal
 
 import Base.show
@@ -84,7 +84,6 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     PosteriorSamples = []
 
     (trace, _) = generate(NoCovContinuousGPSLC, (hyperparams, nU), obs)
-    println(get_choices(trace))
     for i in tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, uNoiseProposal, (0.5,))

@@ -1,7 +1,7 @@
 # Gaussian Processes with Structured Latent Confounders
 
 ## Description
-This code provides a working example of the algorithm 3 in the ICML 2020 submission. In summary, this code estimates posterior distributions over individual treatment effects given an observational dataset and an intervention assignment.
+This code provides a working example of the algorithm 3 in the ICML 2020 [paper](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf). In summary, this code estimates posterior distributions over individual treatment effects given an observational dataset and an intervention assignment.
 
 ## Usage
 1. Download and install julia 1.0 or later from https://julialang.org/downloads/
