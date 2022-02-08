@@ -1,30 +1,11 @@
 using Pkg
-
 Pkg.activate(".")
 
-println("Adding packages")
-using Random
-using CSV
-using DataFrames
 using ArgParse
-using DataFrames
-using LinearAlgebra
-using ProgressBars
-using Statistics
-using Distributions
+using Random
 Random.seed!(1234)
 
-println("Loading Inference")
-include("../src/inference.jl")
-using .Inference
-
-println("Loading Estimation")
-include("../src/estimation.jl")
-using .Estimation
-
-println("Loading Utilities")
-include("../src/utils.jl")
-using .Utils
+using GPSLC
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -187,45 +168,13 @@ end
 
 
 function main()
-    # parse argument
+    # parse arguments
     println("Parsing Arguments")
     parsed_args = parse_commandline()
-    csv_path = parsed_args["datapath"]
-    df = CSV.read(csv_path, DataFrame)
 
-    # build a list of object size
-    # [a, a, a, b, c, c] -> [3, 1, 2]
-    counts = Dict()
-    for o in df[!, :obj]
-        if o in keys(counts)
-            counts[o] += 1
-        else
-            counts[o] = 1
-        end
-    end
-    obj_count = [counts[o] for o in uniq(df[!, :obj])]
-
-    # generate a block matrix based on object counts.
-    # SigmaU is shorthand for the object structure of the latent confounder.
-    SigmaU = generateSigmaU(obj_count)
+    # load and prepare data
+    X, T, Y, SigmaU = prepareData(parsed_args["datapath"])
     parsed_args["SigmaU"] = SigmaU
-
-    # prepare inputs
-    T = Array(df[!, :T])
-    Y = Array(df[!, :Y])
-
-    cols = names(df)
-    cols = deleteat!(cols, cols .== "T")
-    cols = deleteat!(cols, cols .== "Y")
-    cols = deleteat!(cols, cols .== "obj")
-    if length(cols) == 0
-        X = nothing
-    else
-        X_ = df[!, cols]
-        nX = size(X_)[2]
-        X = [Array(X_[!, i]) for i in 1:nX]
-    end
-
 
     # running GPSLC
     nOuter = parsed_args["nOuter"]
@@ -233,62 +182,25 @@ function main()
     nESInner = parsed_args["nESInner"]
     nU = parsed_args["nU"]
 
+    # do inference on latent values and the parameters
     println("Running Inference on U and Kernel Hyperparameters")
-    posteriorsample, _ = Posterior(parsed_args, X, T, Y, nU, nOuter, nMHInner, nESInner)
+    posteriorsample = samplePosterior(X, T, Y, SigmaU; hyperparams = parsed_args,
+        nU = nU, nOuter = nOuter, nMHInner = nMHInner, nESInner = nESInner)
 
     # inference of treatment effects
     burnIn = parsed_args["burnIn"]
     stepSize = parsed_args["stepSize"]
     samplesPerPost = parsed_args["samplesPerPost"]
+    doT = parsed_args["doT"]
 
+    # estimate individual treatment effects
     println("Estimating ITE")
-    ITEsamples = zeros(length(T), samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
-    idx = 1
-    for i in tqdm(burnIn:stepSize:nOuter)
-        uyLS = []
-        U = []
-        for u in 1:nU
-            push!(uyLS, posteriorsample[i][:uyLS=>u=>:LS])
-            push!(U, posteriorsample[i][:U=>u=>:U])
-        end
+    ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorsample = posteriorsample,
+        doT = doT, nU = nU, nOuter = nOuter,
+        burnIn = burnIn, stepSize = stepSize, samplesPerPost = samplesPerPost)
 
-        doT = parsed_args["doT"]
-
-        if X == nothing
-            xyLS = nothing
-        else
-            xyLS = convert(Array{Float64,1}, posteriorsample[i][:xyLS])
-        end
-        uyLS = convert(Array{Float64,1}, uyLS)
-
-        MeanITE, CovITE = conditionalITE(uyLS,
-            posteriorsample[i][:tyLS],
-            xyLS,
-            posteriorsample[i][:yNoise],
-            posteriorsample[i][:yScale],
-            U,
-            X,
-            T,
-            Y,
-            doT)
-
-        for j in 1:samplesPerPost
-            samples = rand(MvNormal(MeanITE, Symmetric(CovITE) + I * (1e-10)))
-            ITEsamples[:, idx] = samples
-            idx += 1
-        end
-    end
-    # n x m matrix where n is the number of data,
-    # and m is the number of samples
-
-    meanITE = mean(ITEsamples, dims = 2)[:, 1]
-    lowerITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
-    upperITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
-
-
-    df = DataFrame(Individual = 1:size(meanITE)[1], Mean = meanITE, LowerBound = lowerITE, UpperBound = upperITE)
-    CSV.write(parsed_args["output_filepath"], df)
-    println("Saved ITE mean and 90% credible intervals to " * parsed_args["output_filepath"])
+    # summarize results
+    summarizeITE(ITEsamples; savetofile = parsed_args["output_filepath"])
 end
 
 main()
