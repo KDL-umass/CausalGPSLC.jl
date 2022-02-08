@@ -92,7 +92,7 @@ Defaults are those used in original paper, listed here for modification
 - `tyLSScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel lengthscale of T and Y
 """
 function getHyperParameters()
-    Dict{String,Float64}(
+    Dict{String,Any}(
         "uNoiseShape" => 4.0,
         "uNoiseScale" => 4.0,
         "xNoiseShape" => 4.0,
@@ -136,7 +136,7 @@ Returns:
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 
 """
-function sampleITE(X, T, Y, SigmaU; posteriorsample = samplePosterior(X, T, Y),
+function sampleITE(X, T, Y, SigmaU; posteriorsample = samplePosterior(X, T, Y, SigmaU),
     doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,
     burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10
 )
