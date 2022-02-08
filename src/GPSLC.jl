@@ -1,27 +1,63 @@
 module GPSLC
 
-using Random
 using CSV
-using DataFrames
-using ArgParse
 using DataFrames
 using LinearAlgebra
 using ProgressBars
 using Statistics
 using Distributions
-Random.seed!(1234)
 
 println("Loading Inference")
-include("../src/inference.jl")
+include("inference.jl")
 using .Inference
 
 println("Loading Estimation")
-include("../src/estimation.jl")
+include("estimation.jl")
 using .Estimation
 
 println("Loading Utilities")
-include("../src/utils.jl")
+include("utils.jl")
 using .Utils
+
+export prepareData, getHyperParameters, sampleITE, samplePosterior, summarizeITE
+
+function prepareData(csv_path)
+    df = CSV.read(csv_path, DataFrame)
+
+    # build a list of object size
+    # [a, a, a, b, c, c] -> [3, 1, 2]
+    counts = Dict()
+    for o in df[!, :obj]
+        if o in keys(counts)
+            counts[o] += 1
+        else
+            counts[o] = 1
+        end
+    end
+    obj_count = [counts[o] for o in uniq(df[!, :obj])]
+
+    # generate a block matrix based on object counts.
+    # SigmaU is shorthand for the object structure of the latent confounder.
+    SigmaU = generateSigmaU(obj_count)
+
+    # prepare inputs
+    T = Array(df[!, :T])
+    Y = Array(df[!, :Y])
+
+    cols = names(df)
+    cols = deleteat!(cols, cols .== "T")
+    cols = deleteat!(cols, cols .== "Y")
+    cols = deleteat!(cols, cols .== "obj")
+    if length(cols) == 0
+        X = nothing
+    else
+        X_ = df[!, cols]
+        nX = size(X_)[2]
+        X = [Array(X_[!, i]) for i in 1:nX]
+    end
+
+    X, T, Y, SigmaU
+end
 
 """
 *Hyperparameters*
@@ -86,17 +122,6 @@ function getHyperParameters()
     )
 end
 
-function summarizeITE(ITEsamples; savetofile::String = "")
-    meanITE = mean(ITEsamples, dims = 2)[:, 1]
-    lowerITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
-    upperITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
-    df = DataFrame(Individual = 1:size(meanITE)[1], Mean = meanITE, LowerBound = lowerITE, UpperBound = upperITE)
-    if savetofile != ""
-        CSV.write(savetofile, df)
-        println("Saved ITE mean and 90% credible intervals to " * savetofile)
-    end
-    df
-end
 
 """
 Estimate Individual Treatment Effect using GPSLC model
@@ -111,12 +136,10 @@ Returns:
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 
 """
-function sampleITE(X, T, Y; posteriorsample = samplePosterior(X, T, Y),
+function sampleITE(X, T, Y, SigmaU; posteriorsample = samplePosterior(X, T, Y),
     doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,
     burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10
 )
-
-    println("Estimating ITE")
     ITEsamples = zeros(length(T), samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
     idx = 1
     for i in tqdm(burnIn:stepSize:nOuter)
@@ -151,17 +174,40 @@ function sampleITE(X, T, Y; posteriorsample = samplePosterior(X, T, Y),
             idx += 1
         end
     end
-    ITEsamples
+    return ITEsamples
 end
 
 """
 Draw samples from the posterior given the observed data `X,T,Y`.
 """
-function samplePosterior(X, T, Y; hyperparams::Dict{String,Float64} = getHyperParameters()
+function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any} = getHyperParameters(),
     nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1
 )
-    println("Running Inference on U and Kernel Hyperparameters")
+    hyperparams["SigmaU"] = SigmaU # databased hyperparameter
     posteriorsample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
+    return posteriorsample
+end
+
+"""
+Create dataframe of mean, lower and upper quantiles of the ITE samples.
+
+Params:
+- `ITEsamples`: `n x m` array of ITE samples
+- `savetofile`: Optionally save the resultant dataframe as CSV to the filename passed.
+
+Returns:
+- `df`: Dataframe of Individual, Mean, LowerBound, and UpperBound values for the samples.
+"""
+function summarizeITE(ITEsamples; savetofile::String = "")
+    meanITE = mean(ITEsamples, dims = 2)[:, 1]
+    lowerITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
+    upperITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
+    df = DataFrame(Individual = 1:size(meanITE)[1], Mean = meanITE, LowerBound = lowerITE, UpperBound = upperITE)
+    if savetofile != ""
+        CSV.write(savetofile, df)
+        println("Saved ITE mean and 90% credible intervals to " * savetofile)
+    end
+    return df
 end
 
 end

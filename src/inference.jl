@@ -9,10 +9,8 @@ using .Model
 include("proposal.jl")
 using .Proposal
 
-import Base.show
+# import Base.show
 export Posterior
-
-load_generated_functions()
 
 """Full Model"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},

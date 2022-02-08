@@ -6,9 +6,9 @@ import FunctionalCollections
 
 export rbfKernelLog, processCov, expit
 
-function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1}, 
+function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1},
     LS::Union{
-        Array{Float64,1}, 
+        Array{Float64,1},
         FunctionalCollections.PersistentVector{Float64}
     })
     return -broadcast(/, ((X1 .- X2') .^ 2,), LS .^ 2)

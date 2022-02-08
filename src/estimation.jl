@@ -137,7 +137,7 @@ function conditionalITE(uyLS::Nothing, tyLS::Float64, xyLS::Array{Float64},
     return MeanITE, CovITE
 end
 
-# No Confounders No Covariates Continuous/Binary
+"""No Confounders No Covariates Continuous/Binary"""
 function conditionalITE(uyLS::Nothing, tyLS::Float64, xyLS::Nothing,
     yNoise::Float64, yScale::Float64, U::Nothing,
     X::Nothing, T, Y::Array, doT)

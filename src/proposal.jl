@@ -1,10 +1,12 @@
 module Proposal
 
 using Gen
-using ProgressBars
 
 export getProposalAddress, paramProposal
 
+"""
+Optimizes `paramProposal` by providing compact way to access trace address symbols
+"""
 function getProposalAddress(name::String; i::Int = -1, j::Int = -1)
     proposalAddresses = Dict(
         "uNoise" => :uNoise,
