@@ -40,6 +40,4 @@ See https://arxiv.org/pdf/1605.01019.pdf.
     @trace(inv_gamma(Shape, Scale), addr)
 end
 
-load_generated_functions()
-
 end

@@ -34,10 +34,8 @@ function prepareData(csv_path)
             counts[o] = 1
         end
     end
-    obj_count = [counts[o] for o in uniq(df[!, :obj])]
+    obj_count = [counts[o] for o in removeAdjacent(df[!, :obj])]
 
-    # generate a block matrix based on object counts.
-    # SigmaU is shorthand for the object structure of the latent confounder.
     SigmaU = generateSigmaU(obj_count)
 
     # prepare inputs
@@ -134,7 +132,6 @@ Params:
 Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
-
 """
 function sampleITE(X, T, Y, SigmaU; posteriorsample = samplePosterior(X, T, Y, SigmaU),
     doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,

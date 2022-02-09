@@ -31,7 +31,7 @@ end
         @trace(bernoulli(expit(logitT)), :T)
 end
 
-"""Gen function to generate latent confounders (U) from mvnormal distribution."""
+"""Gen function to generate latent confounders (U) from mvnormal distribution"""
 @gen function generateU(Ucov::Array{Float64}, n::Int)
         @trace(mvnormal(fill(0, n), Ucov), :U)
 end
@@ -52,7 +52,7 @@ MappedGenerateX = Map(generateX)
 load_generated_functions()
 
 
-"""Continous GPSLC, with Latent Confounders (U) and Covariates (X)."""
+"""Continous GPSLC, with Latent Confounders (U) and Covariates (X)"""
 @gen function ContinuousGPSLC(hyperparams, nX, nU)
         n = size(hyperparams["SigmaU"])[1]
 
