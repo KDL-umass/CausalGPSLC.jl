@@ -3,13 +3,9 @@ module Estimation
 using LinearAlgebra
 using Gen
 
-include("model.jl")
-using .Model
-
 include("kernel.jl")
 using .Kernel
 
-import Base.show
 export conditionalITE, conditionalSATE, ITEsamples, SATEsamples
 
 """Full Model Continuous/Binary"""

@@ -150,7 +150,7 @@ function sampleITE(X, T, Y, SigmaU; posteriorsample = samplePosterior(X, T, Y, S
             push!(U, posteriorsample[i][:U=>u=>:U])
         end
 
-        if X == nothing
+        if X === nothing
             xyLS = nothing
         else
             xyLS = convert(Array{Float64,1}, posteriorsample[i][:xyLS])

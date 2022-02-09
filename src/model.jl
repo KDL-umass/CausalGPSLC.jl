@@ -2,7 +2,7 @@ module Model
 
 using Gen
 using LinearAlgebra
-import Base.show
+
 import FunctionalCollections
 
 include("kernel.jl")

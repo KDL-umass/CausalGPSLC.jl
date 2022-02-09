@@ -9,7 +9,6 @@ using .Model
 include("proposal.jl")
 using .Proposal
 
-# import Base.show
 export Posterior
 
 """Full Model"""
