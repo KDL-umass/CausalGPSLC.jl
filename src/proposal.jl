@@ -31,13 +31,15 @@ Like a Gaussian drift, we match the moments of our proposal
 with the previous noise sample with a fixed variance.
 See https://arxiv.org/pdf/1605.01019.pdf.
 """
-@gen function paramProposal(trace, var::Float64, addr)
+@gen function paramProposal(trace, variance::Float64, addr)
     cur = trace[addr]
 
-    Shape = (cur * cur / var) + 2
-    Scale = cur * (Shape - 1)
+    # inv_gamma parameters, centered at cur with known variance
+    shape = (cur * cur / variance) + 2
+    scale = cur * (shape - 1)
 
-    @trace(inv_gamma(Shape, Scale), addr)
+    # Prior is `inv_gamma` [0,+inf]
+    @trace(inv_gamma(shape, scale), addr)
 end
 
 end

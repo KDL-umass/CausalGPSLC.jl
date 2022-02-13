@@ -24,16 +24,11 @@ function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1},
     return -broadcast(/, ((X1 .- X2') .^ 2,), LS .^ 2)
 end
 
-function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1}, LS::Float64)
-    return -((X1 .- X2') / LS) .^ 2
-end
+SupportedRBFMatrix = Union{
+    Array{Float64,1},Array{Bool,1},FunctionalCollections.PersistentVector{Bool}
+}
 
-function rbfKernelLog(X1::Array{Bool,1}, X2::Array{Bool,1}, LS::Float64)
-    return -((X1 .- X2') / LS) .^ 2
-end
-
-function rbfKernelLog(X1::FunctionalCollections.PersistentVector{Bool},
-    X2::FunctionalCollections.PersistentVector{Bool}, LS::Float64)
+function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Float64)
     return -((X1 .- X2') / LS) .^ 2
 end
 
@@ -45,14 +40,15 @@ logit(prob)::Real = log(prob / (1 - prob))
 expit(x::Real) = exp(x) / (1.0 + exp(x))
 
 
-"""Exponentiate and scale a log covariance matrix; add noise if passed"""
-function processCov(logCov::Array{Float64}, scale::Float64,
-    noise::Union{Float64,Nothing})
-    if noise === nothing
-        return exp.(logCov) * scale
-    else
-        return exp.(logCov) * scale + 1I * noise
-    end
+"""
+Convert covariance matrix back from log-space, scale and add noise, if passed
+"""
+function processCov(logCov::Array{Float64}, scale::Float64, noise::Float64)
+    return exp.(logCov) * scale + 1I * noise
+end
+
+function processCov(logCov::Array{Float64}, scale::Float64, noise::Nothing)
+    return exp.(logCov) * scale
 end
 
 end
