@@ -40,7 +40,7 @@ include("../examples/basicExample.jl")
                 passing[i] = expected[i, "LowerBound"] <= actual[i, "Mean"] &&
                              actual[i, "Mean"] <= expected[i, "UpperBound"]
             end
-            @test sum(passing) / N > 0.95
+            @test sum(passing) / N > 0.97
         end
     end
 
