@@ -6,7 +6,9 @@ Random.seed!(1234)
 
 using GPSLC
 
-function main()
+export basicExample
+
+function basicExample()
     X, T, Y, SigmaU = prepareData("examples/data/NEEC_sampled.csv")
 
     println("Running Inference on U and Kernel Hyperparameters")
@@ -18,4 +20,6 @@ function main()
     summarizeITE(ITEsamples; savetofile = "examples/results/NEEC_sampled_80.csv")
 end
 
-main()
+if abspath(PROGRAM_FILE) == @__FILE__
+    basicExample()
+end
