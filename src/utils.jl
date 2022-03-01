@@ -1,5 +1,3 @@
-module Utils
-
 using LinearAlgebra
 
 export generateSigmaU, removeAdjacent
@@ -38,6 +36,4 @@ function removeAdjacent(v)
         end
     end
     return output
-end
-
 end

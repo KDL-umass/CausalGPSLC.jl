@@ -1,15 +1,12 @@
-module Model
-
 using Gen
 using LinearAlgebra
 
 import FunctionalCollections
 
-include("kernel.jl")
-using .Kernel
-
-export ContinuousGPSLC, NoCovContinuousGPSLC, NoUContinuousGPSLC, NoCovNoUContinuousGPSLC,
-    BinaryGPSLC, NoCovBinaryGPSLC, NoUBinaryGPSLC, NoCovNoUBinaryGPSLC
+export ContinuousGPSLC,
+    NoCovContinuousGPSLC, NoUContinuousGPSLC, NoCovNoUContinuousGPSLC,
+    BinaryGPSLC,
+    NoCovBinaryGPSLC, NoUBinaryGPSLC, NoCovNoUBinaryGPSLC
 
 """Gen function to generate lengthscale parameter for GP"""
 @gen function generateLS(shape, scale)
@@ -383,7 +380,3 @@ end
 
     return Y
 end
-
-end
-
-

@@ -1,10 +1,5 @@
-module Estimation
-
 using LinearAlgebra
 using Gen
-
-include("kernel.jl")
-using .Kernel
 
 export conditionalITE, conditionalSATE, ITEsamples, SATEsamples
 
@@ -219,6 +214,4 @@ function SATEsamples(MeanSATEs, VarSATEs, nSamplesPerMixture)
         end
     end
     return samples
-end
-
 end

@@ -1,10 +1,8 @@
-module Kernel
-
 using LinearAlgebra
 
 import FunctionalCollections
 
-export rbfKernelLog, processCov, expit
+export rbfKernelLog, logit, expit, processCov
 
 """
 Radial Basis Function Kernel applied element-wise to two vectors `X1` and `X2` passed
@@ -49,6 +47,4 @@ end
 
 function processCov(logCov::Array{Float64}, scale::Float64, noise::Nothing)
     return exp.(logCov) * scale
-end
-
 end

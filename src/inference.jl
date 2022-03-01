@@ -1,13 +1,5 @@
-module Inference
-
 using Gen
 using ProgressBars
-
-include("model.jl")
-using .Model
-
-include("proposal.jl")
-using .Proposal
 
 export Posterior
 
@@ -367,6 +359,4 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
         push!(PosteriorSamples, get_choices(trace))
     end
     PosteriorSamples, trace
-end
-
 end

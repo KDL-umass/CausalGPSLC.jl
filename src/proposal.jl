@@ -1,5 +1,3 @@
-module Proposal
-
 using Gen
 
 export getProposalAddress, paramProposal
@@ -40,6 +38,4 @@ See https://arxiv.org/pdf/1605.01019.pdf.
 
     # Prior is `inv_gamma` [0,+inf]
     @trace(inv_gamma(shape, scale), addr)
-end
-
 end
