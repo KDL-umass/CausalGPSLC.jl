@@ -16,15 +16,27 @@ include("../examples/basicExample.jl")
 
     # Is the algorithm doing the preconditions for inference?
     # (Are the individual mechanisms working properly)
-    ## During inference are you changing each latent variable in your model? 
+    @testset "Latent variables changing during inference" begin
+        ## During inference are you changing each latent variable in your model? 
 
-    # SBC: Run univariate sbc for each dimension
+    end
+
     # Apply Bonferroni correction to adjust p-value (multiple hypothesis correction)
+    @testset "Simulation-Based Calibration" begin
+        # SBC: Run univariate sbc for each dimension
+        # https://en.wikipedia.org/wiki/Bonferroni_correction#Definition
 
+    end
 
     ### Test kernel functions
+    @testset "Kernel Functions" begin
+
+    end
 
     ### Test utils
+    @testset "Utilities" begin
+
+    end
 
     ### Make sure things match submission
     @testset "Submission Comparison" begin
