@@ -14,32 +14,32 @@ export getHyperParameters, sampleITE, samplePosterior, summarizeITE
 
 Defaults are those used in original paper, listed here for modification
 
-- `uNoiseShape::Float64=4.0`: the shape parameter of the prior inv gamma over the noise of U
-- `uNoiseScale::Float64=4.0`: the scale parameter of the prior inv gamma over the noise of U
-- `xNoiseShape::Float64=4.0`: the shape parameter of the prior inv gamma over the noise of X
-- `xNoiseScale::Float64=4.0`: the scale parameter of the prior inv gamma over the noise of X
-- `tNoiseShape::Float64=4.0`: the shape parameter of the prior inv gamma over the noise of T
-- `tNoiseScale::Float64=4.0`: the scale parameter of the prior inv gamma over the noise of T
-- `yNoiseShape::Float64=4.0`: the shape parameter of the prior inv gamma over the noise of Y
-- `yNoiseScale::Float64=4.0`: the scale parameter of the prior inv gamma over the noise of Y
-- `xScaleShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel scale of X
-- `xScaleScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel scale of X
-- `tScaleShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel scale of T
-- `tScaleScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel scale of T
-- `yScaleShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel scale of Y
-- `yScaleScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel scale of Y
-- `uxLSShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel lengthscale of U and X
-- `uxLSScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel lengthscale of U and X
-- `utLSShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel lengthscale of U and T
-- `utLSScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel lengthscale of U and T
-- `xtLSShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel lengthscale of X and T
-- `xtLSScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel lengthscale of X and T
-- `uyLSShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel lengthscale of U and Y
-- `uyLSScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel lengthscale of U and Y
-- `xyLSShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel lengthscale of X and Y
-- `xyLSScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel lengthscale of X and Y
-- `tyLSShape::Float64=4.0`: the shape parameter of the prior inv gamma over kernel lengthscale of T and Y
-- `tyLSScale::Float64=4.0`: the scale parameter of the prior inv gamma over kernel lengthscale of T and Y
+- `uNoiseShape::Float64=4.0`: shape parameter of the InvGamma prior over the noise of U
+- `uNoiseScale::Float64=4.0`: scale parameter of the InvGamma prior over the noise of U
+- `xNoiseShape::Float64=4.0`: shape parameter of the InvGamma prior over the noise of X
+- `xNoiseScale::Float64=4.0`: scale parameter of the InvGamma prior over the noise of X
+- `tNoiseShape::Float64=4.0`: shape parameter of the InvGamma prior over the noise of T
+- `tNoiseScale::Float64=4.0`: scale parameter of the InvGamma prior over the noise of T
+- `yNoiseShape::Float64=4.0`: shape parameter of the InvGamma prior over the noise of Y
+- `yNoiseScale::Float64=4.0`: scale parameter of the InvGamma prior over the noise of Y
+- `xScaleShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel scale of X
+- `xScaleScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel scale of X
+- `tScaleShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel scale of T
+- `tScaleScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel scale of T
+- `yScaleShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel scale of Y
+- `yScaleScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel scale of Y
+- `uxLSShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel lengthscale of U and X
+- `uxLSScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel lengthscale of U and X
+- `utLSShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel lengthscale of U and T
+- `utLSScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel lengthscale of U and T
+- `xtLSShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel lengthscale of X and T
+- `xtLSScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel lengthscale of X and T
+- `uyLSShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel lengthscale of U and Y
+- `uyLSScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel lengthscale of U and Y
+- `xyLSShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel lengthscale of X and Y
+- `xyLSScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel lengthscale of X and Y
+- `tyLSShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel lengthscale of T and Y
+- `tyLSScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel lengthscale of T and Y
 """
 function getHyperParameters()
     Dict{String,Any}(
@@ -80,12 +80,14 @@ Params:
 - `X`: Input covariates
 - `T`: Input treatment
 - `Y`: Output
+- `SigmaU`: Object structure
+- `posteriorSample`=[`samplePosterior`](@ref)`(X,T,Y,SigmaU)`: Samples of parameters from posterior
 
 Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 """
-function sampleITE(X, T, Y, SigmaU; posteriorsample = samplePosterior(X, T, Y, SigmaU),
+function sampleITE(X, T, Y, SigmaU; posteriorSample = samplePosterior(X, T, Y, SigmaU),
     doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,
     burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10
 )
@@ -95,22 +97,22 @@ function sampleITE(X, T, Y, SigmaU; posteriorsample = samplePosterior(X, T, Y, S
         uyLS = []
         U = []
         for u in 1:nU
-            push!(uyLS, posteriorsample[i][:uyLS=>u=>:LS])
-            push!(U, posteriorsample[i][:U=>u=>:U])
+            push!(uyLS, posteriorSample[i][:uyLS=>u=>:LS])
+            push!(U, posteriorSample[i][:U=>u=>:U])
         end
 
         if X === nothing
             xyLS = nothing
         else
-            xyLS = convert(Array{Float64,1}, posteriorsample[i][:xyLS])
+            xyLS = convert(Array{Float64,1}, posteriorSample[i][:xyLS])
         end
         uyLS = convert(Array{Float64,1}, uyLS)
 
         MeanITE, CovITE = conditionalITE(uyLS,
-            posteriorsample[i][:tyLS],
+            posteriorSample[i][:tyLS],
             xyLS,
-            posteriorsample[i][:yNoise],
-            posteriorsample[i][:yScale],
+            posteriorSample[i][:yNoise],
+            posteriorSample[i][:yScale],
             U,
             X,
             T,
@@ -128,13 +130,24 @@ end
 
 """
 Draw samples from the posterior given the observed data `X,T,Y`.
+
+Params:
+- `X`: Input covariates
+- `T`: Input treatment
+- `Y`: Output
+- `SigmaU`: Object structure
+- `hyperParams`=[`getHyperParameters`](@ref)`()`: Hyperparameters for posterior sampling
+
+Returns:
+
+`posteriorSample`: samples from posterior determined by hyperparameters
 """
 function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any} = getHyperParameters(),
     nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1
 )
     hyperparams["SigmaU"] = SigmaU # databased hyperparameter
-    posteriorsample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
-    return posteriorsample
+    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
+    return posteriorSample
 end
 
 """
