@@ -9,4 +9,5 @@ makedocs(sitename = "GPSLC")
 
 deploydocs(
     repo = "github.com/KDL-umass/GPSLC.jl.git",
+    devbranch = "main"
 )
