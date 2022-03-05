@@ -8,5 +8,5 @@ using Documenter, GPSLC
 makedocs(sitename = "GPSLC")
 
 deploydocs(
-    repo = "github.com/kdl-umass/GPSLC.jl.git",
+    repo = "github.com/KDL-umass/GPSLC.jl.git",
 )

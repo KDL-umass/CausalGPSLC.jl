@@ -18,7 +18,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
         obs[:X=>i=>:X] = X[i]
     end
 
-    PosteriorSamples = []
+    posteriorSamples = []
 
     (trace, _) = generate(ContinuousGPSLC, (hyperparams, nX, nU), obs)
     for i in tqdm(1:nOuter)
@@ -55,9 +55,9 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
             end
         end
 
-        push!(PosteriorSamples, get_choices(trace))
+        push!(posteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, trace
+    posteriorSamples, trace
 end
 
 """No Covariates"""
@@ -70,7 +70,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     obs[:T] = T
     obs[:Y] = Y
 
-    PosteriorSamples = []
+    posteriorSamples = []
 
     (trace, _) = generate(NoCovContinuousGPSLC, (hyperparams, nU), obs)
     for i in tqdm(1:nOuter)
@@ -97,9 +97,9 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
             end
         end
 
-        push!(PosteriorSamples, get_choices(trace))
+        push!(posteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, trace
+    posteriorSamples, trace
 end
 
 """No latent confounder"""
@@ -113,7 +113,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     obs[:T] = T
     obs[:Y] = Y
 
-    PosteriorSamples = []
+    posteriorSamples = []
 
     (trace, _) = generate(NoUContinuousGPSLC, (hyperparams, X), obs)
     for i = 1:nOuter
@@ -129,9 +129,9 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
 
-        push!(PosteriorSamples, get_choices(trace))
+        push!(posteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, trace
+    posteriorSamples, trace
 end
 
 """No Covariates or latent confounders"""
@@ -143,7 +143,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     obs = Gen.choicemap()
     obs[:Y] = Y
 
-    PosteriorSamples = []
+    posteriorSamples = []
 
     (trace, _) = generate(NoCovNoUContinuousGPSLC, (hyperparams, T), obs)
     for i = 1:nOuter
@@ -151,9 +151,9 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
 
-        push!(PosteriorSamples, get_choices(trace))
+        push!(posteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, trace
+    posteriorSamples, trace
 end
 
 
@@ -175,7 +175,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
         obs[:X=>i=>:X] = X[i]
     end
 
-    PosteriorSamples = []
+    posteriorSamples = []
 
     (trace, _) = generate(BinaryGPSLC, (hyperparams, nX, nU), obs)
     for i in tqdm(1:nOuter)
@@ -226,9 +226,9 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
             end
         end
 
-        push!(PosteriorSamples, get_choices(trace))
+        push!(posteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, trace
+    posteriorSamples, trace
 end
 
 """Binary Treatment No Covariates"""
@@ -244,7 +244,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
         obs[:T=>i=>:T] = T[i]
     end
 
-    PosteriorSamples = []
+    posteriorSamples = []
 
     (trace, _) = generate(NoCovBinaryGPSLC, (hyperparams, nU), obs)
     for i = 1:nOuter
@@ -283,9 +283,9 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
             end
         end
 
-        push!(PosteriorSamples, get_choices(trace))
+        push!(posteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, trace
+    posteriorSamples, trace
 end
 
 """Binary Treatment with No Confounders"""
@@ -302,7 +302,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
         obs[:T=>i=>:T] = T[i]
     end
 
-    PosteriorSamples = []
+    posteriorSamples = []
 
     (trace, _) = generate(NoUBinaryGPSLC, (hyperparams, X), obs)
     for i = 1:nOuter
@@ -333,9 +333,9 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
             trace = elliptical_slice(trace, :logitT, zeros(n), logitTcov)
         end
 
-        push!(PosteriorSamples, get_choices(trace))
+        push!(posteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, trace
+    posteriorSamples, trace
 end
 
 """Binary Treatment No Confounders No Covariates"""
@@ -348,7 +348,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     obs[:Y] = Y
 
-    PosteriorSamples = []
+    posteriorSamples = []
 
     (trace, _) = generate(NoCovNoUBinaryGPSLC, (hyperparams, T), obs)
     for i = 1:nOuter
@@ -356,7 +356,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
 
-        push!(PosteriorSamples, get_choices(trace))
+        push!(posteriorSamples, get_choices(trace))
     end
-    PosteriorSamples, trace
+    posteriorSamples, trace
 end

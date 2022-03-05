@@ -184,7 +184,7 @@ function main()
 
     # do inference on latent values and the parameters
     println("Running Inference on U and Kernel Hyperparameters")
-    posteriorsample = samplePosterior(X, T, Y, SigmaU; hyperparams = parsed_args,
+    posteriorSample = samplePosterior(X, T, Y, SigmaU; hyperparams = parsed_args,
         nU = nU, nOuter = nOuter, nMHInner = nMHInner, nESInner = nESInner)
 
     # inference of treatment effects
@@ -195,7 +195,7 @@ function main()
 
     # estimate individual treatment effects
     println("Estimating ITE")
-    ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorsample = posteriorsample,
+    ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorSample = posteriorSample,
         doT = doT, nU = nU, nOuter = nOuter,
         burnIn = burnIn, stepSize = stepSize, samplesPerPost = samplesPerPost)
 
