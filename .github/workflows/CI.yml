@@ -53,7 +53,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
       - run: julia --project=docs/ docs/make.jl
-      - run: julia --project=docs -e '
+      - run: |
+          julia --project=docs -e '
             using Documenter: DocMeta, doctest
             using GPSLC
             DocMeta.setdocmeta!(GPSLC, :DocTestSetup, :(using GPSLC); recursive=true)
