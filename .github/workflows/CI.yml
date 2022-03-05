@@ -21,7 +21,6 @@ jobs:
           - '1.7'
         os:
           - ubuntu-latest
-          <</OS>>
         arch:
           - x86
     steps:
