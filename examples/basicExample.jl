@@ -6,6 +6,7 @@ using GPSLC
 export basicExample
 
 function basicExample()
+    println("CURRENTLY IN: $(pwd())")
     X, T, Y, SigmaU = prepareData("examples/data/NEEC_sampled.csv")
 
     println("Running Inference on U and Kernel Hyperparameters")
