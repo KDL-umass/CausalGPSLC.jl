@@ -6,3 +6,7 @@ Pkg.add("Documenter")
 using Documenter, GPSLC
 
 makedocs(sitename = "GPSLC")
+
+deploydocs(
+    repo = "github.com/kdl-umass/GPSLC.jl.git",
+)
