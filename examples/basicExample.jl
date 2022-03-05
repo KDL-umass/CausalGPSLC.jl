@@ -1,6 +1,3 @@
-using Pkg
-Pkg.activate(".")
-
 using Random
 Random.seed!(1234)
 
