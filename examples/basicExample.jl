@@ -5,7 +5,7 @@ using GPSLC
 
 export basicExample
 
-function basicExample(dataFile = "examples/data/NEEC_sampled.csv", verbose = true)
+function basicExample(dataFile = "examples/data/NEEC_sampled.csv"; verbose = true)
     X, T, Y, SigmaU = prepareData(dataFile)
 
     println("Running Inference on U and Kernel Hyperparameters")
