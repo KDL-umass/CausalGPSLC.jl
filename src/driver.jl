@@ -143,10 +143,10 @@ Returns:
 `posteriorSample`: samples from posterior determined by hyperparameters
 """
 function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any} = getHyperParameters(),
-    nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1
+    nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1, verbose = true
 )
     hyperparams["SigmaU"] = SigmaU # databased hyperparameter
-    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
+    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner; verbose = verbose)
     return posteriorSample
 end
 

@@ -6,12 +6,12 @@ include("../examples/basicExample.jl")
 @testset "Submission Comparison" begin
     @testset "NEEC" begin
         testRoot = pwd()[end-3:end] == "test"
-        if testRoot
-            basicExample("../examples/data/NEEC_sampled.csv")
+        if testRoot # in CI environment
+            basicExample(dataFile = "../examples/data/NEEC_sampled.csv", verbose = false)
             expected = CSV.read("test_results/NEEC_sampled_80.csv", DataFrame)
             actual = CSV.read("../examples/results/NEEC_sampled_80.csv", DataFrame)
         else
-            basicExample("examples/data/NEEC_sampled.csv")
+            basicExample(dataFile = "examples/data/NEEC_sampled.csv")
             expected = CSV.read("test/test_results/NEEC_sampled_80.csv", DataFrame)
             actual = CSV.read("examples/results/NEEC_sampled_80.csv", DataFrame)
         end
