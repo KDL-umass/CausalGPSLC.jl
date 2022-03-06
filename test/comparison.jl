@@ -11,7 +11,7 @@ include("../examples/basicExample.jl")
             expected = CSV.read("test_results/NEEC_sampled_80.csv", DataFrame)
             actual = CSV.read("../examples/results/NEEC_sampled_80.csv", DataFrame)
         else
-            basicExample("examples/data/NEEC_sampled.csv")
+            basicExample("examples/data/NEEC_sampled.csv"; verbose = false)
             expected = CSV.read("test/test_results/NEEC_sampled_80.csv", DataFrame)
             actual = CSV.read("examples/results/NEEC_sampled_80.csv", DataFrame)
         end

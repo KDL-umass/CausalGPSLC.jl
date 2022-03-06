@@ -10,6 +10,6 @@ include("comparison.jl")
 include("kernel.jl")
 include("latent.jl")
 include("sbc.jl")
-include("utils.jl")``
+include("utils.jl")
 
 end

@@ -7,7 +7,7 @@ export Posterior
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
     if !verbose
-        tqdm = range
+        tqdm = loop(x) = x
     end
 
     n = length(T)
@@ -67,7 +67,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
     if !verbose
-        tqdm = range
+        tqdm = loop(x) = x
     end
 
     n = length(T)
@@ -112,7 +112,7 @@ end
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing; verbose = true)
     if !verbose
-        tqdm = range
+        tqdm = loop(x) = x
     end
 
     n = length(T)
@@ -147,7 +147,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing; verbose = true)
     if !verbose
-        tqdm = range
+        tqdm = loop(x) = x
     end
 
     n = length(T)
@@ -173,7 +173,7 @@ end
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
     if !verbose
-        tqdm = range
+        tqdm = loop(x) = x
     end
 
     n = length(T)
@@ -250,7 +250,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
     if !verbose
-        tqdm = range
+        tqdm = loop(x) = x
     end
 
     n = length(T)
@@ -310,7 +310,7 @@ end
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
     if !verbose
-        tqdm = range
+        tqdm = loop(x) = x
     end
 
     n = length(T)
@@ -363,7 +363,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing; verbose = true)
     if !verbose
-        tqdm = range
+        tqdm = loop(x) = x
     end
 
     n = length(T)
