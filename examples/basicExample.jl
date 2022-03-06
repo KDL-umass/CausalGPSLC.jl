@@ -12,7 +12,7 @@ function basicExample(dataFile = "examples/data/NEEC_sampled.csv"; verbose = tru
     posteriorSample = samplePosterior(X, T, Y, SigmaU; verbose = verbose)
 
     println("Estimating ITE")
-    ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorSample = posteriorSample)
+    ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorSample = posteriorSample, verbose = verbose)
 
     summarizeITE(ITEsamples; savetofile = "examples/results/NEEC_sampled_80.csv")
 end

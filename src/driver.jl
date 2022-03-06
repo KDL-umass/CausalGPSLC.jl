@@ -82,6 +82,7 @@ Params:
 - `Y`: Output
 - `SigmaU`: Object structure
 - `posteriorSample`=[`samplePosterior`](@ref)`(X,T,Y,SigmaU)`: Samples of parameters from posterior
+- `verbose=true`: Print progress bars if true
 
 Returns:
 
@@ -140,6 +141,7 @@ Params:
 - `Y`: Output
 - `SigmaU`: Object structure
 - `hyperParams`=[`getHyperParameters`](@ref)`()`: Hyperparameters for posterior sampling
+- `verbose=true`: Print progress bars if true
 
 Returns:
 
