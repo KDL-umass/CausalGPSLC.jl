@@ -89,8 +89,11 @@ Returns:
 """
 function sampleITE(X, T, Y, SigmaU; posteriorSample = samplePosterior(X, T, Y, SigmaU),
     doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,
-    burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10
+    burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10; verbose = true
 )
+    if !verbose
+        tqdm = loop(x) = x
+    end
     ITEsamples = zeros(length(T), samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
     idx = 1
     for i in tqdm(burnIn:stepSize:nOuter)
