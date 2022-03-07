@@ -16,7 +16,3 @@ function basicExample(dataFile = "examples/data/NEEC_sampled.csv")
 
     summarizeITE(ITEsamples; savetofile = "examples/results/NEEC_sampled_80.csv")
 end
-
-if abspath(PROGRAM_FILE) == @__FILE__
-    basicExample()
-end
