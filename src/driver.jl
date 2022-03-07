@@ -90,7 +90,7 @@ Returns:
 """
 function sampleITE(X, T, Y, SigmaU; posteriorSample = samplePosterior(X, T, Y, SigmaU),
     doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,
-    burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10; verbose = true
+    burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10, verbose = true
 )
     if !verbose
         tqdm = loop(x) = x
@@ -147,8 +147,7 @@ Returns:
 
 `posteriorSample`: samples from posterior determined by hyperparameters
 """
-function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any} = getHyperParameters(),
-    nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1, verbose = true
+function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any} = getHyperParameters(), nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1, verbose = true
 )
     hyperparams["SigmaU"] = SigmaU # databased hyperparameter
     posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner; verbose = verbose)
