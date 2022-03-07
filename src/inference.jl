@@ -6,9 +6,9 @@ export Posterior
 """Full Model"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
-    # if !verbose
-    #     tqdm = loop(x) = x
-    # end
+    if !verbose
+        tqdm = loop(x) = x
+    end
 
     n = length(T)
     nX = length(X)
@@ -66,9 +66,9 @@ end
 """No Covariates"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
-    # if !verbose
-    #     tqdm = loop(x) = x
-    # end
+    if !verbose
+        tqdm = loop(x) = x
+    end
 
     n = length(T)
 
@@ -125,7 +125,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     posteriorSamples = []
 
     (trace, _) = generate(NoUContinuousGPSLC, (hyperparams, X), obs)
-    for i = 1:nOuter
+    for i = tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
@@ -172,9 +172,9 @@ end
 """Binary Treatment Full Model"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
-    # if !verbose
-    #     tqdm = loop(x) = x
-    # end
+    if !verbose
+        tqdm = loop(x) = x
+    end
 
     n = length(T)
     nX = length(X)
@@ -249,9 +249,9 @@ end
 """Binary Treatment No Covariates"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
-    # if !verbose
-    #     tqdm = loop(x) = x
-    # end
+    if !verbose
+        tqdm = loop(x) = x
+    end
 
     n = length(T)
 
@@ -265,7 +265,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
     posteriorSamples = []
 
     (trace, _) = generate(NoCovBinaryGPSLC, (hyperparams, nU), obs)
-    for i = 1:nOuter
+    for i = tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
@@ -309,9 +309,9 @@ end
 """Binary Treatment with No Confounders"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Int, nESInner::Int; verbose = true)
-    # if !verbose
-    #     tqdm = loop(x) = x
-    # end
+    if !verbose
+        tqdm = loop(x) = x
+    end
 
     n = length(T)
     nX = length(X)
@@ -326,7 +326,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
     posteriorSamples = []
 
     (trace, _) = generate(NoUBinaryGPSLC, (hyperparams, X), obs)
-    for i = 1:nOuter
+    for i = tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
@@ -362,9 +362,9 @@ end
 """Binary Treatment No Confounders No Covariates"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing; verbose = true)
-    # if !verbose
-    #     tqdm = loop(x) = x
-    # end
+    if !verbose
+        tqdm = loop(x) = x
+    end
 
     n = length(T)
 
@@ -375,7 +375,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
     posteriorSamples = []
 
     (trace, _) = generate(NoCovNoUBinaryGPSLC, (hyperparams, T), obs)
-    for i = 1:nOuter
+    for i = tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
