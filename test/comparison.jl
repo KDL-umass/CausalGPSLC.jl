@@ -5,21 +5,18 @@ include("../examples/basicExample.jl")
 
 @testset "Submission Comparison" begin
     @testset "NEEC" begin
-        # testRoot = pwd()[end-3:end] == "test"
-        # if testRoot # in CI environment
-        #     println("In CI environment")
-        #     basicExample("../examples/data/NEEC_sampled.csv"; verbose = false)
-        #     expected = CSV.read("test_results/NEEC_sampled_80.csv", DataFrame)
-        #     actual = CSV.read("../examples/results/NEEC_sampled_80.csv", DataFrame)
-        # else
-        #     println("In local environment")
-        #     basicExample("examples/data/NEEC_sampled.csv"; verbose = false)
-        #     expected = CSV.read("test/test_results/NEEC_sampled_80.csv", DataFrame)
-        #     actual = CSV.read("examples/results/NEEC_sampled_80.csv", DataFrame)
-        # end
-        basicExample("examples/data/NEEC_sampled.csv"; verbose = false)
-        expected = CSV.read("test/test_results/NEEC_sampled_80.csv", DataFrame)
-        actual = CSV.read("examples/results/NEEC_sampled_80.csv", DataFrame)
+        testRoot = pwd()[end-3:end] == "test"
+        if testRoot # in CI environment
+            println("In CI environment")
+            basicExample("../examples/data/NEEC_sampled.csv"; verbose = false)
+            expected = CSV.read("test_results/NEEC_sampled_80.csv", DataFrame)
+            actual = CSV.read("../examples/results/NEEC_sampled_80.csv", DataFrame)
+        else
+            println("In local environment")
+            basicExample("examples/data/NEEC_sampled.csv"; verbose = false)
+            expected = CSV.read("test/test_results/NEEC_sampled_80.csv", DataFrame)
+            actual = CSV.read("examples/results/NEEC_sampled_80.csv", DataFrame)
+        end
 
         @test size(expected) == size(actual)
         N = size(actual, 1)
