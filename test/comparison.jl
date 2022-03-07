@@ -1,17 +1,11 @@
 using DataFrames
 import CSV
 
-println(pwd()[end-3:end])
-prefix = ""
-if pwd()[end-3:end] != "test"
-    prefix = "test/"
-end
-
 function testInference()
     X, T, Y, SigmaU = prepareData("$(prefix)test_data/NEEC_sampled.csv")
-    posteriorSample = samplePosterior(X, T, Y, SigmaU; verbose = false)
+    posteriorSample = samplePosterior(X, T, Y, SigmaU)
     ITEsamples = sampleITE(X, T, Y, SigmaU;
-        posteriorSample = posteriorSample, verbose = false)
+        posteriorSample = posteriorSample)
     summarizeITE(ITEsamples)
 end
 

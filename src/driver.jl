@@ -82,19 +82,16 @@ Params:
 - `Y`: Output
 - `SigmaU`: Object structure
 - `posteriorSample`=[`samplePosterior`](@ref)`(X,T,Y,SigmaU)`: Samples of parameters from posterior
-- `verbose=true`: Print progress bars if true
 
 Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 """
-function sampleITE(X, T, Y, SigmaU; posteriorSample = samplePosterior(X, T, Y, SigmaU),
+function sampleITE(X, T, Y, SigmaU;
+    posteriorSample = samplePosterior(X, T, Y, SigmaU),
     doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,
-    burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10, verbose = true
-)
-    if !verbose
-        tqdm = loop(x) = x
-    end
+    burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10)
+
     ITEsamples = zeros(length(T), samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
     idx = 1
     for i in tqdm(burnIn:stepSize:nOuter)
@@ -141,16 +138,14 @@ Params:
 - `Y`: Output
 - `SigmaU`: Object structure
 - `hyperParams`=[`getHyperParameters`](@ref)`()`: Hyperparameters for posterior sampling
-- `verbose=true`: Print progress bars if true
 
 Returns:
 
 `posteriorSample`: samples from posterior determined by hyperparameters
 """
-function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any} = getHyperParameters(), nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1, verbose = true
-)
+function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any} = getHyperParameters(), nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1)
     hyperparams["SigmaU"] = SigmaU # databased hyperparameter
-    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner; verbose = verbose)
+    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
     return posteriorSample
 end
 
