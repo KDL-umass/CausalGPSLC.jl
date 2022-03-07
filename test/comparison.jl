@@ -1,6 +1,3 @@
-using DataFrames
-import CSV
-
 function testInference()
     X, T, Y, SigmaU = prepareData("$(prefix)test_data/NEEC_sampled.csv")
     posteriorSample = samplePosterior(X, T, Y, SigmaU)

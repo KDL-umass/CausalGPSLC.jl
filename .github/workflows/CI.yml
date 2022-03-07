@@ -11,6 +11,25 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
+  # build:
+  #   name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: true
+  #     matrix:
+  #       version:
+  #         - '1.7'
+  #       os:
+  #         - ubuntu-latest
+  #       arch:
+  #         - x86
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: julia-actions/setup-julia@v1
+  #       with:
+  #         version: ${{ matrix.version }}
+  #         arch: ${{ matrix.arch }}
+  #     - uses: julia-actions/julia-buildpkg@v1
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
@@ -38,7 +57,6 @@ jobs:
         # with:
         #   files: lcov.info
 
-  #  GOOD TO GO:
   # docs:
   #   name: Documentation
   #   runs-on: ubuntu-latest

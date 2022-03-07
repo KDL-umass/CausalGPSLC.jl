@@ -1,6 +1,3 @@
-using LinearAlgebra
-using Gen
-
 export conditionalITE, conditionalSATE, ITEsamples, SATEsamples
 
 """Full Model Continuous/Binary"""

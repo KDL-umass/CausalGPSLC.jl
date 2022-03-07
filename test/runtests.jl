@@ -1,9 +1,11 @@
 module GPSLCTests
 
-using GPSLC
-using Test
 using Mocking
+using Test
+using GPSLC
 using ProgressBars
+using DataFrames
+import CSV
 
 import Random
 Random.seed!(0)
@@ -16,7 +18,10 @@ end
 
 # Mock ProgressBars
 Mocking.activate()
-patch = @patch tqdm(x::UnitRange{Int64}) = x
+patch = @patch function ProgressBars.tqdm(x)
+    println("Mocking out progress bars")
+    return x
+end
 
 apply(patch) do
     include("comparison.jl")

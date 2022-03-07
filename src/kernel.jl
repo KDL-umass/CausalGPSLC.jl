@@ -1,7 +1,3 @@
-using LinearAlgebra
-
-import FunctionalCollections
-
 export rbfKernelLog, logit, expit, processCov
 
 """

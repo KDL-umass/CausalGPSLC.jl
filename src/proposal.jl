@@ -1,5 +1,3 @@
-using Gen
-
 export getProposalAddress, paramProposal
 
 """

@@ -1,6 +1,3 @@
-using CSV
-using DataFrames
-
 export prepareData
 
 function prepareData(csv_path)

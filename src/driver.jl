@@ -1,12 +1,4 @@
-using GPSLC
-
-using CSV
-using DataFrames
-using LinearAlgebra
-using ProgressBars
-using Statistics
-using Distributions
-
+using Mocking
 export getHyperParameters, sampleITE, samplePosterior, summarizeITE
 
 """
@@ -92,9 +84,10 @@ function sampleITE(X, T, Y, SigmaU;
     doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,
     burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10)
 
+
     ITEsamples = zeros(length(T), samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
     idx = 1
-    for i in tqdm(burnIn:stepSize:nOuter)
+    for i in @mock tqdm(burnIn:stepSize:nOuter)
         uyLS = []
         U = []
         for u in 1:nU
@@ -126,6 +119,7 @@ function sampleITE(X, T, Y, SigmaU;
             idx += 1
         end
     end
+    println("Done with loop")
     return ITEsamples
 end
 
@@ -160,6 +154,7 @@ Returns:
 - `df`: Dataframe of Individual, Mean, LowerBound, and UpperBound values for the samples.
 """
 function summarizeITE(ITEsamples; savetofile::String = "")
+    println("ITE: $(size(ITEsamples))")
     meanITE = mean(ITEsamples, dims = 2)[:, 1]
     lowerITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
     upperITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
