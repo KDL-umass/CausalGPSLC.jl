@@ -71,3 +71,5 @@ jobs:
             using GPSLC
             DocMeta.setdocmeta!(GPSLC, :DocTestSetup, :(using GPSLC); recursive=true)
             doctest(GPSLC)'
+
+  # add nightly that pulls latest versions of dependencies

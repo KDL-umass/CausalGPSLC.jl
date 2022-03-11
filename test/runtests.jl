@@ -30,4 +30,7 @@ apply(patch) do
     include("sbc.jl")
     include("utils.jl")
 end
+
+# Bayesian Workflow -> A guide on writing Bayes code + tests
+# https://arxiv.org/pdf/2011.01808.pdf
 end
