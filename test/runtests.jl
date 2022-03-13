@@ -23,13 +23,13 @@ patch = @patch function ProgressBars.tqdm(x)
     return x
 end
 
-apply(patch) do
-    include("comparison.jl")
-    include("kernel.jl")
-    include("latent.jl")
-    include("sbc.jl")
-    include("utils.jl")
-end
+# apply(patch) do
+include("comparison.jl")
+include("kernel.jl")
+include("latent.jl")
+include("sbc.jl")
+include("utils.jl")
+# end
 
 # Bayesian Workflow -> A guide on writing Bayes code + tests
 # https://arxiv.org/pdf/2011.01808.pdf
