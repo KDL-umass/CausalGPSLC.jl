@@ -19,7 +19,7 @@ function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1},
 end
 
 SupportedRBFMatrix = Union{
-    Array{Float64,1},Array{Bool,1},FunctionalCollections.PersistentVector{Bool}
+    Array{Float64,1},Array{Int64,1},Array{Bool,1},FunctionalCollections.PersistentVector{Bool}
 }
 
 function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Float64)
