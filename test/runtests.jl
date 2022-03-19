@@ -1,5 +1,6 @@
 module GPSLCTests
 
+using Revise
 using Mocking
 using Test
 using GPSLC

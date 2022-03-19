@@ -79,8 +79,8 @@ function true_Ycf_ISO(doTs::Vector{Float64}, Ts, Ys)
         means = []
         vars = []
         for doT in doTs
-            kTTs = processCov(rbfKernelLog(Ts[region], [doT], LS), yScale, nothing)
-            kTsTs = processCov(rbfKernelLog([doT], [doT], LS), yScale, nothing)
+            kTTs = processCov(rbfKernelLog(Ts[region], [doT], LS), yScale)
+            kTsTs = processCov(rbfKernelLog([doT], [doT], LS), yScale)
             push!(means, (kTTs'*(kTT\Ys[region]))[1])
         end
         truthIntMeans[region] = means

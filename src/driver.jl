@@ -119,7 +119,6 @@ function sampleITE(X, T, Y, SigmaU;
             idx += 1
         end
     end
-    println("Done with loop")
     return ITEsamples
 end
 
@@ -154,7 +153,6 @@ Returns:
 - `df`: Dataframe of Individual, Mean, LowerBound, and UpperBound values for the samples.
 """
 function summarizeITE(ITEsamples; savetofile::String = "")
-    println("ITE: $(size(ITEsamples))")
     meanITE = mean(ITEsamples, dims = 2)[:, 1]
     lowerITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
     upperITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
