@@ -2,11 +2,16 @@ module GPSLCTests
 
 using Revise
 using Mocking
+using Gen
 using Test
 using GPSLC
 using ProgressBars
 using DataFrames
 using FunctionalCollections
+# using Statistics
+using Distributions
+using HypothesisTests
+using Plots
 import CSV
 
 import Random
@@ -25,7 +30,7 @@ patch = @patch function ProgressBars.tqdm(x)
     return x
 end
 
-apply(patch) do
+Mocking.apply(patch) do
     include("comparison.jl")
     include("kernel.jl")
     include("latent.jl")
