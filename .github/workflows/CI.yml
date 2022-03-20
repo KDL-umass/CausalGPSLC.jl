@@ -22,7 +22,7 @@ jobs:
         os:
           - ubuntu-latest
         arch:
-          - x86
+          - x64
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
@@ -41,7 +41,7 @@ jobs:
         os:
           - ubuntu-latest
         arch:
-          - x86
+          - x64
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
@@ -71,3 +71,5 @@ jobs:
             using GPSLC
             DocMeta.setdocmeta!(GPSLC, :DocTestSetup, :(using GPSLC); recursive=true)
             doctest(GPSLC)'
+
+  # add nightly that pulls latest versions of dependencies

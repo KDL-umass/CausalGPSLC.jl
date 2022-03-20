@@ -1,10 +1,15 @@
 module GPSLCTests
 
+using Revise
 using Mocking
+using Gen
 using Test
 using GPSLC
 using ProgressBars
 using DataFrames
+using FunctionalCollections
+using Distributions
+using HypothesisTests
 import CSV
 
 import Random
@@ -23,11 +28,14 @@ patch = @patch function ProgressBars.tqdm(x)
     return x
 end
 
-apply(patch) do
+Mocking.apply(patch) do
     include("comparison.jl")
     include("kernel.jl")
     include("latent.jl")
     include("sbc.jl")
     include("utils.jl")
 end
+
+# Bayesian Workflow -> A guide on writing Bayes code + tests
+# https://arxiv.org/pdf/2011.01808.pdf
 end
