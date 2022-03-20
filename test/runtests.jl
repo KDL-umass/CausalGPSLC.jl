@@ -8,10 +8,8 @@ using GPSLC
 using ProgressBars
 using DataFrames
 using FunctionalCollections
-# using Statistics
 using Distributions
 using HypothesisTests
-using Plots
 import CSV
 
 import Random
