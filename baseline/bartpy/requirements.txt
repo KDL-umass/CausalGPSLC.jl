@@ -1,8 +1,0 @@
-joblib
-matplotlib
-numpy
-pandas
-scipy
-sklearn
-statsmodels
-tqdm
