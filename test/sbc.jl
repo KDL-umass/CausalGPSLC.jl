@@ -9,11 +9,11 @@ function simulationBasedCalibration(prior, likelihood, posterior, numTrials, num
         y = likelihood(theta) # draw "true" y from data model
 
         # posterior returns array of samples (e.g. every 100th MH step)
-        thetaSamples = posterior(y, numSamples)
+        thetaSamples = posterior(y, numSamples) # numSamples x numParams
 
         for h = 1:numParams
             # where does this true theta component fall in the sampled distribution?
-            quantileSamples[t, h] = thetaQuantile(thetaSamples[:, h], theta[h])
+            quantileSamples[t, h] = thetaQuantile(thetaSamples[:,h], theta[h])
         end
     end
     # return quantileSamples
@@ -62,8 +62,9 @@ end
         numSamples = 100
         numTrials = 100 * numSamples
         @gen prior() = [randn()]
+        numParams = size(prior(),1)
         @gen likelihood(theta) = [randn() * theta]
-        @gen posterior(y, numSamples) = [prior() for i=1:numSamples]
+        @gen posterior(y, numSamples) = reshape([prior()[1] for i=1:numSamples], (numSamples,numParams))
 
         @test simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples)
     end
