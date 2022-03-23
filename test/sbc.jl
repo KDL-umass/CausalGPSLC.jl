@@ -63,7 +63,7 @@ end
         numTrials = 100 * numSamples
         @gen prior() = [randn()]
         @gen likelihood(theta) = [randn() * theta]
-        @gen posterior(y) = prior()
+        @gen posterior(y, numSamples) = [prior() for i=1:numSamples]
 
         @test simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples)
     end
