@@ -155,12 +155,10 @@ end
     Xcov = broadcast(processCov, sum(broadcast(rbfKernelLog, U, U, uxLS)), xScale, xNoise)
 
     X = @trace(MappedGenerateX(Xcov, fill(n, nX)), :X)
-
     utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
     xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
     Tcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
     T = @trace(mvnormal(fill(0, n), Tcov), :T)
-
     uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
     xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
     tyCovLog = rbfKernelLog(T, T, tyLS)
@@ -275,13 +273,11 @@ end
     Xcov = broadcast(processCov, sum(broadcast(rbfKernelLog, U, U, uxLS)), xScale, xNoise)
 
     X = @trace(MappedGenerateX(Xcov, fill(n, nX)), :X)
-
     utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
     xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
     logitTcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
     logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
-
     uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
     xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
     tyCovLog = rbfKernelLog(T, T, tyLS)
@@ -319,7 +315,6 @@ end
     logitTcov = processCov(utCovLog, tScale, tNoise)
     logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
-
     uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
     tyCovLog = rbfKernelLog(T, T, tyLS)
     Ycov = processCov(uyCovLog + tyCovLog, yScale, yNoise)
@@ -348,7 +343,6 @@ end
     logitTcov = processCov(xtCovLog, tScale, tNoise)
     logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
-
     xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
     tyCovLog = rbfKernelLog(T, T, tyLS)
     Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
