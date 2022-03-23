@@ -1,19 +1,15 @@
-@gen function simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples)
-    theta = @trace(prior()) # draw "true" theta from prior 
+function simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples)
+    theta = prior() # draw "true" theta from prior 
     numParams = size(theta, 1) # theta is 1D
-
     quantileSamples = zeros((numTrials, numParams))
 
     for t = 1:numTrials # N in columbia article
 
-        theta = @trace(prior()) # draw "true" theta from prior 
-        y = @trace(likelihood(theta)) # draw "true" y from data model
+        theta = prior() # draw "true" theta from prior 
+        y = likelihood(theta) # draw "true" y from data model
 
-        thetaSamples = zeros(numSamples, numParams)
-        for s = 1:numSamples # L in columbia article
-            # draw inference samples from posterior
-            thetaSamples[s, :] = @trace(posterior(y))
-        end
+        # posterior returns array of samples (e.g. every 100th MH step)
+        thetaSamples = posterior(y, numSamples)
 
         for h = 1:numParams
             # where does this true theta component fall in the sampled distribution?
@@ -45,7 +41,12 @@ end
 function isApproxUniform(dist, numTrials, numSamples)
     # https://en.wikipedia.org/wiki/Bonferroni_correction#Definition
     # https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
-    dist = vec(dist)
+    dist = vec(dist) 
+
+    # trials x params
+    # p-values for each parameter
+    # apply B.correction over all parameters
+
     d = Distributions.Uniform(0, numSamples)
     T = HypothesisTests.ApproximateOneSampleKSTest(dist, d)
     p = HypothesisTests.pvalue(T)
@@ -65,6 +66,10 @@ end
         @gen posterior(y) = prior()
 
         @test simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples)
+    end
+
+    @testset "GPSLC" begin
+        # test the inference algorithms
     end
 
 end
