@@ -3,3 +3,10 @@ results/*
 docs/build
 build
 secrets
+
+
+*checkpoint*
+*.jld
+*.csv
+!examples/data/*.csv
+*.xlsx
