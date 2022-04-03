@@ -72,6 +72,12 @@ end
 
     @testset "GPSLC" begin
         # test the inference algorithms
+        hyperparams = getHyperParameters()
+        # @gen prior() = [
+        #     lengthscaleFromPriorNoUNoX(),
+        #     sampleNoiseFromPrior()
+        # ]
+        # @gen likelihood() 
     end
 
 end
