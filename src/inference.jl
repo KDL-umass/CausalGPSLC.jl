@@ -17,7 +17,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(ContinuousGPSLC, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCContinuous, (hyperparams, nX, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -26,18 +26,18 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k::Int = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
                 for l = 1:nX
-                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i = k, j = l)))
+                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i=k, j=l)))
                 end
             end
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -69,7 +69,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoCovContinuousGPSLC, (hyperparams, nU), obs)
+    (trace, _) = generate(GPSLCNoCovContinuous, (hyperparams, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise"),))
@@ -78,8 +78,8 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -111,15 +111,15 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoUContinuousGPSLC, (hyperparams, X), obs)
+    (trace, _) = generate(GPSLCNoUContinuous, (hyperparams, X), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
         for k = 1:nX
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
         end
 
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -140,7 +140,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoCovNoUContinuousGPSLC, (hyperparams, T), obs)
+    (trace, _) = generate(GPSLCNoCovNoUContinuous, (hyperparams, T), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
@@ -172,7 +172,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 
     posteriorSamples = []
 
-    (trace, _) = generate(BinaryGPSLC, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCBinary, (hyperparams, nX, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -181,18 +181,18 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
                 for l = 1:nX
-                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i = k, j = l)))
+                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i=k, j=l)))
                 end
             end
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -241,7 +241,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoCovBinaryGPSLC, (hyperparams, nU), obs)
+    (trace, _) = generate(GPSLCNoCovBinary, (hyperparams, nU), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -250,8 +250,8 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -299,7 +299,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoUBinaryGPSLC, (hyperparams, X), obs)
+    (trace, _) = generate(GPSLCNoUBinary, (hyperparams, X), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
@@ -307,8 +307,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -345,7 +345,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoCovNoUBinaryGPSLC, (hyperparams, T), obs)
+    (trace, _) = generate(GPSLCNoCovNoUBinary, (hyperparams, T), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))

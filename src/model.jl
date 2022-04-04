@@ -1,9 +1,9 @@
 import FunctionalCollections
 
-export ContinuousGPSLC,
-    NoCovContinuousGPSLC, NoUContinuousGPSLC, NoCovNoUContinuousGPSLC,
-    BinaryGPSLC,
-    NoCovBinaryGPSLC, NoUBinaryGPSLC, NoCovNoUBinaryGPSLC
+export GPSLCContinuous,
+    GPSLCNoCovContinuous, GPSLCNoUContinuous, GPSLCNoCovNoUContinuous,
+    GPSLCBinary,
+    GPSLCNoCovBinary, GPSLCNoUBinary, GPSLCNoCovNoUBinary
 
 """Gen function to generate lengthscale parameter for GP"""
 @gen function generateLS(shape, scale)
@@ -135,7 +135,7 @@ Generate kernel lengthscales from prior without latent confounders or covariates
 end
 
 """Continous GPSLC, with Latent Confounders (U) and Covariates (X)"""
-@gen function ContinuousGPSLC(hyperparams, nX, nU)
+@gen function GPSLCContinuous(hyperparams, nX, nU)
     n = size(hyperparams["SigmaU"])[1]
 
     uNoise, xNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams, nX))
@@ -169,7 +169,7 @@ end
 end
 
 """No Covariates (no X), Continuous GPSLC"""
-@gen function NoCovContinuousGPSLC(hyperparams, nU)
+@gen function GPSLCNoCovContinuous(hyperparams, nU)
     n = size(hyperparams["SigmaU"])[1]
 
     uNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
@@ -199,7 +199,7 @@ end
 
 
 """No Latent Confounders (no U), Continuous GPSLC"""
-@gen function NoUContinuousGPSLC(hyperparams, X)
+@gen function GPSLCNoUContinuous(hyperparams, X)
     n = length(X[1])
     nX = length(X)
 
@@ -231,7 +231,7 @@ end
 
 
 """No Covariates (no X), No Latent Confounders (no U), Continuous GPSLC"""
-@gen function NoCovNoUContinuousGPSLC(hyperparams, T)
+@gen function GPSLCNoCovNoUContinuous(hyperparams, T)
     n = length(T)
 
     _, _, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
@@ -252,7 +252,7 @@ end
 
 
 """Binary Treatment GPSLC with Covariates (X) and Latent Confounders (U)"""
-@gen function BinaryGPSLC(hyperparams, nX, nU)
+@gen function GPSLCBinary(hyperparams, nX, nU)
     n = size(hyperparams["SigmaU"])[1]
 
     #   Prior over Noise
@@ -289,7 +289,7 @@ end
 
 
 """No Covariates (no X), Binary Treatment GPSLC"""
-@gen function NoCovBinaryGPSLC(hyperparams, nU)
+@gen function GPSLCNoCovBinary(hyperparams, nU)
     n = size(hyperparams["SigmaU"])[1]
 
     #   Prior over Noise
@@ -324,7 +324,7 @@ end
 end
 
 """No latent confounders (no U), Binary Treatment GPSLC"""
-@gen function NoUBinaryGPSLC(hyperparams, X)
+@gen function GPSLCNoUBinary(hyperparams, X)
     n = size(X[1])
     nX = size(X)
 
@@ -351,8 +351,14 @@ end
     return Y
 end
 
-"""No latent confounders (no U) for Binary Treatment GPSLC"""
-@gen function NoCovNoUBinaryGPSLC(hyperparams, T::Array{Bool,1})
+@gen function generateY(U::Nothing, X::Nothing, T::Array{Bool,1}, tyLS, yScale, yNoise)
+    tyCovLog = rbfKernelLog(T, T, tyLS)
+    Ycov = processCov(tyCovLog, yScale, yNoise)
+    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+end
+
+"""No covariates (no X), no latent confounders (no U) for Binary Treatment GPSLC"""
+@gen function GPSLCNoCovNoUBinary(hyperparams, T::Array{Bool,1})
     n = size(T)
 
     #   Prior over Noise
@@ -365,9 +371,7 @@ end
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data 
-    tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = generateY(nothing, nothing, T, tyLS, yScale, yNoise)
 
     return Y
 end

@@ -73,11 +73,21 @@ end
     @testset "GPSLC" begin
         # test the inference algorithms
         hyperparams = getHyperParameters()
-        # @gen prior() = [
-        #     lengthscaleFromPriorNoUNoX(),
-        #     sampleNoiseFromPrior()
-        # ]
-        # @gen likelihood() 
+        @gen prior() = {
+            "tyLS" => lengthscaleFromPriorNoUNoX(hyperparams),
+            "yNoise" => sampleNoiseFromPrior(hyperparams)[3],
+            "yScale" => @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale),
+        }
+        sampleNoiseFromPrior()
+        @gen likelihood(theta) = @trace(generateY(nothing, nothing, T, theta["tyLS"], theta["yScale"], theta["yNoise"]))
     end
+
+    # I'm trying to map the existing GPSLC functions onto the SBC setup, but I'm having trouble... It's all very nested together I think. I'm starting simple with just binary T and no U or X:
+    #  What I have so far is that the prior for what we're doing inference over:
+    #     yNoise, tyLS, and yScale seem to be the parameters we're doing inference over
+    #  Then, we need to be able to sample Y from the parameters we're doing inference over, which is the NoCovNoUBinaryGPSLC function you had defined (might have been named slightly differently)
+    #     Y comes from a mvnormal on a ycov from tyCovLog, yScale, and yNoise
+    #  Lastly, we need to do posterior inference on the parameters yNoise, tyLS, and yScale from this sampled Y
+    #     So we get yNoise, tyLS, and yScale from the Posterior with the right inputs. 
 
 end
