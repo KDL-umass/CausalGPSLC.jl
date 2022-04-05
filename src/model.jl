@@ -134,6 +134,28 @@ Generate kernel lengthscales from prior without latent confounders or covariates
     return tyLS
 end
 
+"""
+Generate data from parameters
+"""
+@gen function generateY(X::Nothing, T::Nothing, SigmaU, uNoise, nU, uxLS, xScale, xNoise, nX, utLS, xtLS, tScale, tNoise, uyLS, xyLS, tyLS, yScale, yNoise)
+    n = size(SigmaU, 1)
+    uCov = SigmaU * uNoise
+    U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
+    Xcov = broadcast(processCov, sum(broadcast(rbfKernelLog, U, U, uxLS)), xScale, xNoise)
+
+    X = @trace(MappedGenerateX(Xcov, fill(n, nX)), :X)
+    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
+    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
+    Tcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
+    T = @trace(mvnormal(fill(0, n), Tcov), :T)
+    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
+    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
+    tyCovLog = rbfKernelLog(T, T, tyLS)
+    Ycov = processCov(uyCovLog + xyCovLog + tyCovLog, yScale, yNoise)
+    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    return Y
+end
+
 """Continous GPSLC, with Latent Confounders (U) and Covariates (X)"""
 @gen function GPSLCContinuous(hyperparams, nX, nU)
     n = size(hyperparams["SigmaU"])[1]
@@ -150,39 +172,15 @@ end
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data 
-    uCov = hyperparams["SigmaU"] * uNoise
-    U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
-    Xcov = broadcast(processCov, sum(broadcast(rbfKernelLog, U, U, uxLS)), xScale, xNoise)
-
-    X = @trace(MappedGenerateX(Xcov, fill(n, nX)), :X)
-    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
-    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
-    Tcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
-    T = @trace(mvnormal(fill(0, n), Tcov), :T)
-    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
-    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
-    tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(uyCovLog + xyCovLog + tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(generateY(nothing, nothing, hyperparams["SigmaU"], uNoise, nU, uxLS, xScale, xNoise, nX, utLS, xtLS, tScale, tNoise, uyLS, xyLS, tyLS, yScale, yNoise))
 
     return Y
 end
 
-"""No Covariates (no X), Continuous GPSLC"""
-@gen function GPSLCNoCovContinuous(hyperparams, nU)
-    n = size(hyperparams["SigmaU"])[1]
-
-    uNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
-
-    #   Prior over Kernel Lengthscales
-    utLS, uyLS, tyLS = @trace(lengthscaleFromPriorNoX(hyperparams, nU))
-
-    #   Prior over Kernel Scale
-    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
-
-    #   Generate Data 
-    uCov = hyperparams["SigmaU"] * uNoise
+@gen function generateY(X::Nothing, T::Nothing, SigmaU, uNoise, nU, uxLS::Nothing, xScale::Nothing, xNoise::Nothing, nX::Nothing, utLS, xtLS::Nothing, tScale, tNoise, uyLS, xyLS::Nothing, tyLS, yScale, yNoise)
+    println("Generate Y 181")
+    n = size(SigmaU, 1)
+    uCov = SigmaU * uNoise
     U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
 
     utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
@@ -193,10 +191,38 @@ end
     tyCovLog = rbfKernelLog(T, T, tyLS)
     Ycov = processCov(uyCovLog + tyCovLog, yScale, yNoise)
     Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    return Y
+end
+
+"""No Covariates (no X), Continuous GPSLC"""
+@gen function GPSLCNoCovContinuous(hyperparams, nU)
+    uNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+
+    #   Prior over Kernel Lengthscales
+    utLS, uyLS, tyLS = @trace(lengthscaleFromPriorNoX(hyperparams, nU))
+
+    #   Prior over Kernel Scale
+    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+
+    #   Generate Data 
+    Y = @trace(generateY(nothing, nothing, hyperparams["SigmaU"], uNoise, nU, nothing, nothing, nothing, nothing, utLS, nothing, tScale, tNoise, uyLS, nothing, tyLS, yScale, yNoise))
 
     return Y
 end
 
+@gen function generateY(X, T::Nothing, SigmaU::Nothing, uNoise::Nothing, nU::Nothing, uxLS::Nothing, xScale::Nothing, xNoise::Nothing, nX::Nothing, utLS::Nothing, xtLS, tScale, tNoise, uyLS::Nothing, xyLS, tyLS, yScale, yNoise)
+    n = length(X[1])
+    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
+    Tcov = processCov(xtCovLog, tScale, tNoise)
+    T = @trace(mvnormal(fill(0, n), Tcov), :T)
+
+    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
+    tyCovLog = rbfKernelLog(T, T, tyLS)
+    Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
+    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    return Y
+end
 
 """No Latent Confounders (no U), Continuous GPSLC"""
 @gen function GPSLCNoUContinuous(hyperparams, X)
@@ -217,15 +243,16 @@ end
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data 
-    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
-    Tcov = processCov(xtCovLog, tScale, tNoise)
-    T = @trace(mvnormal(fill(0, n), Tcov), :T)
+    Y = @trace(generateY(X, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, xtLS, tScale, tNoise, nothing, xyLS, tyLS, yScale, yNoise))
 
-    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
+    return Y
+end
+
+@gen function generateY(X::Nothing, T, SigmaU::Nothing, uNoise::Nothing, nU::Nothing, uxLS::Nothing, xScale::Nothing, xNoise::Nothing, nX::Nothing, utLS::Nothing, xtLS::Nothing, tScale::Nothing, tNoise::Nothing, uyLS::Nothing, xyLS::Nothing, tyLS, yScale, yNoise)
+    n = length(T)
     tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
+    Ycov = processCov(tyCovLog, yScale, yNoise)
     Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
-
     return Y
 end
 
@@ -243,13 +270,29 @@ end
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data     
-    tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(generateY(nothing, T, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, tyLS, yScale, yNoise))
 
     return Y
 end
 
+@gen function generateY(X::Nothing, T::Nothing, SigmaU, uNoise, nU, uxLS, xScale, xNoise, nX, utLS, xtLS, tScale, tNoise, uyLS, xyLS, tyLS, yScale, yNoise)
+    uCov = hyperparams["SigmaU"] * uNoise
+    U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
+    Xcov = broadcast(processCov, sum(broadcast(rbfKernelLog, U, U, uxLS)), xScale, xNoise)
+
+    X = @trace(MappedGenerateX(Xcov, fill(n, nX)), :X)
+    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
+    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
+    logitTcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
+    logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
+    T = @trace(MappedGenerateBinaryT(logitT), :T)
+    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
+    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
+    tyCovLog = rbfKernelLog(T, T, tyLS)
+    Ycov = processCov(uyCovLog + xyCovLog + tyCovLog, yScale, yNoise)
+    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    return Y
+end
 
 """Binary Treatment GPSLC with Covariates (X) and Latent Confounders (U)"""
 @gen function GPSLCBinary(hyperparams, nX, nU)
@@ -268,29 +311,30 @@ end
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data 
-    uCov = hyperparams["SigmaU"] * uNoise
-    U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
-    Xcov = broadcast(processCov, sum(broadcast(rbfKernelLog, U, U, uxLS)), xScale, xNoise)
-
-    X = @trace(MappedGenerateX(Xcov, fill(n, nX)), :X)
-    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
-    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
-    logitTcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
-    logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
-    T = @trace(MappedGenerateBinaryT(logitT), :T)
-    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
-    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
-    tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(uyCovLog + xyCovLog + tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(generateY(nothing, nothing, hyperparams["SigmaU"], uNoise, nU, uxLS, xScale, xNoise, nX, utLS, xtLS, tScale, tNoise, uyLS, xyLS, tyLS, yScale, yNoise))
 
     return Y
 end
 
+@gen function generateY(X::Nothing, T, SigmaU, uNoise, nU, uxLS::Nothing, xScale::Nothing, xNoise::Nothing, nX::Nothing, utLS, xtLS::Nothing, tScale, tNoise, uyLS, xyLS::Nothing, tyLS, yScale, yNoise)
+    uCov = SigmaU * uNoise
+    n = size(SigmaU, 1)
+    U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
+
+    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
+    logitTcov = processCov(utCovLog, tScale, tNoise)
+    logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
+    T = @trace(MappedGenerateBinaryT(logitT), :T)
+    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
+    tyCovLog = rbfKernelLog(T, T, tyLS)
+    Ycov = processCov(uyCovLog + tyCovLog, yScale, yNoise)
+    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    return Y
+end
 
 """No Covariates (no X), Binary Treatment GPSLC"""
 @gen function GPSLCNoCovBinary(hyperparams, nU)
-    n = size(hyperparams["SigmaU"])[1]
+    n = size(hyperparams["SigmaU"], 1)
 
     #   Prior over Noise
     uNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
@@ -308,18 +352,20 @@ end
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data 
-    uCov = hyperparams["SigmaU"] * uNoise
-    U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
+    Y = @trace(generateY(nothing, T, hyperparams["SigmaU"], nU, uNoise, nothing, nothing, nothing, nothing, utLS, nothing, tScale, tNoise, uyLS, nothing, tyLS, yScale, yNoise))
 
-    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
-    logitTcov = processCov(utCovLog, tScale, tNoise)
+    return Y
+end
+
+@gen function generateY(X, T::Nothing, SigmaU::Nothing, uNoise::Nothing, nU::Nothing, uxLS::Nothing, xScale::Nothing, xNoise::Nothing, nX::Nothing, utLS::Nothing, xtLS, tScale, tNoise, uyLS::Nothing, xyLS, tyLS, yScale, yNoise)
+    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
+    logitTcov = processCov(xtCovLog, tScale, tNoise)
     logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
-    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
+    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
     tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(uyCovLog + tyCovLog, yScale, yNoise)
+    Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
     Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
-
     return Y
 end
 
@@ -339,19 +385,12 @@ end
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data 
-    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
-    logitTcov = processCov(xtCovLog, tScale, tNoise)
-    logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
-    T = @trace(MappedGenerateBinaryT(logitT), :T)
-    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
-    tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(generateY(X, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, xtLS, tScale, tNoise, nothing, xyLS, tyLS, yScale, yNoise))
 
     return Y
 end
 
-@gen function generateY(U::Nothing, X::Nothing, T::Array{Bool,1}, tyLS, yScale, yNoise)
+@gen function generateY(X::Nothing, T, SigmaU::Nothing, uNoise::Nothing, nU::Nothing, uxLS::Nothing, xScale::Nothing, xNoise::Nothing, nX::Nothing, utLS::Nothing, xtLS::Nothing, tScale::Nothing, tNoise::Nothing, uyLS::Nothing, xyLS::Nothing, tyLS, yScale, yNoise)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     Ycov = processCov(tyCovLog, yScale, yNoise)
     Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
@@ -365,13 +404,13 @@ end
     _, _, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
 
     #   Prior over Kernel Lengthscales
-    tyLS, xtLS, xyLS = @trace(lengthscaleFromPriorNoU(hyperparams, nX))
+    tyLS, _, _ = @trace(lengthscaleFromPriorNoU(hyperparams, nX))
 
     #   Prior over Kernel Scale
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data 
-    Y = generateY(nothing, nothing, T, tyLS, yScale, yNoise)
+    Y = @trace(generateY(nothing, T, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, tyLS, yScale, yNoise))
 
     return Y
 end

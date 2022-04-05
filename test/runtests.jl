@@ -4,12 +4,12 @@ using Revise
 using Mocking
 using Gen
 using Test
-using GPSLC
 using ProgressBars
 using DataFrames
 using FunctionalCollections
 using Distributions
 using HypothesisTests
+using GPSLC
 import CSV
 
 import Random

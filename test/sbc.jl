@@ -73,12 +73,11 @@ end
     @testset "GPSLC" begin
         # test the inference algorithms
         hyperparams = getHyperParameters()
-        @gen prior() = {
+        @gen prior() = Dict{String,Any}(
             "tyLS" => lengthscaleFromPriorNoUNoX(hyperparams),
             "yNoise" => sampleNoiseFromPrior(hyperparams)[3],
             "yScale" => @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale),
-        }
-        sampleNoiseFromPrior()
+        )
         @gen likelihood(theta) = @trace(generateY(nothing, nothing, T, theta["tyLS"], theta["yScale"], theta["yNoise"]))
     end
 
