@@ -1,4 +1,5 @@
-export generateY
+export generateU, generateX, generateT, generateY
+
 """
 Generate output (Y) from parameters
 
