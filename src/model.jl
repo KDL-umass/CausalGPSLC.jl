@@ -343,16 +343,18 @@ end
     logitTcov = processCov(xtCovLog, tScale, tNoise)
     logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
-    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
-    tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+
+    # xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
+    # tyCovLog = rbfKernelLog(T, T, tyLS)
+    # Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
+    # Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(generateY(nothing, X, T, nothing, xyLS, tyLS, yScale, yNoise))
 
     return Y
 end
 
 """No covariates (no X), no latent confounders (no U) for Binary Treatment GPSLC"""
-@gen function GPSLCNoCovNoUBinary(hyperparams, T::Array{Bool,1})
+@gen function GPSLCNoCovNoUBinary(hyperparams::HyperParameters, T::Array{Bool,1})
     n = size(T)
 
     #   Prior over Noise
@@ -365,9 +367,6 @@ end
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
 
     #   Generate Data 
-    tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
-
+    Y = @trace(generateY(nothing, nothing, T, nothing, nothing, tyLS, yScale, yNoise))
     return Y
 end
