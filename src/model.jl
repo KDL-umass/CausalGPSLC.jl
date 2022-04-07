@@ -5,104 +5,30 @@ export GPSLCContinuous,
     GPSLCBinary,
     GPSLCNoCovBinary, GPSLCNoUBinary, GPSLCNoCovNoUBinary
 
-"""Gen function to generate lengthscale parameter for GP"""
-@gen function generateLS(shape, scale)
-    @trace(inv_gamma(shape, scale), :LS)
-end
-
-"""Gen function to generate scale parameter for GP"""
-@gen function generateScale(shape, scale)
-    @trace(inv_gamma(shape, scale), :Scale)
-end
-
-"""Gen function to generate noise from inv_gamma"""
-@gen function generateNoise(shape, scale)
-    @trace(inv_gamma(shape, scale), :Noise)
-end
-
-"""Gen function to generate binary treatment (T)"""
-@gen function generateBinaryT(logitT)
-    @trace(bernoulli(expit(logitT)), :T)
-end
-
-"""Gen function to generate latent confounders (U) from mvnormal distribution"""
-@gen function generateU(Ucov::Array{Float64}, n::Int)
-    @trace(mvnormal(fill(0, n), Ucov), :U)
-end
-
-"""Gen function to generate covariates (X) from mvnormal distribution"""
-@gen function generateX(Xcov::Array{Float64}, n::Int)
-    @trace(mvnormal(fill(0, n), Xcov), :X)
-end
-
-MappedGenerateLS = Map(generateLS)
-MappedMappedGenerateLS = Map(MappedGenerateLS)
-MappedGenerateScale = Map(generateScale)
-MappedGenerateBinaryT = Map(generateBinaryT)
-MappedGenerateNoise = Map(generateNoise)
-MappedGenerateU = Map(generateU)
-MappedGenerateX = Map(generateX)
-
-load_generated_functions()
-
-"""
-Generate noise terms from noise prior
-"""
-@gen function sampleNoiseFromPrior(hyperparams, nX)
-    uNoise = @trace(inv_gamma(hyperparams["uNoiseShape"], hyperparams["uNoiseScale"]), :uNoise)
-    tNoise = @trace(inv_gamma(hyperparams["tNoiseShape"], hyperparams["tNoiseScale"]), :tNoise)
-    xNoise = @trace(MappedGenerateNoise(fill(hyperparams["xNoiseShape"], nX),
-            fill(hyperparams["xNoiseScale"], nX)), :xNoise)
-    yNoise = @trace(inv_gamma(hyperparams["yNoiseShape"], hyperparams["yNoiseScale"]), :yNoise)
-
-    return uNoise, xNoise, tNoise, yNoise
-end
-
-@gen function sampleNoiseFromPrior(hyperparams)
-    uNoise = @trace(inv_gamma(hyperparams["uNoiseShape"], hyperparams["uNoiseScale"]), :uNoise)
-    tNoise = @trace(inv_gamma(hyperparams["tNoiseShape"], hyperparams["tNoiseScale"]), :tNoise)
-    yNoise = @trace(inv_gamma(hyperparams["yNoiseShape"], hyperparams["yNoiseScale"]), :yNoise)
-    return uNoise, tNoise, yNoise
-end
-
-"""Treatment to outcome lengthscale"""
-@gen function sampleTYLengthscale(hyperparams)
-    tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)
-    return tyLS
-end
-
-"""Latent confounders to treatment and outcome lengthscale"""
-@gen function sampleUtUyLengthscale(hyperparams)
-    utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU),
-            fill(hyperparams["utLSScale"], nU)), :utLS)
-    uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU),
-            fill(hyperparams["uyLSScale"], nU)), :uyLS)
-    return utLS, uyLS
-end
-
-"""Covariates to treatment and outcome lengthscale"""
-@gen function sampleXtXyLengthscale(hyperparams, nX)
-    xtLS = @trace(MappedGenerateLS(fill(hyperparams["xtLSShape"], nX),
-            fill(hyperparams["xtLSScale"], nX)), :xtLS)
-    xyLS = @trace(MappedGenerateLS(fill(hyperparams["xyLSShape"], nX),
-            fill(hyperparams["xyLSScale"], nX)), :xyLS)
-    return xtLS, xyLS
-end
-
 """Continous GPSLC, with Latent Confounders (U) and Covariates (X)"""
 @gen function GPSLCContinuous(hyperparams, nX, nU)
     n = size(hyperparams["SigmaU"])[1]
 
-    uNoise, xNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams, nX))
+    # uNoise, xNoise, tNoise, yNoise = @trace(sampleNoiseFromPriorUXTY(hyperparams, nothing, nX))
+    uNoise = @trace(sampleNoiseFromPriorU(hyperparams))
+    xNoise = @trace(sampleNoiseFromPriorX(hyperparams, nX))
+    tNoise = @trace(sampleNoiseFromPriorT(hyperparams))
+    yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
 
     #   Prior over Kernel Lengthscales
-    utLS, uyLS, uxLS, tyLS, xtLS, xyLS = @trace(lengthscaleFromPrior(hyperparams, nU, nX))
+    # utLS, uyLS, uxLS, xtLS, xyLS, tyLS = @trace(lengthscaleFromPriorUTX(hyperparams, nU, nX))
+    uxLS, utLS, uyLS = @trace(lengthscaleFromPriorU(hyperparams, nU))
+    xtLS, xyLS = @trace(lengthscaleFromPriorX(hyperparams, nX))
+    tyLS = @trace(lengthscaleFromPriorT(hyperparams))
 
     #   Prior over Kernel Scale
-    xScale = @trace(MappedGenerateScale(fill(hyperparams["xScaleShape"], nX),
-            fill(hyperparams["xScaleScale"], nX)), :xScale)
-    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    # xScale = @trace(MappedGenerateScale(fill(hyperparams["xScaleShape"], nX),
+    #         fill(hyperparams["xScaleScale"], nX)), :xScale)
+    # tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    # yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    xScale = @trace(scaleFromPriorX(hyperparams, nX))
+    tScale = @trace(scaleFromPriorT(hyperparams))
+    yScale = @trace(scaleFromPriorY(hyperparams))
 
     #   Generate Data 
     U = @trace(generateUfromSigmaU(hyperparams["SigmaU"], uNoise, nU, n))
@@ -132,14 +58,21 @@ end
 @gen function GPSLCNoCovContinuous(hyperparams, nU)
     n = size(hyperparams["SigmaU"], 1)
 
-    uNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    # uNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    uNoise = @trace(sampleNoiseFromPriorU(hyperparams))
+    tNoise = @trace(sampleNoiseFromPriorT(hyperparams))
+    yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
 
     #   Prior over Kernel Lengthscales
-    utLS, uyLS, tyLS = @trace(lengthscaleFromPriorNoX(hyperparams, nU))
+    # utLS, uyLS, tyLS = @trace(lengthscaleFromPriorNoX(hyperparams, nU))
+    utLS, uyLS = @trace(lengthscaleFromPriorU(hyperparams, nU))
+    tyLS = @trace(lengthscaleFromPriorT(hyperparams))
 
     #   Prior over Kernel Scale
-    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    # tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    # yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    tScale = @trace(scaleFromPriorT(hyperparams))
+    yScale = @trace(scaleFromPriorY(hyperparams))
 
     #   Generate Data 
     # uCov = hyperparams["SigmaU"] * uNoise
@@ -167,18 +100,24 @@ end
     n = length(X[1])
     nX = length(X)
 
-    _, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    # _, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    tNoise = @trace(sampleNoiseFromPriorT(hyperparams))
+    yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
 
     #   Prior over Kernel Lengthscales
-    tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)
-    xtLS = @trace(MappedGenerateLS(fill(hyperparams["xtLSShape"], nX),
-            fill(hyperparams["xtLSScale"], nX)), :xtLS)
-    xyLS = @trace(MappedGenerateLS(fill(hyperparams["xyLSShape"], nX),
-            fill(hyperparams["xyLSScale"], nX)), :xyLS)
+    # tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)
+    # xtLS = @trace(MappedGenerateLS(fill(hyperparams["xtLSShape"], nX),
+    #         fill(hyperparams["xtLSScale"], nX)), :xtLS)
+    # xyLS = @trace(MappedGenerateLS(fill(hyperparams["xyLSShape"], nX),
+    #         fill(hyperparams["xyLSScale"], nX)), :xyLS)
+    xtLS, xyLS = @trace(lengthscaleFromPriorX(hyperparams, nX))
+    tyLS = @trace(lengthscaleFromPriorT(hyperparams))
 
     #   Prior over Kernel Scale
-    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    # tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    # yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    tScale = @trace(scaleFromPriorT(hyperparams))
+    yScale = @trace(scaleFromPriorY(hyperparams))
 
     #   Generate Data 
     # xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
@@ -201,13 +140,15 @@ end
 @gen function GPSLCNoCovNoUContinuous(hyperparams, T)
     n = length(T)
 
-    _, _, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    # _, _, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
 
     #   Prior over Kernel Lengthscales
-    tyLS = lengthscaleFromPriorNoUNoX(hyperparams)
+    tyLS = lengthscaleFromPriorT(hyperparams)
 
     #   Prior over Kernel Scale
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    # yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    yScale = @trace(scaleFromPriorY(hyperparams))
 
     #   Generate Data     
     # tyCovLog = rbfKernelLog(T, T, tyLS)
@@ -224,16 +165,26 @@ end
     n = size(hyperparams["SigmaU"])[1]
 
     #   Prior over Noise
-    uNoise, xNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams, nX))
+    # uNoise, xNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams, nX))
+    uNoise = @trace(sampleNoiseFromPriorU(hyperparams))
+    xNoise = @trace(sampleNoiseFromPriorX(hyperparams, nX))
+    tNoise = @trace(sampleNoiseFromPriorT(hyperparams))
+    yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
 
     #   Prior over Kernel Lengthscales    
-    utLS, uyLS, uxLS, tyLS, xtLS, xyLS = @trace(lengthscaleFromPrior(hyperparams, nU, nX))
+    # utLS, uyLS, uxLS, tyLS, xtLS, xyLS = @trace(lengthscaleFromPrior(hyperparams, nU, nX))
+    uxLS, utLS, uyLS = @trace(lengthscaleFromPriorU(hyperparams, nU))
+    xtLS, xyLS = @trace(lengthscaleFromPriorX(hyperparams, nX))
+    tyLS = @trace(lengthscaleFromPriorT(hyperparams))
 
     #   Prior over Kernel Scale
-    xScale = @trace(MappedGenerateScale(fill(hyperparams["xScaleShape"], nX),
-            fill(hyperparams["xScaleScale"], nX)), :xScale)
-    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    # xScale = @trace(MappedGenerateScale(fill(hyperparams["xScaleShape"], nX),
+    #         fill(hyperparams["xScaleScale"], nX)), :xScale)
+    # tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    # yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    xScale = @trace(scaleFromPriorX(hyperparams, nX))
+    tScale = @trace(scaleFromPriorT(hyperparams))
+    yScale = @trace(scaleFromPriorY(hyperparams))
 
     #   Generate Data 
     # uCov = hyperparams["SigmaU"] * uNoise
@@ -267,19 +218,26 @@ end
     n = size(hyperparams["SigmaU"])[1]
 
     #   Prior over Noise
-    uNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    # uNoise, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    uNoise = @trace(sampleNoiseFromPriorU(hyperparams))
+    tNoise = @trace(sampleNoiseFromPriorT(hyperparams))
+    yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
 
 
     #   Prior over Kernel Lengthscales
-    utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU),
-            fill(hyperparams["utLSScale"], nU)), :utLS)
-    uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU),
-            fill(hyperparams["uyLSScale"], nU)), :uyLS)
-    tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)
+    # utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU),
+    #         fill(hyperparams["utLSScale"], nU)), :utLS)
+    # uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU),
+    #         fill(hyperparams["uyLSScale"], nU)), :uyLS)
+    # tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)
+    utLS, uyLS = @trace(lengthscaleFromPriorU(hyperparams, nU))
+    tyLS = @trace(lengthscaleFromPriorT(hyperparams))
 
     #   Prior over Kernel Scale
-    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    # tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    # yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    tScale = @trace(scaleFromPriorT(hyperparams))
+    yScale = @trace(scaleFromPriorY(hyperparams))
 
     #   Generate Data 
     # uCov = hyperparams["SigmaU"] * uNoise
@@ -307,14 +265,20 @@ end
     nX = size(X)
 
     #   Prior over Noise
-    _, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    # _, tNoise, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    tNoise = @trace(sampleNoiseFromPriorT(hyperparams))
+    yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
 
     #   Prior over Kernel Lengthscales
-    tyLS, xtLS, xyLS = @trace(lengthscaleFromPriorNoU(hyperparams, nX))
+    # tyLS, xtLS, xyLS = @trace(lengthscaleFromPriorNoU(hyperparams, nX))
+    xtLS, xyLS = @trace(lengthscaleFromPriorX(hyperparams, nX))
+    tyLS = @trace(lengthscaleFromPriorT(hyperparams))
 
     #   Prior over Kernel Scale
-    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    # tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    # yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    tScale = @trace(scaleFromPriorT(hyperparams))
+    yScale = @trace(scaleFromPriorY(hyperparams))
 
     #   Generate Data 
     # xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
@@ -337,13 +301,16 @@ end
     n = size(T)
 
     #   Prior over Noise
-    _, _, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    # _, _, yNoise = @trace(sampleNoiseFromPrior(hyperparams))
+    yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
 
     #   Prior over Kernel Lengthscales
-    tyLS, xtLS, xyLS = @trace(lengthscaleFromPriorNoU(hyperparams, nX))
+    # tyLS, xtLS, xyLS = @trace(lengthscaleFromPriorNoU(hyperparams, nX))
+    tyLS = @trace(lengthscaleFromPriorT(hyperparams))
 
     #   Prior over Kernel Scale
-    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    # yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    yScale = @trace(scaleFromPriorY(hyperparams))
 
     #   Generate Data 
     Y = @trace(generateYfromT(nothing, nothing, T, nothing, nothing, tyLS, yScale, yNoise))

@@ -1,4 +1,4 @@
-export sampleNoiseFromPrior, lengthscaleFromPrior
+export sampleNoiseFromPriorUXTY, sampleNoiseFromPriorUTY, lengthscaleFromPriorT, lengthscaleFromPriorU, lengthscaleFromPriorX, lengthscaleFromPriorUX, lengthscaleFromPriorUTX
 
 """Gen function to generate lengthscale parameter for GP"""
 @gen function generateLS(shape, scale)
@@ -45,32 +45,45 @@ load_generated_functions()
 
 """
 Generate noise terms from noise prior
+
+Sample noise for prior from confounders (U)
 """
-@gen function sampleNoiseFromPrior(hyperparams::HyperParameters, nX)
+@gen function sampleNoiseFromPriorU(hyperparams::HyperParameters)
     uNoise = @trace(inv_gamma(hyperparams["uNoiseShape"], hyperparams["uNoiseScale"]), :uNoise)
-    tNoise = @trace(inv_gamma(hyperparams["tNoiseShape"], hyperparams["tNoiseScale"]), :tNoise)
+    return uNoise
+end
+
+
+"""Sample noise from prior for covariates (X)"""
+@gen function sampleNoiseFromPriorX(hyperparams::HyperParameters, nX::Int64)
     xNoise = @trace(MappedGenerateNoise(fill(hyperparams["xNoiseShape"], nX),
             fill(hyperparams["xNoiseScale"], nX)), :xNoise)
-    yNoise = @trace(inv_gamma(hyperparams["yNoiseShape"], hyperparams["yNoiseScale"]), :yNoise)
 
-    return uNoise, xNoise, tNoise, yNoise
+    return xNoise
 end
 
-@gen function sampleNoiseFromPrior(hyperparams::HyperParameters)
-    uNoise = @trace(inv_gamma(hyperparams["uNoiseShape"], hyperparams["uNoiseScale"]), :uNoise)
+"""Sample noise from prior for treatment (T)"""
+@gen function sampleNoiseFromPriorT(hyperparams::HyperParameters)
     tNoise = @trace(inv_gamma(hyperparams["tNoiseShape"], hyperparams["tNoiseScale"]), :tNoise)
-    yNoise = @trace(inv_gamma(hyperparams["yNoiseShape"], hyperparams["yNoiseScale"]), :yNoise)
-    return uNoise, tNoise, yNoise
+
+    return tNoise
 end
+
+"""Sample noise from prior for outcome (Y)"""
+@gen function sampleNoiseFromPriorY(hyperparams::HyperParameters)
+    yNoise = @trace(inv_gamma(hyperparams["yNoiseShape"], hyperparams["yNoiseScale"]), :yNoise)
+    return yNoise
+end
+
 
 """Treatment to outcome lengthscale"""
-@gen function sampleTYLengthscale(hyperparams::HyperParameters)
+@gen function lengthscaleFromPriorT(hyperparams::HyperParameters)
     tyLS = @trace(inv_gamma(hyperparams["tyLSShape"], hyperparams["tyLSScale"]), :tyLS)
     return tyLS
 end
 
 """Latent confounders to treatment and outcome lengthscale"""
-@gen function sampleUtUyLengthscale(hyperparams::HyperParameters)
+@gen function lengthscaleFromPriorU(hyperparams::HyperParameters, nU::Int64)
     utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU),
             fill(hyperparams["utLSScale"], nU)), :utLS)
     uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU),
@@ -79,7 +92,7 @@ end
 end
 
 """Covariates to treatment and outcome lengthscale"""
-@gen function sampleXtXyLengthscale(hyperparams::HyperParameters, nX)
+@gen function lengthscaleFromPriorX(hyperparams::HyperParameters, nX::Int64)
     xtLS = @trace(MappedGenerateLS(fill(hyperparams["xtLSShape"], nX),
             fill(hyperparams["xtLSScale"], nX)), :xtLS)
     xyLS = @trace(MappedGenerateLS(fill(hyperparams["xyLSShape"], nX),
@@ -88,46 +101,27 @@ end
 end
 
 
+
 """
-Generate kernel lengthscales from prior with U and X
+Generate kernel scales from prior for covariates (X)
 """
-@gen function lengthscaleFromPriorUX(hyperparams::HyperParameters, nU::Int64, nX::Int64)
-    utLS, uyLS = @trace(sampleUtUyLengthscale(hyperparams))
-
-    uxLS = @trace(MappedMappedGenerateLS(fill(fill(hyperparams["uxLSShape"], nX), nU),
-            fill(fill(hyperparams["uxLSScale"], nX), nU)), :uxLS)
-
-    tyLS = @trace(sampleTYLengthscale(hyperparams))
-    xtLS, xyLS = sampleXtXyLengthscale(hyperparams, nX)
-
-    return utLS, uyLS, uxLS, tyLS, xtLS, xyLS
+@gen function scaleFromPriorX(hyperparams::HyperParameters, nX::Int64)
+    xScale = @trace(MappedGenerateScale(fill(hyperparams["xScaleShape"], nX), fill(hyperparams["xScaleScale"], nX)), :xScale)
+    return xScale
 end
 
 """
-Generate kernel lengthscales from prior without covariates
+Sample kernel scale from prior for treatment (T)
 """
-@gen function lengthscaleFromPriorU(hyperparams::HyperParameters, nU::Int64, nX::Nothing)
-    utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU),
-            fill(hyperparams["utLSScale"], nU)), :utLS)
-    uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU),
-            fill(hyperparams["uyLSScale"], nU)), :uyLS)
-    tyLS = @trace(sampleTYLengthscale(hyperparams))
-    return utLS, uyLS, tyLS
+@gen function scaleFromPriorT(hyperparams::HyperParameters)
+    tScale = @trace(inv_gamma(hyperparams["tScaleShape"], hyperparams["tScaleScale"]), :tScale)
+    return tScale
 end
 
 """
-Generate kernel lengthscales from prior without latent confounders
+Sample kernel scale from prior for outcome (Y)
 """
-@gen function lengthscaleFromPriorX(hyperparams::HyperParameters, nU::Nothing, nX::Int64)
-    tyLS = @trace(sampleTYLengthscale(hyperparams))
-    xtLS, xyLS = @trace(sampleXtXyLengthscale(hyperparams, nX))
-    return tyLS, xtLS, xyLS
-end
-
-"""
-Generate kernel lengthscales from prior without latent confounders or covariates
-"""
-@gen function lengthscaleFromPrior(hyperparams::HyperParameters, nU::Nothing, nX::Nothing)
-    tyLS = @trace(sampleTYLengthscale(hyperparams))
-    return tyLS
+@gen function scaleFromPriorY(hyperparams::HyperParameters)
+    yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
+    return yScale
 end
