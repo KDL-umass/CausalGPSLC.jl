@@ -89,9 +89,9 @@ end
 
 
 """
-Generate kernel lengthscales from prior
+Generate kernel lengthscales from prior with U and X
 """
-@gen function lengthscaleFromPrior(hyperparams::HyperParameters, nU::Int64, nX::Int64)
+@gen function lengthscaleFromPriorUX(hyperparams::HyperParameters, nU::Int64, nX::Int64)
     utLS, uyLS = @trace(sampleUtUyLengthscale(hyperparams))
 
     uxLS = @trace(MappedMappedGenerateLS(fill(fill(hyperparams["uxLSShape"], nX), nU),
@@ -106,7 +106,7 @@ end
 """
 Generate kernel lengthscales from prior without covariates
 """
-@gen function lengthscaleFromPrior(hyperparams::HyperParameters, nU::Int64, nX::Nothing)
+@gen function lengthscaleFromPriorU(hyperparams::HyperParameters, nU::Int64, nX::Nothing)
     utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU),
             fill(hyperparams["utLSScale"], nU)), :utLS)
     uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU),
@@ -118,7 +118,7 @@ end
 """
 Generate kernel lengthscales from prior without latent confounders
 """
-@gen function lengthscaleFromPrior(hyperparams::HyperParameters, nU::Nothing, nX::Int64)
+@gen function lengthscaleFromPriorX(hyperparams::HyperParameters, nU::Nothing, nX::Int64)
     tyLS = @trace(sampleTYLengthscale(hyperparams))
     xtLS, xyLS = @trace(sampleXtXyLengthscale(hyperparams, nX))
     return tyLS, xtLS, xyLS
