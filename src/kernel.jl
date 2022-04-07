@@ -10,20 +10,24 @@ Params:
 
 Output normalized by `LS` squared
 """
-function rbfKernelLog(X1::Array{Float64,1}, X2::Array{Float64,1},
-    LS::Union{
-        Array{Float64,1},
-        FunctionalCollections.PersistentVector{Float64}
-    })
+function rbfKernelLog(X1::SupportedRBFVector, X2::SupportedRBFVector, LS::SupportedRBFLengthscale)
     return -broadcast(/, ((X1 .- X2') .^ 2,), LS .^ 2)
 end
 
-SupportedRBFMatrix = Union{
-    Array{Float64,1},Array{Int64,1},Array{Bool,1},FunctionalCollections.PersistentVector{Bool}
-}
 
-function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Float64)
+function rbfKernelLog(X1::SupportedRBFVector, X2::SupportedRBFVector, LS::Float64)
     return -((X1 .- X2') / LS) .^ 2
+end
+
+"""
+2D rbfKernelLog
+"""
+function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Union{SupportedRBFLengthscale,Float64})
+    sum([rbfKernelLog(X1[i, :], X2[i, :], LS) for i in 1:size(X1, 1)])
+end
+
+function rbfKernelLog(X1::SupportedRBFData, X2::SupportedRBFData, LS::Union{SupportedRBFLengthscale,Float64})
+    sum(broadcast(rbfKernelLog, X1, X2, LS))
 end
 
 
@@ -37,10 +41,10 @@ expit(x::Real) = exp(x) / (1.0 + exp(x))
 """
 Convert covariance matrix back from log-space, scale and add noise (if passed)
 """
-function processCov(logCov::Array{Float64}, scale::Float64, noise::Float64)
+function processCov(logCov::Union{Float64,Array{Float64}}, scale::Float64, noise::Float64)
     return exp.(logCov) * scale + 1I * noise
 end
 
-function processCov(logCov::Array{Float64}, scale::Float64)
+function processCov(logCov::Union{Float64,Array{Float64}}, scale::Float64)
     return exp.(logCov) * scale
 end
