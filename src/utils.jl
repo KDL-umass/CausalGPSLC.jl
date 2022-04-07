@@ -12,7 +12,10 @@ function generateSigmaU(nIndividualsArray::Array{Int},
     SigmaU = Matrix{Float64}(I, n, n)
     i = 1
     for nIndividuals in nIndividualsArray
-        SigmaU[i:i+nIndividuals-1, i:i+nIndividuals-1] = ones(nIndividuals, nIndividuals) * cov
+        SigmaU[
+            i:i+nIndividuals-1, 
+            i:i+nIndividuals-1
+            ] = ones(nIndividuals, nIndividuals) * cov
         i += nIndividuals
     end
 

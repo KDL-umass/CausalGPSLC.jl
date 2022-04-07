@@ -1,4 +1,12 @@
 function simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples; confidence=0.05)
+    # TODO: Gen-ify this like this:
+    # trace, _ = generate(model)
+    # data = "extract data not parameters"(trace) # this is a choicemap
+    # for numTrials
+    #   inferred_params = inference(model, data)
+    # end
+
+
     theta = prior() # draw "true" theta from prior 
     numParams = size(theta, 1) # theta is 1D
     quantileSamples = zeros((numTrials, numParams))
@@ -73,12 +81,11 @@ end
     @testset "GPSLC" begin
         # test the inference algorithms
         hyperparams = getHyperParameters()
-        @gen prior() = {
+        @gen prior() = Dict{String,Any}(
             "tyLS" => lengthscaleFromPriorNoUNoX(hyperparams),
             "yNoise" => sampleNoiseFromPrior(hyperparams)[3],
             "yScale" => @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale),
-        }
-        sampleNoiseFromPrior()
+        )
         @gen likelihood(theta) = @trace(generateY(nothing, nothing, T, theta["tyLS"], theta["yScale"], theta["yNoise"]))
     end
 
