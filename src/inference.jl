@@ -17,7 +17,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCContinuous, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCRealT, (hyperparams, nX, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -69,7 +69,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovContinuous, (hyperparams, nU), obs)
+    (trace, _) = generate(GPSLCNoCovRealT, (hyperparams, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise"),))
@@ -99,7 +99,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     posteriorSamples, trace
 end
 
-"""No latent confounder"""
+"""No latent confounder, continuous treatment"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
     n = length(T)
@@ -111,7 +111,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUContinuous, (hyperparams, X), obs)
+    (trace, _) = generate(GPSLCNoURealT, (hyperparams, X), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
@@ -130,7 +130,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     posteriorSamples, trace
 end
 
-"""No Covariates or latent confounders"""
+"""No latent confounders or covariates, continuous treatment"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
     n = length(T)
@@ -140,7 +140,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovNoUContinuous, (hyperparams, T), obs)
+    (trace, _) = generate(GPSLCNoUNoCovRealT, (hyperparams, T), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
@@ -172,7 +172,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCBinary, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nX, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -241,7 +241,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovBinary, (hyperparams, nU), obs)
+    (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -299,7 +299,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUBinary, (hyperparams, X), obs)
+    (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, X), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
@@ -345,7 +345,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovNoUBinary, (hyperparams, T), obs)
+    (trace, _) = generate(GPSLCNoUNoCovBinaryT, (hyperparams, T), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))

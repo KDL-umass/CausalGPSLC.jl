@@ -32,10 +32,10 @@ Mocking.apply(patch) do
     include("comparison.jl")
     include("kernel.jl")
     include("latent.jl")
+    # Bayesian Workflow -> A guide on writing Bayes code + tests
+    # https://arxiv.org/pdf/2011.01808.pdf
     include("sbc.jl")
     include("utils.jl")
 end
 
-# Bayesian Workflow -> A guide on writing Bayes code + tests
-# https://arxiv.org/pdf/2011.01808.pdf
 end

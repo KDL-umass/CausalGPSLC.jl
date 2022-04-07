@@ -1,4 +1,4 @@
-export generateUfromSigmaU, generateXfromU, generateTfromUX, generateBinaryTfromU, generateTfromU, generateBinaryTfromX, generateYfromUXT, generateYfromUT, generateYfromXT, generateYfromT
+export generateUfromSigmaU, generateXfromU, generateBinaryTfromUX, generateBinaryTfromU, generateRealTfromU, generateBinaryTfromX, generateYfromUXT, generateYfromUT, generateYfromXT, generateYfromT
 
 """Sample U"""
 @gen function generateUfromSigmaU(SigmaU, uNoise, n, nU)
@@ -14,15 +14,24 @@ end
     return X
 end
 
-"""Sample T from confounders (U) and covariates (X)"""
-@gen function generateTfromUX(U::Any, X::Any, utLS, xtLS, tScale::Float64, tNoise::Float64)
+"""Sample Binary T from confounders (U) and covariates (X)"""
+@gen function generateBinaryTfromUX(U::Any, X::Any, utLS, xtLS, tScale::Float64, tNoise::Float64)
     n = size(U, 1)
-    X = @trace(MappedGenerateX(Xcov, fill(n, nX)), :X)
     utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
     xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
     logitTcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
     logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
+    return T
+end
+
+"""Sample T from confounders (U) and covariates (X)"""
+@gen function generateRealTfromUX(U::Any, X::Any, utLS, xtLS, tScale::Float64, tNoise::Float64)
+    n = size(U, 1)
+    utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
+    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
+    Tcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
+    T = @trace(mvnormal(fill(0, n), Tcov), :T)
     return T
 end
 
@@ -36,7 +45,7 @@ end
 end
 
 """Sample Continuous T from confounders (U)"""
-@gen function generateTfromU(U::Any, X::Nothing, utLS, xtLS::Nothing, tScale::Float64, tNoise::Float64, n::Int64)
+@gen function generateRealTfromU(U::Any, X::Nothing, utLS, xtLS::Nothing, tScale::Float64, tNoise::Float64, n::Int64)
     utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
     Tcov = processCov(utCovLog, tScale, tNoise)
     T = @trace(mvnormal(fill(0, n), Tcov), :T)
@@ -49,6 +58,14 @@ end
     logitTcov = processCov(xtCovLog, tScale, tNoise)
     logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
+    return T
+end
+
+"""Sample Binary T from covariates (X)"""
+@gen function generateRealTfromX(U::Nothing, X::Any, utLS::Nothing, xtLS, tScale::Float64, tNoise::Float64)
+    xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
+    Tcov = processCov(xtCovLog, tScale, tNoise)
+    T = @trace(mvnormal(fill(0, n), Tcov), :T)
     return T
 end
 
