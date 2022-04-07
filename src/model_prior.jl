@@ -1,4 +1,4 @@
-export sampleNoiseFromPriorUXTY, sampleNoiseFromPriorUTY, lengthscaleFromPriorT, lengthscaleFromPriorU, lengthscaleFromPriorX, lengthscaleFromPriorUX, lengthscaleFromPriorUTX
+export sampleNoiseFromPriorU, sampleNoiseFromPriorX, sampleNoiseFromPriorT, sampleNoiseFromPriorY, lengthscaleFromPriorT, lengthscaleFromPriorU, lengthscaleFromPriorX, scaleFromPriorX, scaleFromPriorT, scaleFromPriorY
 
 """Gen function to generate lengthscale parameter for GP"""
 @gen function generateLS(shape, scale)

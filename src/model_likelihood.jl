@@ -1,4 +1,4 @@
-export generateU, generateX, generateT, generateY
+export generateUfromSigmaU, generateXfromU, generateTfromUX, generateBinaryTfromU, generateTfromU, generateBinaryTfromX, generateYfromUXT, generateYfromUT, generateYfromXT, generateYfromT
 
 """Sample U"""
 @gen function generateUfromSigmaU(SigmaU, uNoise, n, nU)
