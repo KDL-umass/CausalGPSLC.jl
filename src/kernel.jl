@@ -10,24 +10,38 @@ Params:
 
 Output normalized by `LS` squared
 """
-function rbfKernelLog(X1::SupportedRBFVector, X2::SupportedRBFVector, LS::SupportedRBFLengthscale)
-    return -broadcast(/, ((X1 .- X2') .^ 2,), LS .^ 2)
-end
-
-
-function rbfKernelLog(X1::SupportedRBFVector, X2::SupportedRBFVector, LS::Float64)
-    return -((X1 .- X2') / LS) .^ 2
+function rbfKernelLog(Xi::SupportedRBFVector, Xiprime::SupportedRBFVector, LS::SupportedRBFLengthscale)
+    println("RBF Vector lengthscale $(size(LS))")
+    return -sum((Xi .- Xiprime) .^ 2 ./ LS)
 end
 
 """
 2D rbfKernelLog
 """
 function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Union{SupportedRBFLengthscale,Float64})
-    sum([rbfKernelLog(X1[i, :], X2[i, :], LS) for i in 1:size(X1, 1)])
+    println("rbfKernelLog list comp")
+    @assert size(X1) == size(X2) "X1 and X2 are different sizes!"
+    n = size(X1, 1)
+    cov = zeros(n, n)
+    for i = 1:n, ip = 1:n
+        cov[i, ip] = rbfKernelLog(X1[i, :], X2[ip, :], LS)
+    end
+    println("cov $(size(cov))")
+    return cov
 end
 
 function rbfKernelLog(X1::SupportedRBFData, X2::SupportedRBFData, LS::Union{SupportedRBFLengthscale,Float64})
-    sum(broadcast(rbfKernelLog, X1, X2, LS))
+    println("rbfKernelLog broadcast")
+    n = size(X1, 1)
+    @assert size(X1) == size(X2) "X1 and X2 are different sizes!"
+    cov = zeros(n, n)
+    for i = 1:n, ip = 1:n
+        cov[i, ip] = rbfKernelLog(X1[i], X2[ip], LS)
+    end
+    println("cov $typeof(cov)")
+    println("cov $size(cov)")
+    println("cov $length(cov)")
+    return cov
 end
 
 

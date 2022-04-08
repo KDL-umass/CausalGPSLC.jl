@@ -13,8 +13,9 @@ function prepareData(csv_path)
             counts[o] = 1
         end
     end
+    println("Rm Adj $(removeAdjacent(df[!, :obj]))")
     obj_count = [counts[o] for o in removeAdjacent(df[!, :obj])]
-
+    println("Obj count $obj_count")
     SigmaU = generateSigmaU(obj_count)
 
     # prepare inputs

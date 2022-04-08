@@ -16,22 +16,22 @@ end
 
 """Sample Binary T from confounders (U) and covariates (X)"""
 @gen function generateBinaryTfromUX(U::Any, X::Any, utLS, xtLS, tScale::Float64, tNoise::Float64)
-    n = size(U, 1)
+    n = size(X, 1)
     utCovLog = rbfKernelLog(U, U, utLS)
     xtCovLog = rbfKernelLog(X, X, xtLS)
     logitTcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
-    logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
+    logitT = @trace(mvnormal(zeros(n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
     return T
 end
 
 """Sample T from confounders (U) and covariates (X)"""
 @gen function generateRealTfromUX(U::Any, X::Any, utLS, xtLS, tScale::Float64, tNoise::Float64)
-    n = size(U, 1)
+    n = size(X, 1)
     utCovLog = rbfKernelLog(U, U, utLS)
     xtCovLog = rbfKernelLog(X, X, xtLS)
     Tcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
-    T = @trace(mvnormal(fill(0, n), Tcov), :T)
+    T = @trace(mvnormal(zeros(n), Tcov), :T)
     return T
 end
 
@@ -39,27 +39,33 @@ end
 @gen function generateBinaryTfromU(U::Any, X::Nothing, utLS, xtLS::Nothing, tScale::Float64, tNoise::Float64, n::Int64)
     utCovLog = rbfKernelLog(U, U, utLS)
     logitTcov = processCov(utCovLog, tScale, tNoise)
-    logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
+    logitT = @trace(mvnormal(zeros(n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
     return T
 end
 
 """Sample Continuous T from confounders (U)"""
 @gen function generateRealTfromU(U::Any, X::Nothing, utLS, xtLS::Nothing, tScale::Float64, tNoise::Float64, n::Int64)
-    print("U ")
-    println(typeof(U))
+    println("U $(typeof(U))")
+    println("U $(size(U))")
     utCovLog = rbfKernelLog(U, U, utLS)
     Tcov = processCov(utCovLog, tScale, tNoise)
-    T = @trace(mvnormal(fill(0, n), Tcov), :T)
+    println("n $(n)")
+    println("Tcov $(size(Tcov))")
+    T = @trace(mvnormal(zeros(n), Tcov), :T)
     return T
 end
 
 """Sample Binary T from covariates (X)"""
 @gen function generateBinaryTfromX(U::Nothing, X::Any, utLS::Nothing, xtLS, tScale::Float64, tNoise::Float64)
     n = size(X, 1)
+    println("X = $(typeof(X))")
+    println("X: $(typeof(X) <: SupportedRBFData))")
+    println("X: $(typeof(X) <: SupportedRBFMatrix))")
     xtCovLog = rbfKernelLog(X, X, xtLS)
+    @assert size(xtCovLog) == (n, n) "tCov needs to be NxN!"
     logitTcov = processCov(xtCovLog, tScale, tNoise)
-    logitT = @trace(mvnormal(fill(0, n), logitTcov), :logitT)
+    logitT = @trace(mvnormal(zeros(n), logitTcov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
     return T
 end
@@ -68,7 +74,7 @@ end
 @gen function generateRealTfromX(U::Nothing, X::Any, utLS::Nothing, xtLS, tScale::Float64, tNoise::Float64)
     xtCovLog = rbfKernelLog(X, X, xtLS)
     Tcov = processCov(xtCovLog, tScale, tNoise)
-    T = @trace(mvnormal(fill(0, n), Tcov), :T)
+    T = @trace(mvnormal(zeros(n), Tcov), :T)
     return T
 end
 
@@ -79,7 +85,7 @@ end
     xyCovLog = rbfKernelLog(X, X, xyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     Ycov = processCov(uyCovLog + xyCovLog + tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(mvnormal(zeros(n), Ycov), :Y)
     return Y
 end
 
@@ -89,7 +95,7 @@ end
     uyCovLog = rbfKernelLog(U, U, uyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     Ycov = processCov(uyCovLog + tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(mvnormal(zeros(n), Ycov), :Y)
     return Y
 end
 
@@ -99,7 +105,7 @@ end
     xyCovLog = rbfKernelLog(X, X, xyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(mvnormal(zeros(n), Ycov), :Y)
     return Y
 end
 
@@ -108,6 +114,6 @@ end
     n = size(T, 1)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     Ycov = processCov(tyCovLog, yScale, yNoise)
-    Y = @trace(mvnormal(fill(0, n), Ycov), :Y)
+    Y = @trace(mvnormal(zeros(n), Ycov), :Y)
     return Y
 end
