@@ -42,6 +42,7 @@ end
 
 """Only call if you know all subvectors are same length"""
 function toMatrix(U::Union{
+        Vector{Any},
         Vector{Vector{Bool}},
         Vector{Vector{Int64}},
         Vector{Vector{Float64}},

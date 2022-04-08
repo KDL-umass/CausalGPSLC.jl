@@ -62,10 +62,10 @@ function conditionalITE(uyLS::Vector{Float64}, tyLS::Float64, xyLS::Nothing,
     CovWWp = Symmetric(CovWW + (yNoise * 1I))
 
     #   K(W, W_*) in the paper. The cross covariance matrix is not in general symettric.
-    CovWWs = processCov(uyCovLog + tyCovLogS, yScale, 0.0)
+    CovWWs = processCov(uyCovLog .+ tyCovLogS, yScale, 0.0)
 
     #   K(W_*, W_*) in the paper.
-    CovWsWs = processCov(uyCovLog + tyCovLogSS, yScale, 0.0)
+    CovWsWs = processCov(uyCovLog .+ tyCovLogSS, yScale, 0.0)
     CovWsWs = Symmetric(CovWsWs)
 
     #   Intermediate inverse products to avoid repeated computation.
