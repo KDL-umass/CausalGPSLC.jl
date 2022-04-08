@@ -80,7 +80,7 @@ Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 """
-function sampleITE(X, T, Y, SigmaU;
+function sampleITE(X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{Vector{Float64},Vector{Bool}}, Y::Vector{Float64}, SigmaU;
     posteriorSample=samplePosterior(X, T, Y, SigmaU),
     doT::Float64=0.6, nU::Int=1, nOuter::Int=25,
     burnIn::Int=10, stepSize::Int=1, samplesPerPost::Int=10)
@@ -95,13 +95,16 @@ function sampleITE(X, T, Y, SigmaU;
             push!(uyLS, posteriorSample[i][:uyLS=>u=>:LS])
             push!(U, posteriorSample[i][:U=>u=>:U])
         end
+        n = size(T, 1)
+        U = toMatrix(U, n, nU)
+
 
         if X === nothing
             xyLS = nothing
         else
-            xyLS = convert(Array{Float64,1}, posteriorSample[i][:xyLS])
+            xyLS = convert(Vector{Float64}, posteriorSample[i][:xyLS])
         end
-        uyLS = convert(Array{Float64,1}, uyLS)
+        uyLS = convert(Vector{Float64}, uyLS)
 
         MeanITE, CovITE = conditionalITE(uyLS,
             posteriorSample[i][:tyLS],
