@@ -1,32 +1,32 @@
 export sampleNoiseFromPriorU, sampleNoiseFromPriorX, sampleNoiseFromPriorT, sampleNoiseFromPriorY, lengthscaleFromPriorT, lengthscaleFromPriorU, lengthscaleFromPriorX, scaleFromPriorX, scaleFromPriorT, scaleFromPriorY
 
 """Gen function to generate lengthscale parameter for GP"""
-@gen function generateLS(shape, scale)::Float64
+@gen function generateLS(shape, scale)
     @trace(inv_gamma(shape, scale), :LS)
 end
 
 """Gen function to generate scale parameter for GP"""
-@gen function generateScale(shape, scale)::Float64
+@gen function generateScale(shape, scale)
     @trace(inv_gamma(shape, scale), :Scale)
 end
 
 """Gen function to generate noise from inv_gamma"""
-@gen function generateNoise(shape, scale)::Float64
+@gen function generateNoise(shape, scale)
     @trace(inv_gamma(shape, scale), :Noise)
 end
 
 """Gen function to generate binary treatment (T)"""
-@gen function generateBinaryT(logitT)::Bool
+@gen function generateBinaryT(logitT)
     @trace(bernoulli(expit(logitT)), :T)
 end
 
 """Gen function to generate latent confounders (U) from mvnormal distribution"""
-@gen function generateU(Ucov::Array{Float64}, n::Int)::Vector{Float64}
+@gen function generateU(Ucov::Array{Float64}, n::Int)
     @trace(mvnormal(fill(0, n), Ucov), :U)
 end
 
 """Gen function to generate covariates (X) from mvnormal distribution"""
-@gen function generateX(Xcov::Array{Float64}, n::Int)::Vector{Float64}
+@gen function generateX(Xcov::Array{Float64}, n::Int)
     @trace(mvnormal(fill(0, n), Xcov), :X)
 end
 

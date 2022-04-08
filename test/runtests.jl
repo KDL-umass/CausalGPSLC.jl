@@ -13,7 +13,7 @@ using GPSLC
 import CSV
 
 import Random
-rng = Random.seed!(0)
+Random.seed!(0)
 
 # Adjust file paths
 prefix = ""
@@ -32,7 +32,6 @@ Mocking.apply(patch) do
     include("comparison.jl")
     include("kernel.jl")
     include("latent.jl")
-    include("model.jl")
     # Bayesian Workflow -> A guide on writing Bayes code + tests
     # https://arxiv.org/pdf/2011.01808.pdf
     include("sbc.jl")

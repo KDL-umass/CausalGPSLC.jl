@@ -1,5 +1,7 @@
 using Mocking
-export getHyperParameters, sampleITE, samplePosterior, summarizeITE
+export HyperParameters, getHyperParameters, sampleITE, samplePosterior, summarizeITE
+
+HyperParameters = Dict{String,Any}
 
 
 """

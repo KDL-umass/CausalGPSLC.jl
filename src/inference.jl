@@ -4,7 +4,8 @@ export Posterior
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n, nX = size(X)
+    n = length(T)
+    nX = length(X)
 
     obs = Gen.choicemap()
     obs[:T] = T
@@ -60,7 +61,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n = size(T, 1)
+    n = length(T)
 
     obs = Gen.choicemap()
     obs[:T] = T
@@ -101,7 +102,8 @@ end
 """No latent confounder, continuous treatment"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
-    n, nX = size(X)
+    n = length(T)
+    nX = length(X)
 
     obs = Gen.choicemap()
     obs[:T] = T
@@ -131,7 +133,7 @@ end
 """No latent confounders or covariates, continuous treatment"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
-    n = size(T, 1)
+    n = length(T)
 
     obs = Gen.choicemap()
     obs[:Y] = Y
@@ -154,7 +156,8 @@ end
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n, nX = size(X)
+    n = length(T)
+    nX = length(X)
 
     obs = Gen.choicemap()
 
@@ -227,7 +230,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n = size(T, 1)
+    n = length(T)
 
     obs = Gen.choicemap()
 
@@ -284,7 +287,8 @@ end
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n, nX = size(X)
+    n = length(T)
+    nX = length(X)
 
     obs = Gen.choicemap()
 
@@ -333,7 +337,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
 
-    n = size(T, 1)
+    n = length(T)
 
     obs = Gen.choicemap()
 
