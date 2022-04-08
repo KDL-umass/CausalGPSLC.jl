@@ -36,7 +36,6 @@ end
     tScale = @trace(scaleFromPriorT(hyperparams))
     yScale = @trace(scaleFromPriorY(hyperparams))
     U = @trace(generateUfromSigmaU(hyperparams["SigmaU"], uNoise, n, nU))
-    println(typeof(U))
     T = @trace(generateRealTfromU(U, nothing, utLS, nothing, tScale, tNoise, n))
     Y = @trace(generateYfromUT(U, nothing, T, uyLS, nothing, tyLS, yScale, yNoise))
     return Y
