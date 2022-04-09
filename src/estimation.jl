@@ -45,27 +45,27 @@ function conditionalITE(uyLS::Array{Float64,1}, tyLS::Float64, xyLS::Array{Float
 end
 
 """No Covariates Continuous/Binary"""
-function conditionalITE(uyLS::Array{Float64,1}, tyLS::Float64, xyLS::Nothing,
-    yNoise::Float64, yScale::Float64, U::Array,
-    X::Nothing, T, Y::Array, doT)
+function conditionalITE(uyLS::Vector{Float64}, tyLS::Float64, xyLS::Nothing,
+    yNoise::Float64, yScale::Float64, U::Union{Matrix{Float64},Vector{Float64}},
+    X::Nothing, T::Union{Vector{Float64},Vector{Bool}}, Y::Union{Matrix{Float64},Vector{Float64}}, doT)
 
     nU = length(U)
     n = length(T)
 
-    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
+    uyCovLog = rbfKernelLog(U, U, uyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     tyCovLogS = rbfKernelLog(T, fill(doT, n), tyLS)
     tyCovLogSS = rbfKernelLog(fill(doT, n), fill(doT, n), tyLS)
 
-    CovWW = processCov(uyCovLog + tyCovLog, yScale, 0.0)
+    CovWW = processCov(uyCovLog .+ tyCovLog, yScale, 0.0)
     CovWW = Symmetric(CovWW)
     CovWWp = Symmetric(CovWW + (yNoise * 1I))
 
     #   K(W, W_*) in the paper. The cross covariance matrix is not in general symettric.
-    CovWWs = processCov(uyCovLog + tyCovLogS, yScale, 0.0)
+    CovWWs = processCov(uyCovLog .+ tyCovLogS, yScale, 0.0)
 
     #   K(W_*, W_*) in the paper.
-    CovWsWs = processCov(uyCovLog + tyCovLogSS, yScale, 0.0)
+    CovWsWs = processCov(uyCovLog .+ tyCovLogSS, yScale, 0.0)
     CovWsWs = Symmetric(CovWsWs)
 
     #   Intermediate inverse products to avoid repeated computation.
@@ -86,14 +86,14 @@ function conditionalITE(uyLS::Array{Float64,1}, tyLS::Float64, xyLS::Nothing,
 end
 
 """No Confounders Continuous/Binary"""
-function conditionalITE(uyLS::Nothing, tyLS::Float64, xyLS::Array{Float64},
+function conditionalITE(uyLS::Nothing, tyLS::Float64, xyLS::Vector{Float64},
     yNoise::Float64, yScale::Float64, U::Nothing,
-    X::Array, T, Y::Array, doT)
+    X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{Vector{Float64},Vector{Bool}}, Y::Vector{Float64}, doT)
 
     nX = length(X)
     n = length(T)
 
-    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
+    xyCovLog = rbfKernelLog(X, X, xyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     tyCovLogS = rbfKernelLog(T, fill(doT, n), tyLS)
     tyCovLogSS = rbfKernelLog(fill(doT, n), fill(doT, n), tyLS)

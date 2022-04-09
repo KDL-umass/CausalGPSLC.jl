@@ -4,8 +4,7 @@ export Posterior
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n = length(T)
-    nX = length(X)
+    n, nX = size(X)
 
     obs = Gen.choicemap()
     obs[:T] = T
@@ -17,7 +16,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(ContinuousGPSLC, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCRealT, (hyperparams, nX, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -26,18 +25,18 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k::Int = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
                 for l = 1:nX
-                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i = k, j = l)))
+                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i=k, j=l)))
                 end
             end
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -60,8 +59,7 @@ end
 """No Covariates"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
-
-    n = length(T)
+    n = size(T, 1)
 
     obs = Gen.choicemap()
     obs[:T] = T
@@ -69,7 +67,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoCovContinuousGPSLC, (hyperparams, nU), obs)
+    (trace, _) = generate(GPSLCNoCovRealT, (hyperparams, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise"),))
@@ -78,8 +76,8 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -99,11 +97,10 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     posteriorSamples, trace
 end
 
-"""No latent confounder"""
+"""No latent confounder, continuous treatment"""
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
-    n = length(T)
-    nX = length(X)
+    n, nX = size(X)
 
     obs = Gen.choicemap()
     obs[:T] = T
@@ -111,15 +108,15 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoUContinuousGPSLC, (hyperparams, X), obs)
+    (trace, _) = generate(GPSLCNoURealT, (hyperparams, X), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
         for k = 1:nX
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
         end
 
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -130,17 +127,17 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     posteriorSamples, trace
 end
 
-"""No Covariates or latent confounders"""
+"""No latent confounders or covariates, continuous treatment"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
-    n = length(T)
+    n = size(T, 1)
 
     obs = Gen.choicemap()
     obs[:Y] = Y
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoCovNoUContinuousGPSLC, (hyperparams, T), obs)
+    (trace, _) = generate(GPSLCNoUNoCovRealT, (hyperparams, T), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
@@ -156,8 +153,7 @@ end
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n = length(T)
-    nX = length(X)
+    n, nX = size(X)
 
     obs = Gen.choicemap()
 
@@ -172,7 +168,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 
     posteriorSamples = []
 
-    (trace, _) = generate(BinaryGPSLC, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nX, nU), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -181,18 +177,18 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
                 for l = 1:nX
-                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i = k, j = l)))
+                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i=k, j=l)))
                 end
             end
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -230,7 +226,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n = length(T)
+    n = size(T, 1)
 
     obs = Gen.choicemap()
 
@@ -241,7 +237,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoCovBinaryGPSLC, (hyperparams, nU), obs)
+    (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -250,8 +246,8 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -287,8 +283,7 @@ end
 function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Int, nESInner::Int)
 
-    n = length(T)
-    nX = length(X)
+    n, nX = size(X)
 
     obs = Gen.choicemap()
 
@@ -299,7 +294,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoUBinaryGPSLC, (hyperparams, X), obs)
+    (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, X), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
@@ -307,8 +302,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i = k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i = k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
             end
 
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
@@ -337,7 +332,7 @@ end
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
     nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
 
-    n = length(T)
+    n = size(T, 1)
 
     obs = Gen.choicemap()
 
@@ -345,7 +340,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(NoCovNoUBinaryGPSLC, (hyperparams, T), obs)
+    (trace, _) = generate(GPSLCNoUNoCovBinaryT, (hyperparams, T), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))

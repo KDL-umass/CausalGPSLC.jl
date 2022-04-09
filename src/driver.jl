@@ -1,6 +1,7 @@
 using Mocking
 export getHyperParameters, sampleITE, samplePosterior, summarizeITE
 
+
 """
 *Hyperparameters*
 
@@ -33,7 +34,7 @@ Defaults are those used in original paper, listed here for modification
 - `tyLSShape::Float64=4.0`: shape parameter of the InvGamma prior over kernel lengthscale of T and Y
 - `tyLSScale::Float64=4.0`: scale parameter of the InvGamma prior over kernel lengthscale of T and Y
 """
-function getHyperParameters()
+function getHyperParameters()::HyperParameters
     Dict{String,Any}(
         "uNoiseShape" => 4.0,
         "uNoiseScale" => 4.0,
@@ -79,10 +80,10 @@ Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 """
-function sampleITE(X, T, Y, SigmaU;
-    posteriorSample = samplePosterior(X, T, Y, SigmaU),
-    doT::Float64 = 0.6, nU::Int = 1, nOuter::Int = 25,
-    burnIn::Int = 10, stepSize::Int = 1, samplesPerPost::Int = 10)
+function sampleITE(X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{Vector{Float64},Vector{Bool}}, Y::Vector{Float64}, SigmaU;
+    posteriorSample=samplePosterior(X, T, Y, SigmaU),
+    doT::Float64=0.6, nU::Int=1, nOuter::Int=25,
+    burnIn::Int=10, stepSize::Int=1, samplesPerPost::Int=10)
 
 
     ITEsamples = zeros(length(T), samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
@@ -94,13 +95,17 @@ function sampleITE(X, T, Y, SigmaU;
             push!(uyLS, posteriorSample[i][:uyLS=>u=>:LS])
             push!(U, posteriorSample[i][:U=>u=>:U])
         end
+        n = size(T, 1)
+        U = toMatrix(U, n, nU)
+        @assert size(U) == (n, nU)
 
+
+        uyLS = convert(Vector{Float64}, uyLS)
         if X === nothing
             xyLS = nothing
         else
-            xyLS = convert(Array{Float64,1}, posteriorSample[i][:xyLS])
+            xyLS = convert(Vector{Float64}, posteriorSample[i][:xyLS])
         end
-        uyLS = convert(Array{Float64,1}, uyLS)
 
         MeanITE, CovITE = conditionalITE(uyLS,
             posteriorSample[i][:tyLS],
@@ -136,7 +141,7 @@ Returns:
 
 `posteriorSample`: samples from posterior determined by hyperparameters
 """
-function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any} = getHyperParameters(), nU::Int = 1, nOuter::Int = 25, nMHInner::Int = 1, nESInner::Int = 1)
+function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any}=getHyperParameters(), nU::Int=1, nOuter::Int=25, nMHInner::Int=1, nESInner::Int=1)
     hyperparams["SigmaU"] = SigmaU # databased hyperparameter
     posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
     return posteriorSample
@@ -152,11 +157,11 @@ Params:
 Returns:
 - `df`: Dataframe of Individual, Mean, LowerBound, and UpperBound values for the samples.
 """
-function summarizeITE(ITEsamples; savetofile::String = "")
-    meanITE = mean(ITEsamples, dims = 2)[:, 1]
+function summarizeITE(ITEsamples; savetofile::String="")
+    meanITE = mean(ITEsamples, dims=2)[:, 1]
     lowerITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
     upperITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
-    df = DataFrame(Individual = 1:size(meanITE)[1], Mean = meanITE, LowerBound = lowerITE, UpperBound = upperITE)
+    df = DataFrame(Individual=1:size(meanITE)[1], Mean=meanITE, LowerBound=lowerITE, UpperBound=upperITE)
     if savetofile != ""
         CSV.write(savetofile, df)
         println("Saved ITE mean and 90% credible intervals to " * savetofile)

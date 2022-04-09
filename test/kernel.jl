@@ -1,38 +1,68 @@
 @testset "Kernel Functions" begin
+    @testset "rbfKernelLogScalar" begin
+        @testset "One Dimension" begin
+
+            @testset "Int64" begin
+                expected = -(11 - 11)^2 / 0.1
+                actual = rbfKernelLogScalar([11], [11], 0.1)
+                @test expected ≈ actual
+            end
+            @testset "Float64" begin
+                val = 11.1
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar([val], [val], 0.1)
+                @test expected ≈ actual
+            end
+            @testset "Bool true" begin
+                val = true
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar([val], [val], 0.1)
+                @test expected ≈ actual
+            end
+            @testset "Bool false" begin
+                val = false
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar([val], [val], 0.1)
+                @test expected ≈ actual
+            end
+            @testset "PersistentVector Bool true" begin
+                val = true
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar(FunctionalCollections.PersistentVector{}([val]), FunctionalCollections.PersistentVector{}([val]), 0.1)
+                @test expected ≈ actual
+            end
+            @testset "PersistentVector Bool false" begin
+                val = false
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar(FunctionalCollections.PersistentVector{}([val]), FunctionalCollections.PersistentVector{}([val]), 0.1)
+                @test expected ≈ actual
+            end
+        end
+        @testset "Two Dimensions" begin
+            x = rand(10)
+            ls = 0.3
+            expected = sum((x .- x) .^ 2 ./ ls)
+            actual = rbfKernelLogScalar(x, x, ls)
+            @test expected ≈ actual
+        end
+    end
     @testset "rbfKernelLog" begin
-        @testset "Int64" begin
-            expected = [-(11 - 11)^2 / 0.1]
-            actual = rbfKernelLog([11], [11], 0.1)
+        @testset "one matrix" begin
+            X = ones(10, 5)
+            actual = rbfKernelLog(X, X, 0.1)
+            expected = zeros(10, 10)
             @test expected ≈ actual
         end
-        @testset "Float64" begin
-            val = 11.1
-            expected = [-(val - val)^2 / 0.1]
-            actual = rbfKernelLog([val], [val], 0.1)
+        @testset "magic matrix" begin
+            X = [1 2; 3 4; 5 6]
+            expected = -[0 8 32; 8 0 8; 32 8 0]
+            actual = rbfKernelLog(X, X, 1)
             @test expected ≈ actual
         end
-        @testset "Bool true" begin
-            val = true
-            expected = [-(val - val)^2 / 0.1]
-            actual = rbfKernelLog([val], [val], 0.1)
-            @test expected ≈ actual
-        end
-        @testset "Bool false" begin
-            val = false
-            expected = [-(val - val)^2 / 0.1]
-            actual = rbfKernelLog([val], [val], 0.1)
-            @test expected ≈ actual
-        end
-        @testset "PersistentVector Bool true" begin
-            val = true
-            expected = [-(val - val)^2 / 0.1]
-            actual = rbfKernelLog(FunctionalCollections.PersistentVector{}([val]), FunctionalCollections.PersistentVector{}([val]), 0.1)
-            @test expected ≈ actual
-        end
-        @testset "PersistentVector Bool false" begin
-            val = false
-            expected = [-(val - val)^2 / 0.1]
-            actual = rbfKernelLog(FunctionalCollections.PersistentVector{}([val]), FunctionalCollections.PersistentVector{}([val]), 0.1)
+        @testset "magic matrix lists" begin
+            X = [[1, 2], [3, 4], [5, 6]]
+            expected = -[0 8 32; 8 0 8; 32 8 0]
+            actual = rbfKernelLog(X, X, 1)
             @test expected ≈ actual
         end
     end
