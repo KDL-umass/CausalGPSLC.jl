@@ -11,10 +11,6 @@ Params:
 Output normalized by `LS` squared
 """
 function rbfKernelLogScalar(Xi::SupportedRBFVector, Xiprime::SupportedRBFVector, LS::SupportedRBFLengthscale)
-    # println("RBF Vector lengthscale $(size(LS))")
-    # println("Xi $Xi")
-    # println("Xiprime $Xiprime")
-    # println("LS $LS")
     @assert (size(LS, 1) == size(Xi, 1)
              ||
              size(LS) == ()) "vector lengthscale doesn't match individual"
@@ -25,28 +21,22 @@ end
 2D rbfKernelLog
 """
 function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Union{SupportedRBFLengthscale,Float64})
-    # println("rbfKernelLog list comp")
     @assert size(X1) == size(X2) "X1 and X2 are different sizes!"
     n = size(X1, 1)
     cov = zeros(n, n)
     for i = 1:n, ip = 1:n
         cov[i, ip] = rbfKernelLogScalar(X1[i, :], X2[ip, :], LS)
     end
-    # println("cov $(size(cov))")
     return cov
 end
 
 function rbfKernelLog(X1::SupportedRBFData, X2::SupportedRBFData, LS::Union{SupportedRBFLengthscale,Float64})
-    # println("rbfKernelLog broadcast")
     n = size(X1, 1)
     @assert size(X1) == size(X2) "X1 and X2 are different sizes!"
     cov = zeros(n, n)
     for i = 1:n, ip = 1:n
         cov[i, ip] = rbfKernelLogScalar(X1[i], X2[ip], LS)
     end
-    # println("cov $typeof(cov)")
-    # println("cov $size(cov)")
-    # println("cov $length(cov)")
     return cov
 end
 

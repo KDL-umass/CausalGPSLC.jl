@@ -5,8 +5,6 @@ export generateUfromSigmaU, generateXfromU, generateBinaryTfromUX, generateBinar
     uCov = SigmaU * uNoise
     U = @trace(MappedGenerateU(fill(uCov, nU), fill(n, nU)), :U)
     U = toMatrix(U, n, nU)
-    # println("U $U")
-    # println("U $(U) $(size(U)) $(typeof(U))")
     @assert size(U) == (n, nU)
     return U
 end
@@ -50,14 +48,8 @@ end
 
 """Sample Continuous T from confounders (U)"""
 @gen function generateRealTfromU(U::Any, X::Nothing, utLS, xtLS::Nothing, tScale::Float64, tNoise::Float64, n::Int64)
-    # println("U $(typeof(U))")
-    # println("U $(size(U))")
     utCovLog = rbfKernelLog(U, U, utLS)
-    # println("utCovLog $(typeof(utCovLog))")
-    # println("utCovLog $(size(utCovLog))")
     Tcov = processCov(utCovLog, tScale, tNoise)
-    # println("n $(n)")
-    # println("Tcov $(size(Tcov))")
     T = @trace(mvnormal(zeros(n), Tcov), :T)
     return T
 end
@@ -65,9 +57,6 @@ end
 """Sample Binary T from covariates (X)"""
 @gen function generateBinaryTfromX(U::Nothing, X::Union{Matrix{Float64},Vector{Float64}}, utLS::Nothing, xtLS, tScale::Float64, tNoise::Float64)
     n = size(X, 1)
-    # println("X = $(typeof(X))")
-    # println("X: $(typeof(X) <: SupportedRBFData))")
-    # println("X: $(typeof(X) <: SupportedRBFMatrix))")
     xtCovLog = rbfKernelLog(X, X, xtLS)
     @assert size(xtCovLog) == (n, n) "tCov needs to be NxN!"
     logitTcov = processCov(xtCovLog, tScale, tNoise)

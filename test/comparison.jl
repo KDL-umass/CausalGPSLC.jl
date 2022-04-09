@@ -15,8 +15,6 @@ end
         @test size(expected) == size(actual)
         N = size(actual, 1)
         passing = zeros(N)
-        # println("expected $expected")
-        # println("actual $actual")
         for i = 1:N
             passing[i] = expected[i, "LowerBound"] <= actual[i, "Mean"] &&
                          actual[i, "Mean"] <= expected[i, "UpperBound"]
