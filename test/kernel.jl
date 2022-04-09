@@ -1,5 +1,5 @@
 @testset "Kernel Functions" begin
-    @testset "rbfKernelLog" begin
+    @testset "rbfKernelLogScalar" begin
         @testset "One Dimension" begin
 
             @testset "Int64" begin
@@ -43,6 +43,26 @@
             ls = 0.3
             expected = sum((x .- x) .^ 2 ./ ls)
             actual = rbfKernelLogScalar(x, x, ls)
+            @test expected ≈ actual
+        end
+    end
+    @testset "rbfKernelLog" begin
+        @testset "one matrix" begin
+            X = ones(10, 5)
+            actual = rbfKernelLog(X, X, 0.1)
+            expected = zeros(10, 10)
+            @test expected ≈ actual
+        end
+        @testset "magic matrix" begin
+            X = [1 2; 3 4; 5 6]
+            expected = -[0 8 32; 8 0 8; 32 8 0]
+            actual = rbfKernelLog(X, X, 1)
+            @test expected ≈ actual
+        end
+        @testset "magic matrix lists" begin
+            X = [[1, 2], [3, 4], [5, 6]]
+            expected = -[0 8 32; 8 0 8; 32 8 0]
+            actual = rbfKernelLog(X, X, 1)
             @test expected ≈ actual
         end
     end

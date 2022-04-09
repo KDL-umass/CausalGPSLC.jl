@@ -74,6 +74,10 @@ SupportedRBFMatrix = Union{
 
 """Viable inputs to the rbfKernelLog function as kernel lengthscales"""
 SupportedRBFLengthscale = Union{
+    Int64,
+    Array{Int64,1},
+    Vector{Int64},
+    FunctionalCollections.PersistentVector{Int64},
     Float64,
     Array{Float64,1},
     Vector{Float64},
