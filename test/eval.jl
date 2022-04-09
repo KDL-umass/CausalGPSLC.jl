@@ -746,7 +746,6 @@ function main(args)
     if dataset == "ISO"
         error_sate, error_ite, samples = eval_model(posterior_dir, model, T, doTs, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT, bart_pred)
     else
-        println(data_id)
         error_sate, error_ite, samples = eval_model(posterior_dir, model, T, doTs, X, Y, Ycfs, obj_key, nSamplesPerPost, nOuter, burnIn, stepSize, stats_by_doT, bart_pred)
     end
 

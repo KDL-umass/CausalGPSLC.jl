@@ -1,33 +1,34 @@
 export sampleNoiseFromPriorU, sampleNoiseFromPriorX, sampleNoiseFromPriorT, sampleNoiseFromPriorY, lengthscaleFromPriorT, lengthscaleFromPriorU, lengthscaleFromPriorX, scaleFromPriorX, scaleFromPriorT, scaleFromPriorY
 
 """Gen function to generate lengthscale parameter for GP"""
-@gen function generateLS(shape, scale)
+@gen function generateLS(shape, scale)::Float64
     @trace(inv_gamma(shape, scale), :LS)
 end
 
 """Gen function to generate scale parameter for GP"""
-@gen function generateScale(shape, scale)
+@gen function generateScale(shape, scale)::Float64
     @trace(inv_gamma(shape, scale), :Scale)
 end
 
 """Gen function to generate noise from inv_gamma"""
-@gen function generateNoise(shape, scale)
+@gen function generateNoise(shape, scale)::Float64
     @trace(inv_gamma(shape, scale), :Noise)
 end
 
 """Gen function to generate binary treatment (T)"""
-@gen function generateBinaryT(logitT)
+@gen function generateBinaryT(logitT)::Bool
     @trace(bernoulli(expit(logitT)), :T)
 end
 
 """Gen function to generate latent confounders (U) from mvnormal distribution"""
-@gen function generateU(Ucov::Array{Float64}, n::Int)
-    @trace(mvnormal(fill(0, n), Ucov), :U)
+@gen function generateU(Ucov::Array{Float64}, n::Int)::Vector{Float64}
+    @assert size(Ucov) == (n, n) "Ucov is not NxN"
+    @trace(mvnormal(zeros(n), Ucov), :U)
 end
 
 """Gen function to generate covariates (X) from mvnormal distribution"""
-@gen function generateX(Xcov::Array{Float64}, n::Int)
-    @trace(mvnormal(fill(0, n), Xcov), :X)
+@gen function generateX(Xcov::Array{Float64}, n::Int)::Vector{Float64}
+    @trace(mvnormal(zeros(n), Xcov), :X)
 end
 
 export MappedGenerateLS, MappedMappedGenerateLS, MappedGenerateScale, MappedGenerateBinaryT, MappedGenerateNoise, MappedGenerateU, MappedGenerateX
@@ -97,6 +98,8 @@ end
             fill(hyperparams["xtLSScale"], nX)), :xtLS)
     xyLS = @trace(MappedGenerateLS(fill(hyperparams["xyLSShape"], nX),
             fill(hyperparams["xyLSScale"], nX)), :xyLS)
+    @assert size(xtLS, 1) == nX "x lengthscale not correct length"
+    @assert size(xyLS, 1) == nX "x lengthscale not correct length"
     return xtLS, xyLS
 end
 

@@ -18,8 +18,7 @@ jobs:
       fail-fast: true
       matrix:
         version:
-          - '' # latest stable build
-          - '1.7'
+          - '^1.7'
         os:
           - ubuntu-latest
         arch:
@@ -30,6 +29,7 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+          show-versioninfo: true
       - uses: julia-actions/julia-buildpkg@v1
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -38,7 +38,7 @@ jobs:
       fail-fast: true
       matrix:
         version:
-          - '1.7'
+          - '^1.7'
         os:
           - ubuntu-latest
         arch:
