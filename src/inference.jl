@@ -59,7 +59,6 @@ end
 """No Covariates"""
 function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
     nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
-
     n = size(T, 1)
 
     obs = Gen.choicemap()

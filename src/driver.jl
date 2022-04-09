@@ -97,14 +97,15 @@ function sampleITE(X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{V
         end
         n = size(T, 1)
         U = toMatrix(U, n, nU)
+        @assert size(U) == (n, nU)
 
 
+        uyLS = convert(Vector{Float64}, uyLS)
         if X === nothing
             xyLS = nothing
         else
             xyLS = convert(Vector{Float64}, posteriorSample[i][:xyLS])
         end
-        uyLS = convert(Vector{Float64}, uyLS)
 
         MeanITE, CovITE = conditionalITE(uyLS,
             posteriorSample[i][:tyLS],

@@ -3,43 +3,47 @@
         @testset "One Dimension" begin
 
             @testset "Int64" begin
-                expected = [-(11 - 11)^2 / 0.1]
-                actual = rbfKernelLog([11], [11], 0.1)
+                expected = -(11 - 11)^2 / 0.1
+                actual = rbfKernelLogScalar([11], [11], 0.1)
                 @test expected ≈ actual
             end
             @testset "Float64" begin
                 val = 11.1
-                expected = [-(val - val)^2 / 0.1]
-                actual = rbfKernelLog([val], [val], 0.1)
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar([val], [val], 0.1)
                 @test expected ≈ actual
             end
             @testset "Bool true" begin
                 val = true
-                expected = [-(val - val)^2 / 0.1]
-                actual = rbfKernelLog([val], [val], 0.1)
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar([val], [val], 0.1)
                 @test expected ≈ actual
             end
             @testset "Bool false" begin
                 val = false
-                expected = [-(val - val)^2 / 0.1]
-                actual = rbfKernelLog([val], [val], 0.1)
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar([val], [val], 0.1)
                 @test expected ≈ actual
             end
             @testset "PersistentVector Bool true" begin
                 val = true
-                expected = [-(val - val)^2 / 0.1]
-                actual = rbfKernelLog(FunctionalCollections.PersistentVector{}([val]), FunctionalCollections.PersistentVector{}([val]), 0.1)
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar(FunctionalCollections.PersistentVector{}([val]), FunctionalCollections.PersistentVector{}([val]), 0.1)
                 @test expected ≈ actual
             end
             @testset "PersistentVector Bool false" begin
                 val = false
-                expected = [-(val - val)^2 / 0.1]
-                actual = rbfKernelLog(FunctionalCollections.PersistentVector{}([val]), FunctionalCollections.PersistentVector{}([val]), 0.1)
+                expected = -(val - val)^2 / 0.1
+                actual = rbfKernelLogScalar(FunctionalCollections.PersistentVector{}([val]), FunctionalCollections.PersistentVector{}([val]), 0.1)
                 @test expected ≈ actual
             end
         end
         @testset "Two Dimensions" begin
-            rbfKernelLog(rand(10), rand(10), 0.3)
+            x = rand(10)
+            ls = 0.3
+            expected = sum((x .- x) .^ 2 ./ ls)
+            actual = rbfKernelLogScalar(x, x, ls)
+            @test expected ≈ actual
         end
     end
     @testset "processCov" begin

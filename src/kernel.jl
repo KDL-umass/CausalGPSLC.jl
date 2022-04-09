@@ -1,4 +1,4 @@
-export rbfKernelLog, logit, expit, processCov
+export rbfKernelLog, rbfKernelLogScalar, logit, expit, processCov
 
 """
 Radial Basis Function Kernel applied element-wise to two vectors `X1` and `X2` passed
@@ -10,8 +10,14 @@ Params:
 
 Output normalized by `LS` squared
 """
-function rbfKernelLog(Xi::SupportedRBFVector, Xiprime::SupportedRBFVector, LS::SupportedRBFLengthscale)
+function rbfKernelLogScalar(Xi::SupportedRBFVector, Xiprime::SupportedRBFVector, LS::SupportedRBFLengthscale)
     # println("RBF Vector lengthscale $(size(LS))")
+    # println("Xi $Xi")
+    # println("Xiprime $Xiprime")
+    # println("LS $LS")
+    @assert (size(LS, 1) == size(Xi, 1)
+             ||
+             size(LS) == ()) "vector lengthscale doesn't match individual"
     return -sum((Xi .- Xiprime) .^ 2 ./ LS)
 end
 
@@ -24,7 +30,7 @@ function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Union{
     n = size(X1, 1)
     cov = zeros(n, n)
     for i = 1:n, ip = 1:n
-        cov[i, ip] = rbfKernelLog(X1[i, :], X2[ip, :], LS)
+        cov[i, ip] = rbfKernelLogScalar(X1[i, :], X2[ip, :], LS)
     end
     # println("cov $(size(cov))")
     return cov
@@ -36,7 +42,7 @@ function rbfKernelLog(X1::SupportedRBFData, X2::SupportedRBFData, LS::Union{Supp
     @assert size(X1) == size(X2) "X1 and X2 are different sizes!"
     cov = zeros(n, n)
     for i = 1:n, ip = 1:n
-        cov[i, ip] = rbfKernelLog(X1[i], X2[ip], LS)
+        cov[i, ip] = rbfKernelLogScalar(X1[i], X2[ip], LS)
     end
     # println("cov $typeof(cov)")
     # println("cov $size(cov)")

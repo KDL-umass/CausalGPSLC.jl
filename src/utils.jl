@@ -52,5 +52,5 @@ function toMatrix(U::Union{
     }, n::Int64, m::Int64)
     U = permutedims(hcat(U...))
     U = reshape(U, (n, m))
-    U
+    return U
 end

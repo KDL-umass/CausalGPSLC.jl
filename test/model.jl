@@ -5,7 +5,8 @@ end
 @testset "Model Generation" begin
     hyperparams = getHyperParameters()
     n = 10
-    X = rand(n, 5)
+    nX = 5
+    X = rand(n, nX)
     binaryT::Array{Bool,1} = collect(rand(n) .< 0.5)
     realT::Array{Float64,1} = rand(n)
     Y = rand(n)

@@ -98,6 +98,8 @@ end
             fill(hyperparams["xtLSScale"], nX)), :xtLS)
     xyLS = @trace(MappedGenerateLS(fill(hyperparams["xyLSShape"], nX),
             fill(hyperparams["xyLSScale"], nX)), :xyLS)
+    @assert size(xtLS, 1) == nX "x lengthscale not correct length"
+    @assert size(xyLS, 1) == nX "x lengthscale not correct length"
     return xtLS, xyLS
 end
 

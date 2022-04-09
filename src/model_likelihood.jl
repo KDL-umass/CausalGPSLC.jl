@@ -63,7 +63,7 @@ end
 end
 
 """Sample Binary T from covariates (X)"""
-@gen function generateBinaryTfromX(U::Nothing, X::Any, utLS::Nothing, xtLS, tScale::Float64, tNoise::Float64)
+@gen function generateBinaryTfromX(U::Nothing, X::Union{Matrix{Float64},Vector{Float64}}, utLS::Nothing, xtLS, tScale::Float64, tNoise::Float64)
     n = size(X, 1)
     # println("X = $(typeof(X))")
     # println("X: $(typeof(X) <: SupportedRBFData))")
@@ -96,7 +96,7 @@ end
 end
 
 """Sample Y from confounders (U) and treatment (T)"""
-@gen function generateYfromUT(U::Any, X::Nothing, T::Any, uyLS, xyLS::Nothing, tyLS::Float64, yScale::Float64, yNoise::Float64)
+@gen function generateYfromUT(U::Any, X::Nothing, T::Treatment, uyLS, xyLS::Nothing, tyLS::Float64, yScale::Float64, yNoise::Float64)
     n = size(T, 1)
     uyCovLog = rbfKernelLog(U, U, uyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
@@ -106,20 +106,25 @@ end
 end
 
 """Sample Y from covariates (X) and treatment (T)"""
-@gen function generateYfromXT(U::Nothing, X::Any, T::Any, uyLS::Nothing, xyLS::Float64, tyLS::Float64, yScale::Float64, yNoise::Float64)
+@gen function generateYfromXT(U::Nothing, X::Covariates, T::Treatment, uyLS::Nothing, xyLS::SupportedRBFLengthscale, tyLS::SupportedRBFLengthscale, yScale::Float64, yNoise::Float64)
     n = size(T, 1)
     xyCovLog = rbfKernelLog(X, X, xyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
-    Ycov = processCov(xyCovLog + tyCovLog, yScale, yNoise)
+    Ycov = processCov(xyCovLog .+ tyCovLog, yScale, yNoise)
     Y = @trace(mvnormal(zeros(n), Ycov), :Y)
     return Y
 end
 
 """Sample Y from only treatment (T)"""
-@gen function generateYfromT(U::Nothing, X::Nothing, T::Any, uyLS::Nothing, xyLS::Nothing, tyLS::Float64, yScale::Float64, yNoise::Float64)
+@gen function generateYfromT(U::Nothing, X::Nothing, T::Treatment, uyLS::Nothing, xyLS::Nothing, tyLS::SupportedRBFLengthscale, yScale::Float64, yNoise::Float64)
     n = size(T, 1)
+    println("n $n")
+    println("T $(size(T)) $(T)")
+    println("tyLS $(size(tyLS)) $tyLS")
     tyCovLog = rbfKernelLog(T, T, tyLS)
+    println("tyCovLog $(size(tyCovLog))")
     Ycov = processCov(tyCovLog, yScale, yNoise)
+    println("Ycov $(size(Ycov))")
     Y = @trace(mvnormal(zeros(n), Ycov), :Y)
     return Y
 end

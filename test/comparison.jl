@@ -1,7 +1,7 @@
 function testInference()
     X, T, Y, SigmaU = prepareData("$(prefix)test_data/NEEC_sampled.csv")
-
     posteriorSample = samplePosterior(X, T, Y, SigmaU)
+    println("posteriorSample $(keys(posteriorSample))")
     ITEsamples = sampleITE(X, T, Y, SigmaU;
         posteriorSample=posteriorSample)
     summarizeITE(ITEsamples)
@@ -15,6 +15,8 @@ end
         @test size(expected) == size(actual)
         N = size(actual, 1)
         passing = zeros(N)
+        # println("expected $expected")
+        # println("actual $actual")
         for i = 1:N
             passing[i] = expected[i, "LowerBound"] <= actual[i, "Mean"] &&
                          actual[i, "Mean"] <= expected[i, "UpperBound"]
