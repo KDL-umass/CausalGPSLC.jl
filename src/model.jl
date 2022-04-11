@@ -43,7 +43,7 @@ end
 
 
 """No Latent Confounders (no U), Continuous GPSLC"""
-@gen function GPSLCNoURealT(hyperparams, X)
+@gen function GPSLCNoURealT(hyperparams, X::Covariates)
     n = length(X[1])
     nX = length(X)
     tNoise = @trace(sampleNoiseFromPriorT(hyperparams))
@@ -107,7 +107,7 @@ end
 end
 
 """No latent confounders (no U), Binary Treatment GPSLC"""
-@gen function GPSLCNoUBinaryT(hyperparams, X::Union{Vector{Float64},Matrix{Float64}})
+@gen function GPSLCNoUBinaryT(hyperparams, X::Covariates)
     nX = size(X, 2)
     tNoise = @trace(sampleNoiseFromPriorT(hyperparams))
     yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
@@ -121,7 +121,7 @@ end
 end
 
 """No covariates (no X), no latent confounders (no U) for Binary Treatment GPSLC"""
-@gen function GPSLCNoUNoCovBinaryT(hyperparams::HyperParameters, T::Array{Bool,1})
+@gen function GPSLCNoUNoCovBinaryT(hyperparams::HyperParameters, T::Vector{Bool})
     n = size(T)
     yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
     tyLS = @trace(lengthscaleFromPriorT(hyperparams))

@@ -11,7 +11,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     obs[:Y] = Y
 
     for i in 1:nX
-        obs[:X=>i=>:X] = X[i]
+        obs[:X=>i=>:X] = X[i, :]
     end
 
     posteriorSamples = []
@@ -163,7 +163,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
     end
 
     for i in 1:nX
-        obs[:X=>i=>:X] = X[i]
+        obs[:X=>i=>:X] = X[i, :]
     end
 
     posteriorSamples = []

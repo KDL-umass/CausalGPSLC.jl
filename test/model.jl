@@ -10,6 +10,7 @@ end
     binaryT::Array{Bool,1} = collect(rand(n) .< 0.5)
     realT::Array{Float64,1} = rand(n)
     Y = rand(n)
+    nU = 1
 
     obs = Gen.choicemap()
     obs[:Y] = Y
@@ -24,7 +25,18 @@ end
             @test true
         end
         @testset "GPSLCNoUBinaryT" begin
+            for i in 1:nX
+                obs[:X=>i=>:X] = X[i]
+            end
             (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, X), obs)
+            @test true
+        end
+        @testset "GPSLCNoCovBinaryT" begin
+            (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU), obs)
+            @test true
+        end
+        @testset "GPSLCBinaryT" begin
+            (trace, _) = generate(GPSLCBinaryT, (hyperparams, X), obs)
             @test true
         end
     end
