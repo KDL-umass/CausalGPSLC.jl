@@ -3,7 +3,7 @@
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://kdl-umass.github.io/GPSLC.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://kdl-umass.github.io/GPSLC.jl/dev)
 [![CI](https://github.com/KDL-umass/GPSLC.jl/workflows/CI/badge.svg)](https://github.com/kdl-umass/GPSLC.jl/actions?query=workflow%3ACI)
-[![Codecov](https://codecov.io/gh/kdl-umass/GPSLC.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/kdl-umass/GPSLC.jl)
+<!-- [![Codecov](https://codecov.io/gh/kdl-umass/GPSLC.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/kdl-umass/GPSLC.jl) -->
 
 ## Description
 
@@ -16,6 +16,11 @@ Running the examples can be done with
 ```bash
 julia examples/basicExample.jl
 ```
+
+
+## Contributing
+
+Please review the contribution instructions in [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Development
 
