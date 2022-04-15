@@ -92,6 +92,18 @@ end
     return utLS, uyLS
 end
 
+"""Latent confounders to treatment and outcome lengthscale when nX is known"""
+@gen function lengthscaleFromPriorUX(hyperparams::HyperParameters, nU::Int64, nX::Int64)
+    uxLS = @trace(MappedMappedGenerateLS(fill(fill(hyperparams["uxLSShape"], nX), nU), fill(fill(hyperparams["uxLSScale"], nX), nU)), :uxLS)
+    uxLS = toMatrix(uxLS, nX, nU)
+    # uxLS = @trace(MappedMappedGenerateLS(fill(fill(hyperparams["uxLSShape"], nU), nX), fill(fill(hyperparams["uxLSScale"], nU), nX)), :uxLS)
+    # uxLS = toMatrix(uxLS, nU, nX)
+    println("uxLS shape: $(size(uxLS))")
+    utLS = @trace(MappedGenerateLS(fill(hyperparams["utLSShape"], nU), fill(hyperparams["utLSScale"], nU)), :utLS)
+    uyLS = @trace(MappedGenerateLS(fill(hyperparams["uyLSShape"], nU), fill(hyperparams["uyLSScale"], nU)), :uyLS)
+    return uxLS, utLS, uyLS
+end
+
 """Covariates to treatment and outcome lengthscale"""
 @gen function lengthscaleFromPriorX(hyperparams::HyperParameters, nX::Int64)
     xtLS = @trace(MappedGenerateLS(fill(hyperparams["xtLSShape"], nX),

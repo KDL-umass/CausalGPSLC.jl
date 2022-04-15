@@ -16,7 +16,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCRealT, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCRealT, (hyperparams, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -168,7 +168,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))

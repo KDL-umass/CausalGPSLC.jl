@@ -41,15 +41,7 @@ end
 
 
 """Only call if you know all subvectors are same length"""
-function toMatrix(U::Union{
-        Vector{Any},
-        Vector{Vector{Bool}},
-        Vector{Vector{Int64}},
-        Vector{Vector{Float64}},
-        FunctionalCollections.PersistentVector{Vector{Bool}},
-        FunctionalCollections.PersistentVector{Vector{Int64}},
-        FunctionalCollections.PersistentVector{Vector{Float64}}
-    }, n::Int64, m::Int64)
+function toMatrix(U::ReshapeableMatrix, n::Int64, m::Int64)
     U = permutedims(hcat(U...))
     U = reshape(U, (n, m))
     return U

@@ -11,6 +11,8 @@ end
     realT::Array{Float64,1} = rand(n)
     Y = rand(n)
     nU = 1
+    objectCounts = [5, 5]
+    hyperparams["SigmaU"] = generateSigmaU(objectCounts)
 
     obs = Gen.choicemap()
     obs[:Y] = Y
@@ -36,7 +38,7 @@ end
             @test true
         end
         @testset "GPSLCBinaryT" begin
-            (trace, _) = generate(GPSLCBinaryT, (hyperparams, X), obs)
+            (trace, _) = generate(GPSLCBinaryT, (hyperparams, nU, nX), obs)
             @test true
         end
     end
