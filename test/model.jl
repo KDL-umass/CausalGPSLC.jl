@@ -10,12 +10,15 @@ end
     binaryT::Array{Bool,1} = collect(rand(n) .< 0.5)
     realT::Array{Float64,1} = rand(n)
     Y = rand(n)
-    nU = 1
+    nU = 2
+    objectCounts = [5, 5]
+    hyperparams["SigmaU"] = generateSigmaU(objectCounts)
 
     obs = Gen.choicemap()
     obs[:Y] = Y
 
     @testset "Binary" begin
+        # Treatment
         for i in 1:n
             obs[:T=>i=>:T] = binaryT[i]
         end
@@ -24,19 +27,21 @@ end
             (trace, _) = generate(GPSLCNoUNoCovBinaryT, (hyperparams, binaryT), obs)
             @test true
         end
-        @testset "GPSLCNoUBinaryT" begin
-            for i in 1:nX
-                obs[:X=>i=>:X] = X[i]
-            end
-            (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, X), obs)
-            @test true
-        end
         @testset "GPSLCNoCovBinaryT" begin
             (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU), obs)
             @test true
         end
+
+        # Covariates
+        for k in 1:nX
+            obs[:X=>k=>:X] = X[:, k]
+        end
+        @testset "GPSLCNoUBinaryT" begin
+            (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, X), obs)
+            @test true
+        end
         @testset "GPSLCBinaryT" begin
-            (trace, _) = generate(GPSLCBinaryT, (hyperparams, X), obs)
+            (trace, _) = generate(GPSLCBinaryT, (hyperparams, nU, nX), obs)
             @test true
         end
     end

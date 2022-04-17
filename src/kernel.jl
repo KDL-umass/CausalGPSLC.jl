@@ -20,22 +20,32 @@ end
 """
 2D rbfKernelLog
 """
-function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Union{SupportedRBFLengthscale,Float64})
+function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::SupportedRBFLengthscale)
     @assert size(X1) == size(X2) "X1 and X2 are different sizes!"
     n = size(X1, 1)
     cov = zeros(n, n)
     for i = 1:n, ip = 1:n
-        cov[i, ip] = rbfKernelLogScalar(X1[i, :], X2[ip, :], LS)
+        if ndims(LS) == 2
+            ls = LS[i, :]
+        else
+            ls = LS
+        end
+        cov[i, ip] = rbfKernelLogScalar(X1[i, :], X2[ip, :], ls)
     end
     return cov
 end
 
-function rbfKernelLog(X1::SupportedRBFData, X2::SupportedRBFData, LS::Union{SupportedRBFLengthscale,Float64})
+function rbfKernelLog(X1::SupportedRBFData, X2::SupportedRBFData, LS::SupportedRBFLengthscale)
     n = size(X1, 1)
     @assert size(X1) == size(X2) "X1 and X2 are different sizes!"
     cov = zeros(n, n)
     for i = 1:n, ip = 1:n
-        cov[i, ip] = rbfKernelLogScalar(X1[i], X2[ip], LS)
+        if ndims(LS) == 2
+            ls = LS[i, :]
+        else
+            ls = LS
+        end
+        cov[i, ip] = rbfKernelLogScalar(X1[i], X2[ip], ls)
     end
     return cov
 end
@@ -48,10 +58,8 @@ logit(prob)::Real = log(prob / (1 - prob))
 expit(x::Real) = exp(x) / (1.0 + exp(x))
 
 
-"""
-Convert covariance matrix back from log-space, scale and add noise (if passed)
-"""
-function processCov(logCov::Union{Float64,Array{Float64}}, scale::Float64, noise::Float64)
+"""Convert covariance matrix back from log-space, scale and add noise (if passed)"""
+function processCov(logCov::Union{Float64,Array{Float64}}, scale::Union{Float64,Array{Float64}}, noise::Float64)
     return exp.(logCov) * scale + 1I * noise
 end
 
