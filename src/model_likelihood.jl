@@ -12,20 +12,13 @@ end
 """Sample X from U"""
 @gen function generateXfromU(U::Confounders, uxLS::SupportedRBFLengthscale, xScale::XScaleOrNoise, xNoise::XScaleOrNoise, n::Int64, nX::Int64)
     X = zeros(n, nX)
-    println("X will be $(size(X))")
     for k = 1:nX
-        println("k $k")
         uxCovLog_k = rbfKernelLog(U, U, uxLS[k, :])
         Xcov_k = processCov(uxCovLog_k, xScale[k], xNoise[k])
-        @assert size(Xcov_k) == (n, n)
+        @assert size(Xcov_k) == (n, n) "X covariance matrix for dim k"
         X[:, k] = @trace(generateX(Xcov_k, n), :X => k)
     end
-    # X = @trace(MappedGenerateX(Xcov_allk, fill(n, nX)), :X)
-    # X = toMatrix(X, n, nX)
     return X
-    # Xcov = broadcast(processCov, sum(broadcast(rbfKernelLog, U, U, uxLS)), xScale, xNoise)
-    # X = @trace(MappedGenerateX(Xcov, fill(n, nX)), :X)
-    # return X
 end
 
 """Sample Binary T from confounders (U) and covariates (X)"""
