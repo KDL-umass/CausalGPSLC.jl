@@ -114,6 +114,8 @@ XScaleOrNoise = Union{
 
 """Matrix that can be reshaped"""
 ReshapeableMatrix = Union{
+    Vector{Any},
+    Matrix{Any},
     Matrix{Bool},
     Matrix{Int64},
     Matrix{Float64},
