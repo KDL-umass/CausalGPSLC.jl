@@ -21,14 +21,14 @@ end
 end
 
 """Gen function to generate latent confounders (U) from mvnormal distribution"""
-@gen function generateU(Ucov::Array{Float64}, n::Int)::Vector{Float64}
-    @assert size(Ucov) == (n, n) "Ucov is not NxN"
-    @trace(mvnormal(zeros(n), Ucov), :U)
+@gen function generateU(uCov::Array{Float64}, n::Int)::Vector{Float64}
+    @assert size(uCov) == (n, n) "uCov is not NxN"
+    @trace(mvnormal(zeros(n), uCov), :U)
 end
 
 """Gen function to generate covariates (n,X_k) from mvnormal distribution"""
-@gen function generateX(Xcov_k::Matrix{Float64}, n::Int)
-    @trace(mvnormal(zeros(n), Xcov_k), :X)
+@gen function generateX(XCov_k::Matrix{Float64}, n::Int)
+    @trace(mvnormal(zeros(n), XCov_k), :X)
 end
 
 export MappedGenerateLS, MappedMappedGenerateLS, MappedGenerateScale, MappedGenerateBinaryT, MappedGenerateNoise, MappedGenerateU, MappedGenerateX
