@@ -85,17 +85,16 @@ function sampleITE(X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{V
     doT::Float64=0.6, nU::Int=1, nOuter::Int=25,
     burnIn::Int=10, stepSize::Int=1, samplesPerPost::Int=10)
 
-
-    ITEsamples = zeros(length(T), samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
+    n = size(T, 1)
+    ITEsamples = zeros(n, samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
     idx = 1
     for i in @mock tqdm(burnIn:stepSize:nOuter)
         uyLS = []
-        U = []
+        U = zeros(n, nU)
         for u in 1:nU
             push!(uyLS, posteriorSample[i][:uyLS=>u=>:LS])
-            push!(U, posteriorSample[i][:U=>u=>:U])
+            U[:, nU] = posteriorSample[i][:U=>u=>:U]
         end
-        n = size(T, 1)
         U = toMatrix(U, n, nU)
         @assert size(U) == (n, nU)
 
@@ -118,7 +117,7 @@ function sampleITE(X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{V
             Y,
             doT)
 
-        for j in 1:samplesPerPost
+        for _ in 1:samplesPerPost
             samples = rand(MvNormal(MeanITE, Symmetric(CovITE) + I * (1e-10)))
             ITEsamples[:, idx] = samples
             idx += 1
