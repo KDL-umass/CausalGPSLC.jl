@@ -59,7 +59,7 @@ expit(x::Real) = exp(x) / (1.0 + exp(x))
 
 
 """Convert covariance matrix back from log-space, scale and add noise (if passed)"""
-function processCov(logCov::Union{Float64,Array{Float64}}, scale::Float64, noise::Float64)
+function processCov(logCov::Union{Float64,Array{Float64}}, scale::Union{Float64,Array{Float64}}, noise::Float64)
     return exp.(logCov) * scale + 1I * noise
 end
 

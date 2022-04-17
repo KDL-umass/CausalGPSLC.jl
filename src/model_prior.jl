@@ -26,9 +26,11 @@ end
     @trace(mvnormal(zeros(n), Ucov), :U)
 end
 
-"""Gen function to generate covariates (X) from mvnormal distribution"""
-@gen function generateX(Xcov::Array{Float64}, n::Int)::Vector{Float64}
-    @trace(mvnormal(zeros(n), Xcov), :X)
+"""Gen function to generate covariates (n,X_k) from mvnormal distribution"""
+@gen function generateX(Xcov_k::Matrix{Float64}, n::Int)
+    println("Xcov_k $(size(Xcov_k))")
+    println("n $n")
+    @trace(mvnormal(zeros(n), Xcov_k), :X)
 end
 
 export MappedGenerateLS, MappedMappedGenerateLS, MappedGenerateScale, MappedGenerateBinaryT, MappedGenerateNoise, MappedGenerateU, MappedGenerateX
@@ -94,8 +96,10 @@ end
 
 """Latent confounders to treatment and outcome lengthscale when nX is known"""
 @gen function lengthscaleFromPriorUX(hyperparams::HyperParameters, nU::Int64, nX::Int64)
+    # uxLS = @trace(MappedMappedGenerateLS(fill(fill(hyperparams["uxLSShape"], nX), nU), fill(fill(hyperparams["uxLSScale"], nX), nU)), :uxLS)
     uxLS = @trace(MappedMappedGenerateLS(fill(fill(hyperparams["uxLSShape"], nX), nU), fill(fill(hyperparams["uxLSScale"], nX), nU)), :uxLS)
     uxLS = toMatrix(uxLS, nX, nU)
+
     # uxLS = @trace(MappedMappedGenerateLS(fill(fill(hyperparams["uxLSShape"], nU), nX), fill(fill(hyperparams["uxLSScale"], nU), nX)), :uxLS)
     # uxLS = toMatrix(uxLS, nU, nX)
     println("uxLS shape: $(size(uxLS))")

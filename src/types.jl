@@ -8,6 +8,7 @@ export HyperParameters,
     SupportedRBFMatrix,
     SupportedRBFLengthscale,
     SupportedCovarianceMatrix,
+    XScaleOrNoise,
     ReshapeableMatrix
 
 """Global hyperparameters"""
@@ -104,6 +105,11 @@ SupportedRBFLengthscale = Union{
 """Viable inputs to the processCov function"""
 SupportedCovarianceMatrix = Union{
     Vector{Matrix{Float64}},
+}
+
+XScaleOrNoise = Union{
+    Vector{Vector{Float64}},
+    FunctionalCollections.PersistentVector{Float64},
 }
 
 """Matrix that can be reshaped"""

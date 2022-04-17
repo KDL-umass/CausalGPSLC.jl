@@ -46,3 +46,8 @@ function toMatrix(U::ReshapeableMatrix, n::Int64, m::Int64)
     U = reshape(U, (n, m))
     return U
 end
+
+"""Convert matrix to list of lists"""
+function toTupleOfVectors(U::Union{Matrix{Bool},Matrix{Int64},Matrix{Float64}})
+    Tuple(U[i, :] for i = 1:size(U, 1))
+end
