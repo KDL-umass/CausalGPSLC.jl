@@ -11,26 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
-  # build:
-#     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
-#     runs-on: ${{ matrix.os }}
-#     strategy:
-#       fail-fast: true
-#       matrix:
-#         version:
-#           - '^1.7'
-#         os:
-#           - ubuntu-latest
-#         arch:
-#           - x64
-#     steps:
-#       - uses: actions/checkout@v2
-#       - uses: julia-actions/setup-julia@v1
-#         with:
-#           version: ${{ matrix.version }}
-#           arch: ${{ matrix.arch }}
-#           show-versioninfo: true
-#       - uses: julia-actions/julia-buildpkg@v1
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
@@ -81,19 +61,5 @@ jobs:
             using GPSLC
             DocMeta.setdocmeta!(GPSLC, :DocTestSetup, :(using GPSLC); recursive=true)
             doctest(GPSLC)'
-  # codecov:
-  #   name: Codecov
-  #   steps:
-  #     - uses: codecov/codecov-action@v3.0.0
-  #       with:
-  #         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-  #         # files: ./coverage1.xml,./coverage2.xml # optional
-  #         run: 
-  #         after_success:
-  #           - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
-  #         flags: unittests # optional
-  #         name: codecov-umbrella # optional
-  #         fail_ci_if_error: true # optional (default = false)
-  #         verbose: true # optional (default = false)
 
   # # add nightly that pulls latest versions of dependencies
