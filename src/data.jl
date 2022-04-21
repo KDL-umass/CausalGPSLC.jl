@@ -1,6 +1,6 @@
 export prepareData
 
-function prepareData(csv_path)
+function prepareData(csv_path, confounderEps::Float64=1.0e-13, confounderCov::Float64=1.0)
     df = CSV.read(csv_path, DataFrame)
 
     # build a list of object size
@@ -14,7 +14,7 @@ function prepareData(csv_path)
         end
     end
     obj_count = [counts[o] for o in removeAdjacent(df[!, :obj])]
-    SigmaU = generateSigmaU(obj_count)
+    SigmaU = generateSigmaU(obj_count, confounderEps, confounderCov)
 
     # prepare inputs
     T = Array(df[!, :T])

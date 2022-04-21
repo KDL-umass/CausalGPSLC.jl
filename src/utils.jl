@@ -1,4 +1,4 @@
-export generateSigmaU, removeAdjacent, toMatrix
+export generateSigmaU, removeAdjacent, toMatrix, toTupleOfVectors
 
 """
 Generate block matrix for U given object counts
@@ -10,7 +10,7 @@ function generateSigmaU(nIndividualsArray::Array{Int},
 
     n = sum(nIndividualsArray)
     SigmaU = Matrix{Float64}(I, n, n)
-    i = 1
+    i = 1 # top left corner of block in block-matrix
     for nIndividuals in nIndividualsArray
         SigmaU[
             i:i+nIndividuals-1,
