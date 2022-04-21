@@ -1,4 +1,4 @@
-name: CI
+name: Continuous Integration
 on:
   push:
     branches:
@@ -50,6 +50,7 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - run: JULIA_NUM_THREADS=2
+      # steps borrowed from https://github.com/jump-dev/MathOptInterface.jl/blob/master/.github/workflows/ci.yml
       # - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:
