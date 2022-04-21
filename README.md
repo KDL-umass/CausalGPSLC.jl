@@ -8,35 +8,25 @@
 
 ## Description
 
-This code provides a working example of the algorithm 3 in the ICML 2020 [paper](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf). In summary, this code estimates posterior distributions over individual treatment effects given an observational dataset and an intervention assignment.
+This project provides a software interface in Julia for performing causal inference using Gaussian processes with structured latent confounders, as defined in the ICML 2020 [paper](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf). 
+
 
 ## Examples
 
-Running the examples can be done with
+The examples can be run by executing the following line:
 
 ```bash
 julia examples/basicExample.jl
 ```
 
+In summary, this code estimates posterior distributions over individual treatment effects given an observational dataset and an intervention assignment.
 
 ## Contributing
 
 Please review the contribution instructions in [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## Development
-
-In the julia REPL execute
-
-```julia
-using Pkg, Revise
-Pkg.activate(".")
-using GPSLC
-```
-
-And then you're good to go and add things as needed and rerun them. Revise should keep things up to date in the REPL as changes are made.
-
 ## Acknowledgements
 
-The original paper was published by Sam Witty, Kenta Takatsu, David Jensen, and Vikash Mansinghka in 2020.
+The original paper was published by Sam Witty, Kenta Takatsu, David Jensen, and Vikash Mansinghka in 2020. As the git history indicates, Sam Witty (switty) and Kenta Takatsu (Kenta426) made the original contributions to the code during their research process.
 
 This package was compiled by Jack Kenney in 2022 under the guidance of Sam Witty and David Jensen.
