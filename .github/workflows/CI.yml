@@ -77,19 +77,19 @@ concurrency:
             using GPSLC
             DocMeta.setdocmeta!(GPSLC, :DocTestSetup, :(using GPSLC); recursive=true)
             doctest(GPSLC)'
-  codecov:
-    name: Codecov
-    steps:
-      - uses: codecov/codecov-action@v3.0.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-          # files: ./coverage1.xml,./coverage2.xml # optional
-          run: 
-          after_success:
-            - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
-          flags: unittests # optional
-          name: codecov-umbrella # optional
-          fail_ci_if_error: true # optional (default = false)
-          verbose: true # optional (default = false)
+  # codecov:
+  #   name: Codecov
+  #   steps:
+  #     - uses: codecov/codecov-action@v3.0.0
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+  #         # files: ./coverage1.xml,./coverage2.xml # optional
+  #         run: 
+  #         after_success:
+  #           - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+  #         flags: unittests # optional
+  #         name: codecov-umbrella # optional
+  #         fail_ci_if_error: true # optional (default = false)
+  #         verbose: true # optional (default = false)
 
-  # add nightly that pulls latest versions of dependencies
+  # # add nightly that pulls latest versions of dependencies
