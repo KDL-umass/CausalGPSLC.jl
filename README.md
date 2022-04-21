@@ -3,7 +3,7 @@
 [![](https://img.shields.io/badge/language-julia-Green.svg)](https://julialang.org)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://kdl-umass.github.io/GPSLC.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://kdl-umass.github.io/GPSLC.jl/dev)
-[![CI](https://github.com/KDL-umass/GPSLC.jl/workflows/ContinuousIntegration/badge.svg)](https://github.com/kdl-umass/GPSLC.jl/actions?query=workflow%3AContinuousIntegration)
+[![CI](https://github.com/KDL-umass/GPSLC.jl/workflows/ci/badge.svg)](https://github.com/kdl-umass/GPSLC.jl/actions?query=workflow%3Aci)
 [![Codecov](https://codecov.io/gh/kdl-umass/GPSLC.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/kdl-umass/GPSLC.jl)
 
 ## Description
