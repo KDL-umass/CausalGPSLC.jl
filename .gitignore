@@ -10,3 +10,4 @@ secrets
 *.csv
 !examples/data/*.csv
 *.xlsx
+*.cov

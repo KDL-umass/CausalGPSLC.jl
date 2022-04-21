@@ -11,12 +11,13 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     obs[:Y] = Y
 
     for i in 1:nX
-        obs[:X=>i=>:X] = X[i]
+        obs[:X=>i=>:X] = X[i, :]
     end
 
+    # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCRealT, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCRealT, (hyperparams, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -43,6 +44,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
         end
 
+        # Algorithm 3 Confounder Update
         uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
 
         for j = 1:nESInner
@@ -65,6 +67,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     obs[:T] = T
     obs[:Y] = Y
 
+    # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
     (trace, _) = generate(GPSLCNoCovRealT, (hyperparams, nU), obs)
@@ -84,6 +87,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
         end
 
+        # Algorithm 3 Confounder Update
         uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
 
         for j = 1:nESInner
@@ -106,6 +110,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     obs[:T] = T
     obs[:Y] = Y
 
+    # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
     (trace, _) = generate(GPSLCNoURealT, (hyperparams, X), obs)
@@ -163,12 +168,13 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
     end
 
     for i in 1:nX
-        obs[:X=>i=>:X] = X[i]
+        obs[:X=>i=>:X] = X[i, :]
     end
 
+    # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nX, nU), obs)
+    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -206,12 +212,13 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 
         utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
         xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
-        logitTcov = processCov(utCovLog + xtCovLog, tScale, tNoise)
+        logittCov = processCov(utCovLog + xtCovLog, tScale, tNoise)
 
+        # Algorithm 3 Confounder Update
         uCov = hyperparams["SigmaU"] * uNoise
 
         for j = 1:nESInner
-            trace = elliptical_slice(trace, :logitT, zeros(n), logitTcov)
+            trace = elliptical_slice(trace, :logitT, zeros(n), logittCov)
             for k = 1:nU
                 trace = elliptical_slice(trace, :U => k => :U, zeros(n), uCov)
             end
@@ -235,6 +242,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
         obs[:T=>i=>:T] = T[i]
     end
 
+    # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
     (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU), obs)
@@ -263,12 +271,13 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
         uNoise = choices[:uNoise]
 
         utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
-        logitTcov = processCov(utCovLog, tScale, tNoise)
+        logittCov = processCov(utCovLog, tScale, tNoise)
 
+        # Algorithm 3 Confounder Update
         uCov = hyperparams["SigmaU"] * uNoise
 
         for j = 1:nESInner
-            trace = elliptical_slice(trace, :logitT, zeros(n), logitTcov)
+            trace = elliptical_slice(trace, :logitT, zeros(n), logittCov)
             for k = 1:nU
                 trace = elliptical_slice(trace, :U => k => :U, zeros(n), uCov)
             end
@@ -292,6 +301,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
         obs[:T=>i=>:T] = T[i]
     end
 
+    # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
     (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, X), obs)
@@ -317,10 +327,10 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
         tNoise = choices[:tNoise]
 
         xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
-        logitTcov = processCov(xtCovLog, tScale, tNoise)
+        logittCov = processCov(xtCovLog, tScale, tNoise)
 
         for j = 1:nESInner
-            trace = elliptical_slice(trace, :logitT, zeros(n), logitTcov)
+            trace = elliptical_slice(trace, :logitT, zeros(n), logittCov)
         end
 
         push!(posteriorSamples, get_choices(trace))
@@ -338,6 +348,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 
     obs[:Y] = Y
 
+    # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
     (trace, _) = generate(GPSLCNoUNoCovBinaryT, (hyperparams, T), obs)

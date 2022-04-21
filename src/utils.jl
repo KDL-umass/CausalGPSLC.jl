@@ -1,4 +1,4 @@
-export generateSigmaU, removeAdjacent, toMatrix
+export generateSigmaU, removeAdjacent, toMatrix, toTupleOfVectors
 
 """
 Generate block matrix for U given object counts
@@ -10,7 +10,7 @@ function generateSigmaU(nIndividualsArray::Array{Int},
 
     n = sum(nIndividualsArray)
     SigmaU = Matrix{Float64}(I, n, n)
-    i = 1
+    i = 1 # top left corner of block in block-matrix
     for nIndividuals in nIndividualsArray
         SigmaU[
             i:i+nIndividuals-1,
@@ -41,16 +41,13 @@ end
 
 
 """Only call if you know all subvectors are same length"""
-function toMatrix(U::Union{
-        Vector{Any},
-        Vector{Vector{Bool}},
-        Vector{Vector{Int64}},
-        Vector{Vector{Float64}},
-        FunctionalCollections.PersistentVector{Vector{Bool}},
-        FunctionalCollections.PersistentVector{Vector{Int64}},
-        FunctionalCollections.PersistentVector{Vector{Float64}}
-    }, n::Int64, m::Int64)
+function toMatrix(U::ReshapeableMatrix, n::Int64, m::Int64)
     U = permutedims(hcat(U...))
     U = reshape(U, (n, m))
     return U
+end
+
+"""Convert matrix to list of lists"""
+function toTupleOfVectors(U::Union{Matrix{Bool},Matrix{Int64},Matrix{Float64}})
+    Tuple(U[i, :] for i = 1:size(U, 1))
 end
