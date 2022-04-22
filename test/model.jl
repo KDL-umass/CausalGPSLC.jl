@@ -1,29 +1,9 @@
-function loadData()
-    CSV.read("$(prefix)test_data/additive_linear.csv", DataFrame)
-end
-
-function getDefaultObs(n)
-    Y = rand(n)
-    obs = Gen.choicemap()
-    obs[:Y] = Y
-    return obs
-end
-
 @testset "Model Generation" begin
-    hyperparams = getHyperParameters()
-    n = 10
-    nX = 5
-    X = rand(n, nX)
-    binaryT::Array{Bool,1} = collect(rand(n) .< 0.5)
-    realT::Array{Float64,1} = rand(n)
-
-    nU = 2
-    objectCounts = [5, 5]
-    hyperparams["SigmaU"] = generateSigmaU(objectCounts)
+    hyperparams, n, nU, nX, X, binaryT, realT = getToyData()
 
     @testset "Binary" begin
         # Treatment
-        obs = getDefaultObs(n)
+        obs, _ = getToyObservations(n)
         for i in 1:n
             obs[:T=>i=>:T] = binaryT[i]
         end
@@ -52,7 +32,7 @@ end
     end
 
     @testset "Real" begin
-        obs = getDefaultObs(n)
+        obs, _ = getToyObservations(n)
 
         @testset "GPSLCNoUNoCovRealT" begin
             (trace, _) = generate(GPSLCNoUNoCovRealT, (hyperparams, realT), obs)

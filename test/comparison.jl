@@ -1,7 +1,6 @@
 function testInference()
     X, T, Y, SigmaU = prepareData("$(prefix)test_data/NEEC_sampled.csv")
     posteriorSample = samplePosterior(X, T, Y, SigmaU)
-    println("posteriorSample $(keys(posteriorSample))")
     ITEsamples = sampleITE(X, T, Y, SigmaU;
         posteriorSample=posteriorSample)
     summarizeITE(ITEsamples)

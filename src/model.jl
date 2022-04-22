@@ -62,7 +62,7 @@ end
 """No Covariates (no X), No Latent Confounders (no U), Continuous GPSLC"""
 @gen function GPSLCNoUNoCovRealT(hyperparams::HyperParameters, T::Treatment)::Outcome
     yNoise = @trace(sampleNoiseFromPriorY(hyperparams))
-    tyLS = lengthscaleFromPriorT(hyperparams)
+    tyLS = @trace(lengthscaleFromPriorT(hyperparams))
     yScale = @trace(scaleFromPriorY(hyperparams))
     Y = @trace(generateYfromT(nothing, nothing, T, nothing, nothing, tyLS, yScale, yNoise))
     return Y

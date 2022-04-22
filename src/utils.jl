@@ -5,7 +5,7 @@ Generate block matrix for U given object counts
     
 SigmaU is shorthand for the object structure of the latent confounder
 """
-function generateSigmaU(nIndividualsArray::Array{Int},
+function generateSigmaU(nIndividualsArray::Array{Int64},
     eps::Float64=1e-13, cov::Float64=1.0)
 
     n = sum(nIndividualsArray)

@@ -148,7 +148,7 @@ function load_synthetic(experiment)
             label += 1
         end
     end
-    obj_key = Int.(obj_label)
+    obj_key = Int64.(obj_label)
 
     if maximum(T_) == 1.0
         T = [t for t in T_]
@@ -215,9 +215,9 @@ returns PEHE and Log likelihood per object (in Dict)
 """
 
 function eval_model(posterior_dirs, model::String, T::Vector{Float64}, doTs::Vector{Float64},
-    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int,
-    nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool, bart_pred)
-    # convert obj_key to Int index
+    Y::Vector{Float64}, Ycfs, obj_key, nSamplesPerPost::Int64,
+    nOuter::Int64, burnIn::Int64, stepSize::Int64, stats_by_doT::Bool, bart_pred)
+    # convert obj_key to Int64 index
     obj2id = Dict()
     init = 1
     for k in obj_key
@@ -226,7 +226,7 @@ function eval_model(posterior_dirs, model::String, T::Vector{Float64}, doTs::Vec
             init += 1
         end
     end
-    obj_label = [Int(obj2id[k]) for k in obj_key]
+    obj_label = [Int64(obj2id[k]) for k in obj_key]
     objects = keys(obj2id)
 
     # get posteriors for MLMs
@@ -390,9 +390,9 @@ evaluation with covariates
 model evalutes CATE
 """
 function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vector{Float64}, X, Y::Vector{Float64}, Ycfs, obj_key,
-    nSamplesPerPost::Int, nOuter::Int, burnIn::Int, stepSize::Int, stats_by_doT::Bool, bart_pred)
+    nSamplesPerPost::Int64, nOuter::Int64, burnIn::Int64, stepSize::Int64, stats_by_doT::Bool, bart_pred)
 
-    # convert obj_key to Int index
+    # convert obj_key to Int64 index
     obj2id = Dict()
     init = 1
     for k in obj_key
@@ -401,7 +401,7 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
             init += 1
         end
     end
-    obj_label = [Int(obj2id[k]) for k in obj_key]
+    obj_label = [Int64(obj2id[k]) for k in obj_key]
     objects = keys(obj2id)
 
     # get posteriors for MLMs

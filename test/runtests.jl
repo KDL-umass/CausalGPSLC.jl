@@ -15,6 +15,9 @@ import CSV
 import Random
 rng = Random.seed!(0)
 
+# utility functions for getting test data shared between various tests
+include("test_data.jl")
+
 # Adjust file paths
 prefix = ""
 if pwd()[end-3:end] != "test"
@@ -24,15 +27,14 @@ end
 # Mock ProgressBars
 Mocking.activate()
 patch = @patch function ProgressBars.tqdm(x)
-    println("Mocking out progress bars")
     return x
 end
 
 Mocking.apply(patch) do
-    include("kernel.jl")
-    include("latent.jl")
-    include("model.jl")
     include("utils.jl")
+    include("kernel.jl")
+    include("model.jl")
+    include("inference.jl")
     include("comparison.jl")
     # Bayesian Workflow -> A guide on writing Bayes code + tests
     # https://arxiv.org/pdf/2011.01808.pdf

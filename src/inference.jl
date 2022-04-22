@@ -1,8 +1,8 @@
 export Posterior
 
-"""Full Model"""
-function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
-    nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
+"""Continuous Treatment Full Model"""
+function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::Outcome,
+    nU::Int64, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
 
     n, nX = size(X)
 
@@ -10,8 +10,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     obs[:T] = T
     obs[:Y] = Y
 
-    for i in 1:nX
-        obs[:X=>i=>:X] = X[i, :]
+    for k in 1:nX
+        obs[:X=>k=>:X] = X[:, k]
     end
 
     # Algorithm 2 HyperParameter Update
@@ -25,7 +25,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
-            for k::Int = 1:nU
+            for k::Int64 = 1:nU
                 (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
                 (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
                 for l = 1:nX
@@ -58,9 +58,9 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
     posteriorSamples, trace
 end
 
-"""No Covariates"""
-function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
-    nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
+"""Continuous Treatment No Covariates"""
+function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Outcome,
+    nU::Int64, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
     n = size(T, 1)
 
     obs = Gen.choicemap()
@@ -101,9 +101,16 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Fl
     posteriorSamples, trace
 end
 
-"""No latent confounder, continuous treatment"""
-function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float64}, Y::Array{Float64},
-    nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
+"""
+Continuous Treatment No Confounders
+
+`nESInner` is not used to sample anything via elliptical slice sampling
+    It is required here for compatibility with the binary treatment version which uses
+    ES to learn hyperparameters for the support of binary variables
+    which are not usually supported by Gaussian processes.
+"""
+function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::Outcome,
+    nU::Nothing, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
     n, nX = size(X)
 
     obs = Gen.choicemap()
@@ -115,26 +122,29 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Float
 
     (trace, _) = generate(GPSLCNoURealT, (hyperparams, X), obs)
     for i = @mock tqdm(1:nOuter)
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
 
-        for k = 1:nX
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
+        for j = 1:nMHInner # Support for loop added after paper
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+
+            for k = 1:nX
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
+            end
+
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
         end
-
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
 
         push!(posteriorSamples, get_choices(trace))
     end
     posteriorSamples, trace
 end
 
-"""No latent confounders or covariates, continuous treatment"""
-function Posterior(hyperparams::Dict, X::Nothing, T::Array{Float64}, Y::Array{Float64},
-    nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
+"""Continuous Treatment No Confounders No Covariates"""
+function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Outcome,
+    nU::Nothing, nOuter::Int64, nMHInner::Nothing, nESInner::Nothing)
     n = size(T, 1)
 
     obs = Gen.choicemap()
@@ -155,8 +165,8 @@ end
 
 
 """Binary Treatment Full Model"""
-function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
-    nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
+function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outcome,
+    nU::Int64, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
 
     n, nX = size(X)
 
@@ -167,8 +177,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
         obs[:T=>i=>:T] = T[i]
     end
 
-    for i in 1:nX
-        obs[:X=>i=>:X] = X[i, :]
+    for k in 1:nX
+        obs[:X=>k=>:X] = X[:, k]
     end
 
     # Algorithm 2 HyperParameter Update
@@ -211,7 +221,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
         uNoise = choices[:uNoise]
 
         utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
-        xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
+        xtCovLog = rbfKernelLog(X, X, xtLS)
         logittCov = processCov(utCovLog + xtCovLog, tScale, tNoise)
 
         # Algorithm 3 Confounder Update
@@ -230,8 +240,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 end
 
 """Binary Treatment No Covariates"""
-function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
-    nU::Int, nOuter::Int, nMHInner::Int, nESInner::Int)
+function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome,
+    nU::Int64, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
 
     n = size(T, 1)
 
@@ -289,8 +299,8 @@ function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float
 end
 
 """Binary Treatment with No Confounders"""
-function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}, Y::Array{Float64},
-    nU::Nothing, nOuter::Int, nMHInner::Int, nESInner::Int)
+function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outcome,
+    nU::Nothing, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
 
     n, nX = size(X)
 
@@ -326,7 +336,7 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
         tScale = choices[:tScale]
         tNoise = choices[:tNoise]
 
-        xtCovLog = sum(broadcast(rbfKernelLog, X, X, xtLS))
+        xtCovLog = rbfKernelLog(X, X, xtLS)
         logittCov = processCov(xtCovLog, tScale, tNoise)
 
         for j = 1:nESInner
@@ -339,8 +349,8 @@ function Posterior(hyperparams::Dict, X::Array{Array{Float64,1}}, T::Array{Bool}
 end
 
 """Binary Treatment No Confounders No Covariates"""
-function Posterior(hyperparams::Dict, X::Nothing, T::Array{Bool}, Y::Array{Float64},
-    nU::Nothing, nOuter::Int, nMHInner::Nothing, nESInner::Nothing)
+function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome,
+    nU::Nothing, nOuter::Int64, nMHInner::Nothing, nESInner::Nothing)
 
     n = size(T, 1)
 

@@ -36,12 +36,22 @@ Covariates = Union{
     Matrix{Float64},
 }
 
+"""Binary Treatment (T)"""
+BinaryTreatment = Union{
+    Vector{Bool},
+    FunctionalCollections.PersistentVector{Bool},
+}
+
+"""Continuous Treatment (T)"""
+ContinuousTreatment = Union{
+    Vector{Float64},
+    FunctionalCollections.PersistentVector{Float64},
+}
+
 """Treatment (T)"""
 Treatment = Union{
-    Vector{Bool},
-    Vector{Float64},
-    FunctionalCollections.PersistentVector{Bool},
-    FunctionalCollections.PersistentVector{Float64},
+    BinaryTreatment,
+    ContinuousTreatment
 }
 
 """Outcome (Y)"""

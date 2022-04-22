@@ -29,33 +29,33 @@ function parse_commandline()
         "--nOuter"
         help = "the number of posterior steps"
         default = 25
-        arg_type = Int
+        arg_type = Int64
         "--nMHInner"
         help = "the number of metropolis hastings sampling steps"
         default = 1
-        arg_type = Int
+        arg_type = Int64
         "--nESInner"
         help = "the number of elliptical slice sampling steps"
         default = 1
-        arg_type = Int
+        arg_type = Int64
         "--nU"
         help = "the dimension of latent confounders to model"
         default = 1
-        arg_type = Int
+        arg_type = Int64
 
         # inference
         "--burnIn"
         help = "the number of posterior samples for burn-in"
         default = 10
-        arg_type = Int
+        arg_type = Int64
         "--stepSize"
         help = "the step size during the inference step"
         default = 1
-        arg_type = Int
+        arg_type = Int64
         "--samplesPerPost"
         help = "the number of samples from each posterior for treatment effect approximation"
         default = 10
-        arg_type = Int
+        arg_type = Int64
 
         # parameters for priors
         "--uNoiseShape"
@@ -184,8 +184,8 @@ function main()
 
     # do inference on latent values and the parameters
     println("Running Inference on U and Kernel Hyperparameters")
-    posteriorSample = samplePosterior(X, T, Y, SigmaU; hyperparams = parsed_args,
-        nU = nU, nOuter = nOuter, nMHInner = nMHInner, nESInner = nESInner)
+    posteriorSample = samplePosterior(X, T, Y, SigmaU; hyperparams=parsed_args,
+        nU=nU, nOuter=nOuter, nMHInner=nMHInner, nESInner=nESInner)
 
     # inference of treatment effects
     burnIn = parsed_args["burnIn"]
@@ -195,12 +195,12 @@ function main()
 
     # estimate individual treatment effects
     println("Estimating ITE")
-    ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorSample = posteriorSample,
-        doT = doT, nU = nU, nOuter = nOuter,
-        burnIn = burnIn, stepSize = stepSize, samplesPerPost = samplesPerPost)
+    ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorSample=posteriorSample,
+        doT=doT, nU=nU, nOuter=nOuter,
+        burnIn=burnIn, stepSize=stepSize, samplesPerPost=samplesPerPost)
 
     # summarize results
-    summarizeITE(ITEsamples; savetofile = parsed_args["output_filepath"])
+    summarizeITE(ITEsamples; savetofile=parsed_args["output_filepath"])
 end
 
 main()

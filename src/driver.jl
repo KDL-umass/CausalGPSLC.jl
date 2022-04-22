@@ -82,8 +82,8 @@ Returns:
 """
 function sampleITE(X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{Vector{Float64},Vector{Bool}}, Y::Vector{Float64}, SigmaU;
     posteriorSample=samplePosterior(X, T, Y, SigmaU),
-    doT::Float64=0.6, nU::Int=1, nOuter::Int=25,
-    burnIn::Int=10, stepSize::Int=1, samplesPerPost::Int=10)
+    doT::Float64=0.6, nU::Int64=1, nOuter::Int64=25,
+    burnIn::Int64=10, stepSize::Int64=1, samplesPerPost::Int64=10)
 
     n = size(T, 1)
     ITEsamples = zeros(n, samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
@@ -140,7 +140,7 @@ Returns:
 
 `posteriorSample`: samples from posterior determined by hyperparameters
 """
-function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any}=getHyperParameters(), nU::Int=1, nOuter::Int=25, nMHInner::Int=1, nESInner::Int=1)
+function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any}=getHyperParameters(), nU::Int64=1, nOuter::Int64=25, nMHInner::Int64=1, nESInner::Int64=1)
     hyperparams["SigmaU"] = SigmaU # databased hyperparameter
     posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
     return posteriorSample
