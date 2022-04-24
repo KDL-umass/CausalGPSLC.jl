@@ -25,7 +25,8 @@ end
     end
 end
 
-@gen function model(X)
+"""Super simple test model with standard GPSLC model calling API"""
+@gen function model(hyperparams, nU, X, T)
     theta = zeros(2) # linear model
     theta[1] = @trace(prior(:intercept))
     theta[2] = @trace(prior(:slope))
@@ -33,12 +34,13 @@ end
     @trace(mvnormal(X .* theta[2] .+ theta[1], LinearAlgebra.I(n)), :Y)
 end
 
-function posterior(X, Y, numSamples) # numSamples=nOuter
+function posterior(hyperparams::Nothing, X, T::Nothing, Y, nU::Nothing, nOuter,
+    nMHInner::Nothing, nESInner::Nothing) # numSamples=nOuter
     obs = choicemap()
     obs[:Y] = Y
-    (trace, _) = generate(model, (X,), obs)
+    (trace, _) = generate(model, (hyperparams, nU, X, T), obs)
     samples = []
-    for i in 1:numSamples
+    for i in 1:nOuter
         trace, _ = mh(trace, proposal, (:intercept,))
         trace, _ = mh(trace, proposal, (:slope,))
         push!(samples, get_choices(trace))
@@ -101,31 +103,15 @@ function isApproxUniform(dist, numTrials, numSamples, confidence=0.05)
     return true # reject null hypothesis
 end
 
-# """
-# Assumes outcome has symbol `:Y`
-# """
-# function simulationBasedCalibration(numSamples, model, hyperparams, X, T)
-#     numTrials = 100 * numSamples
-#     obs = choicemap()
-#     # get num params
-#     initial_trace, _ = generate(model, (X, T,), obs)
-#     initial_choices = get_choices(initial_trace)
-#     outcome_selection = select(:Y)
-#     params_selection = complement(outcome_selection)
-#     true_params = get_selected(initial_choices, params_selection)
-#     theta = flattenPosteriorSamples([true_params])
-#     numParams = length(get_values_shallow(true_params))
+"""
+Assumes outcome has symbol `:Y`
+"""
+function simulationBasedCalibration(numSamples, model, posterior,
+    hyperparams, nU, X, T; numTrials=numSamples * 100)
 
-# end
-
-@testset "Simple gen model SBC" begin
-    numSamples = 10
-    numTrials = 100 * numSamples
-    X = collect(1:50)
+    # get total number of parameters in the model
     obs = choicemap()
-
-    # get num params
-    initial_trace, _ = generate(model, (X,), obs)
+    initial_trace, _ = generate(model, (hyperparams, nU, X, T,), obs)
     initial_choices = get_choices(initial_trace)
     outcome_selection = select(:Y)
     params_selection = complement(outcome_selection)
@@ -137,25 +123,21 @@ end
     quantileSamples = zeros(numTrials, numParams)
 
     for t = 1:numTrials
-        initial_trace, _ = generate(model, (X,), obs)
+        initial_trace, _ = generate(model, (hyperparams, nU, X, T,), obs)
         initial_choices = get_choices(initial_trace)
 
         outcome_selection = select(:Y)
         outcome_choices = get_selected(initial_choices, outcome_selection)
         Y = outcome_choices[:Y]
-        # println("Y $Y")
 
         params_selection = complement(outcome_selection)
         true_params = get_selected(initial_choices, params_selection)
-        # println("params $true_params")
         theta = flattenPosteriorSamples([true_params])
-        # println("theta $theta")
         numParams = length(get_values_shallow(true_params))
-        # println("numParams $numParams")
 
-        posteriorSamples, trace = posterior(X, Y, numSamples)
+        posteriorSamples, trace = posterior(nothing, X, nothing, Y, nothing, numSamples,
+            nothing, nothing) # numSamples=nOuter
 
-        # println("flattening posterior samples")
         samples = flattenPosteriorSamples(posteriorSamples)
 
         for h = 1:numParams
@@ -167,4 +149,10 @@ end
         return true
     end
     false
+end
+
+@testset "Simple gen model SBC" begin
+    X = collect(1:50)
+    T = nothing
+    @test simulationBasedCalibration(10, model, posterior, nothing, nothing, X, T)
 end
