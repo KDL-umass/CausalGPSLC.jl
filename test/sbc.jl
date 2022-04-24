@@ -1,29 +1,31 @@
-function simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples, confidence=0.05)
-    theta = prior() # draw "true" theta from prior 
-    numParams = size(theta, 1) # theta is 1D
-    quantileSamples = zeros((numTrials, numParams))
-
-    for t = 1:numTrials # N in columbia article
-
-        theta = prior() # draw "true" theta from prior 
-        y = likelihood(theta) # draw "true" y from data model
-
-        # posterior returns array of samples (e.g. every 100th MH step)
-        thetaSamples = posterior(y, numSamples) # numSamples x numParams
-        @assert size(thetaSamples) == (numSamples, numParams)
-
-        for h = 1:numParams
-            # where does this true theta component fall in the sampled distribution?
-            quantileSamples[t, h] = thetaQuantile(thetaSamples[:, h], theta[h])
+"""
+Reshape `posteriorSamples`, a Vector of `DSLChoiceMap`s 
+into matrix samples by parameters
+"""
+function flattenPosteriorSamples(posteriorSamples)
+    function getNumParams(sample)
+        count = 0
+        for (addr, val) in get_values_shallow(sample)
+            count += length(val)
+        end
+        return count
+    end
+    numSamples = length(posteriorSamples)
+    numParams = getNumParams(posteriorSamples[1])
+    # println("flattening into $numSamples by $numParams")
+    samples = zeros(numSamples, numParams)
+    for s in 1:numSamples
+        paramNum = 1
+        for (addr, val) in get_values_shallow(posteriorSamples[s])
+            # println("pNum $paramNum end $(paramNum+length(val)-1) $val")
+            samples[s, paramNum:paramNum+length(val)-1] .= val
+            paramNum += length(val)
         end
     end
-    # check if quantiles are uniformly distributed
-    if isApproxUniform(quantileSamples, numTrials, numSamples, confidence)
-        return true
-    end
-    false
+    return samples
 end
 
+"""Calculate the quantile of `dist` that this `theta` falls into"""
 function thetaQuantile(dist, theta)
     dist = sort(vec(dist))
     if theta < dist[1]
@@ -38,7 +40,8 @@ function thetaQuantile(dist, theta)
     return dist[end]
 end
 
-function isApproxUniform(dist, numTrials, numSamples, confidence)
+"""Confirm that dist is approximately uniform with `confidence`"""
+function isApproxUniform(dist, numTrials, numSamples, confidence=0.05)
     numParams = size(dist, 2)
     @test numTrials == size(dist, 1)
 
@@ -56,37 +59,68 @@ function isApproxUniform(dist, numTrials, numSamples, confidence)
     return true # reject null hypothesis
 end
 
-@testset "Simulation-Based Calibration" begin
-    # https://statmodeling.stat.columbia.edu/2021/09/03/simulation-based-calibration-some-challenges-and-directions-for-future-research/
+"""
+Assumes outcome has symbol `:Y`
+"""
+function simulationBasedCalibration(model, posterior,
+    hyperparams, nU, X, T, nOuter, nMHInner, nESInner; numTrials=nOuter * 100)
 
-    @testset "Verify SBC procedure with prior" begin
-        numSamples = 100
-        numTrials = 100 * numSamples
-        @gen prior() = [randn()]
-        numParams = size(prior(), 1)
-        @gen likelihood(theta) = [randn() * theta]
-        @gen posterior(y, numSamples) = reshape([prior()[1] for i = 1:numSamples], (numSamples, numParams))
+    numSamples = nOuter
+    # get total number of parameters in the model
+    obs = choicemap()
+    initial_trace, _ = generate(model, (hyperparams, nU, X, T,), obs)
+    initial_choices = Gen.get_choices(initial_trace)
+    outcome_selection = Gen.select(:Y)
+    params_selection = Gen.complement(outcome_selection)
+    true_params = Gen.get_selected(initial_choices, params_selection)
+    theta = flattenPosteriorSamples([true_params])
+    numParams = length(get_values_shallow(true_params))
 
-        @test simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples)
+    # setup quantile sampling
+    quantileSamples = zeros(numTrials, numParams)
+
+    for t = 1:numTrials
+        initial_trace, _ = generate(model, (hyperparams, nU, X, T,), obs)
+        initial_choices = get_choices(initial_trace)
+        outcome_selection = Gen.select(:Y)
+        outcome_choices = get_selected(initial_choices, outcome_selection)
+        Y = outcome_choices[:Y]
+
+        params_selection = complement(outcome_selection)
+        true_params = get_selected(initial_choices, params_selection)
+        theta = flattenPosteriorSamples([true_params])
+        numParams = length(get_values_shallow(true_params))
+
+        posteriorSamples, trace = posterior(hyperparams, X, T, Y, nU, nOuter,
+            nMHInner, nESInner) # numSamples=nOuter
+
+        samples = flattenPosteriorSamples(posteriorSamples)
+
+        for h = 1:numParams
+            quantileSamples[t, h] = thetaQuantile(samples[:, h], theta[h])
+        end
     end
-
-    @testset "GPSLC" begin
-        # test the inference algorithms
-        hyperparams = getHyperParameters()
-        @gen prior() = Dict{String,Any}(
-            "tyLS" => lengthscaleFromPriorNoUNoX(hyperparams),
-            "yNoise" => sampleNoiseFromPrior(hyperparams)[3],
-            "yScale" => @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale),
-        )
-        @gen likelihood(theta) = @trace(generateY(nothing, nothing, T, theta["tyLS"], theta["yScale"], theta["yNoise"]))
+    # check if quantiles are uniformly distributed
+    if isApproxUniform(quantileSamples, numTrials, numSamples)
+        return true
     end
+    false
+end
 
-    # I'm trying to map the existing GPSLC functions onto the SBC setup, but I'm having trouble... It's all very nested together I think. I'm starting simple with just binary T and no U or X:
-    #  What I have so far is that the prior for what we're doing inference over:
-    #     yNoise, tyLS, and yScale seem to be the parameters we're doing inference over
-    #  Then, we need to be able to sample Y from the parameters we're doing inference over, which is the NoCovNoUBinaryGPSLC function you had defined (might have been named slightly differently)
-    #     Y comes from a mvnormal on a ycov from tyCovLog, yScale, and yNoise
-    #  Lastly, we need to do posterior inference on the parameters yNoise, tyLS, and yScale from this sampled Y
-    #     So we get yNoise, tyLS, and yScale from the Posterior with the right inputs. 
+@testset "Simple gen model SBC" begin
+    X = collect(1:50)
+    T = nothing
+    model, posterior = getToyModel()
+    @test simulationBasedCalibration(model, posterior, nothing, nothing, X, T, 10, nothing, nothing)
+end
 
+@testset "GPSLC SBC" begin
+    hyperparams, n, nU, nX, X, binaryT, realT = getToyData(10)
+    numSamples = 5
+
+    @testset "Binary Treatment, No U, No Cov" begin
+        @test simulationBasedCalibration(
+            GPSLCNoUNoCovBinaryT, Posterior, hyperparams,
+            nothing, nothing, binaryT, numSamples, nothing, nothing)
+    end
 end

@@ -4,6 +4,7 @@ using Revise
 using Mocking
 using Gen
 using Test
+using LinearAlgebra
 using ProgressBars
 using DataFrames
 using FunctionalCollections
@@ -17,6 +18,7 @@ rng = Random.seed!(0)
 
 # utility functions for getting test data shared between various tests
 include("test_data.jl")
+include("test_model.jl")
 
 # Adjust file paths
 prefix = ""
