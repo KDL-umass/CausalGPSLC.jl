@@ -1,12 +1,4 @@
-function simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples; confidence=0.05)
-    # TODO: Gen-ify this like this:
-    # trace, _ = generate(model)
-    # data = "extract data not parameters"(trace) # this is a choicemap
-    # for numTrials
-    #   inferred_params = inference(model, data)
-    # end
-
-
+function simulationBasedCalibration(prior, likelihood, posterior, numTrials, numSamples, confidence=0.05)
     theta = prior() # draw "true" theta from prior 
     numParams = size(theta, 1) # theta is 1D
     quantileSamples = zeros((numTrials, numParams))
