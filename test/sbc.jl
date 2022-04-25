@@ -47,12 +47,15 @@ function isApproxUniform(dist, numTrials, numSamples, confidence=0.05)
 
     for h in 1:numParams
         d = Distributions.Uniform(0, numSamples)
+
         # https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
         T = HypothesisTests.ApproximateOneSampleKSTest(dist[:, h], d)
         p = HypothesisTests.pvalue(T)
+
         # https://en.wikipedia.org/wiki/Bonferroni_correction#Definition
         if p > (confidence / numParams) # Bonferroni correction
-            return false
+            println("SBC Failed with p $p > $(confidence / numParams)")
+            return false # accept null hypothesis
         end
     end
 
@@ -63,7 +66,8 @@ end
 Assumes outcome has symbol `:Y`
 """
 function simulationBasedCalibration(model, posterior,
-    hyperparams, nU, X, T, nOuter, nMHInner, nESInner; numTrials=nOuter * 100)
+    hyperparams, nU, X, T, nOuter, nMHInner, nESInner
+    ; numTrials=nOuter * 25)
 
     numSamples = nOuter
     # get total number of parameters in the model
@@ -116,11 +120,55 @@ end
 
 @testset "GPSLC SBC" begin
     hyperparams, n, nU, nX, X, binaryT, realT = getToyData(10)
-    numSamples = 5
+    nOuter = numSamples = 5
+    nMHInner = 2
+    nESInner = 2
 
     @testset "Binary Treatment, No U, No Cov" begin
         @test simulationBasedCalibration(
             GPSLCNoUNoCovBinaryT, Posterior, hyperparams,
             nothing, nothing, binaryT, numSamples, nothing, nothing)
+    end
+
+    @testset "Binary Treatment, No Cov" begin
+        @test simulationBasedCalibration(
+            GPSLCNoCovBinaryT, Posterior, hyperparams,
+            nU, nothing, binaryT, numSamples, nMHInner, nESInner)
+    end
+
+    @testset "Binary Treatment, No U" begin
+        @test simulationBasedCalibration(
+            GPSLCNoUBinaryT, Posterior, hyperparams,
+            nothing, X, binaryT, numSamples, nMHInner, nESInner)
+    end
+
+    @testset "Binary Treatment, Full Model" begin
+        @test simulationBasedCalibration(
+            GPSLCBinaryT, Posterior, hyperparams,
+            nU, X, binaryT, numSamples, nMHInner, nESInner)
+    end
+
+    @testset "Continous Treatment, No U, No Cov" begin
+        @test simulationBasedCalibration(
+            GPSLCNoUNoCovRealT, Posterior, hyperparams,
+            nothing, nothing, binaryT, numSamples, nothing, nothing)
+    end
+
+    @testset "Continous Treatment, No Cov" begin
+        @test simulationBasedCalibration(
+            GPSLCNoCovRealT, Posterior, hyperparams,
+            nU, nothing, binaryT, numSamples, nMHInner, nESInner)
+    end
+
+    @testset "Continous Treatment, No U" begin
+        @test simulationBasedCalibration(
+            GPSLCNoURealT, Posterior, hyperparams,
+            nothing, X, binaryT, numSamples, nMHInner, nESInner)
+    end
+
+    @testset "Continous Treatment, Full Model" begin
+        @test simulationBasedCalibration(
+            GPSLCRealT, Posterior, hyperparams,
+            nU, X, binaryT, numSamples, nMHInner, nESInner)
     end
 end

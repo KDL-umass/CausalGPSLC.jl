@@ -149,6 +149,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Out
 
     obs = Gen.choicemap()
     obs[:Y] = Y
+    obs[:T] = T
 
     posteriorSamples = []
 
@@ -173,6 +174,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
     obs = Gen.choicemap()
 
     obs[:Y] = Y
+    # observe invididual T to infer logitT
     for i in 1:n
         obs[:T=>i=>:T] = T[i]
     end
@@ -248,6 +250,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome
     obs = Gen.choicemap()
 
     obs[:Y] = Y
+    # observe invididual T to infer logitT
     for i in 1:n
         obs[:T=>i=>:T] = T[i]
     end
@@ -307,6 +310,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
     obs = Gen.choicemap()
 
     obs[:Y] = Y
+    # observe invididual T to infer logitT
     for i in 1:n
         obs[:T=>i=>:T] = T[i]
     end
@@ -357,6 +361,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome
     obs = Gen.choicemap()
 
     obs[:Y] = Y
+    obs[:T] = T
 
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
