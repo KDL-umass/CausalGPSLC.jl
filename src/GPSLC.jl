@@ -13,6 +13,7 @@ import FunctionalCollections
 include("types.jl")
 include("utils.jl")
 include("data.jl")
+include("hyperparameters.jl")
 
 include("kernel.jl")
 include("model_prior.jl")
