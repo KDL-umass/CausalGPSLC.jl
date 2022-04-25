@@ -17,7 +17,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCRealT, (hyperparams, nU, nX), obs)
+    (trace, _) = generate(GPSLCRealT, (hyperparams, nU, X, T), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -70,7 +70,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Out
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovRealT, (hyperparams, nU), obs)
+    (trace, _) = generate(GPSLCNoCovRealT, (hyperparams, nU, nothing, T), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise"),))
@@ -120,7 +120,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoURealT, (hyperparams, X), obs)
+    (trace, _) = generate(GPSLCNoURealT, (hyperparams, nothing, X, T), obs)
     for i = @mock tqdm(1:nOuter)
 
         for j = 1:nMHInner # Support for loop added after paper
@@ -149,10 +149,11 @@ function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Out
 
     obs = Gen.choicemap()
     obs[:Y] = Y
+    obs[:T] = T
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUNoCovRealT, (hyperparams, T), obs)
+    (trace, _) = generate(GPSLCNoUNoCovRealT, (hyperparams, nothing, nothing, T), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
@@ -173,6 +174,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
     obs = Gen.choicemap()
 
     obs[:Y] = Y
+    # observe invididual T to infer logitT
     for i in 1:n
         obs[:T=>i=>:T] = T[i]
     end
@@ -184,7 +186,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nU, nX), obs)
+    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nU, X, T), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -248,6 +250,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome
     obs = Gen.choicemap()
 
     obs[:Y] = Y
+    # observe invididual T to infer logitT
     for i in 1:n
         obs[:T=>i=>:T] = T[i]
     end
@@ -255,7 +258,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU), obs)
+    (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU, nothing, T), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -307,6 +310,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
     obs = Gen.choicemap()
 
     obs[:Y] = Y
+    # observe invididual T to infer logitT
     for i in 1:n
         obs[:T=>i=>:T] = T[i]
     end
@@ -314,7 +318,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, X), obs)
+    (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, nothing, X, T), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
@@ -357,11 +361,12 @@ function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome
     obs = Gen.choicemap()
 
     obs[:Y] = Y
+    obs[:T] = T
 
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUNoCovBinaryT, (hyperparams, T), obs)
+    (trace, _) = generate(GPSLCNoUNoCovBinaryT, (hyperparams, nothing, nothing, T), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
