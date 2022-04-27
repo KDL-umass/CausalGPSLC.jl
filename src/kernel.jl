@@ -14,7 +14,8 @@ function rbfKernelLogScalar(Xi::SupportedRBFVector, Xiprime::SupportedRBFVector,
     @assert (size(LS, 1) == size(Xi, 1)
              ||
              size(LS) == ()) "vector lengthscale doesn't match individual"
-    return -sum((Xi .- Xiprime) .^ 2 ./ LS)
+    return -sum((Xi .- Xiprime) .^ 2 ./ LS .^ 2) # denom of exp vs sqrt of denom of exp
+    # TODO: try running without LS.^2
 end
 
 """

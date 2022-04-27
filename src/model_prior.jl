@@ -1,4 +1,5 @@
-export sampleNoiseFromPriorU, sampleNoiseFromPriorX, sampleNoiseFromPriorT, sampleNoiseFromPriorY, lengthscaleFromPriorT, lengthscaleFromPriorU, lengthscaleFromPriorX, scaleFromPriorX, scaleFromPriorT, scaleFromPriorY
+export sampleNoiseFromPriorU, sampleNoiseFromPriorX, sampleNoiseFromPriorT, sampleNoiseFromPriorY, lengthscaleFromPriorT, lengthscaleFromPriorU, lengthscaleFromPriorX, scaleFromPriorX, scaleFromPriorT, scaleFromPriorY,
+    generateXfromPrior, generateRealTfromPrior, generateBinaryTfromPrior
 
 """Gen function to generate lengthscale parameter for GP"""
 @gen function generateLS(shape::Float64, scale::Float64)::Float64
@@ -60,7 +61,6 @@ end
 @gen function sampleNoiseFromPriorX(hyperparams::HyperParameters, nX::Int64)::Vector{Float64}
     xNoise = @trace(MappedGenerateNoise(fill(hyperparams["xNoiseShape"], nX),
             fill(hyperparams["xNoiseScale"], nX)), :xNoise)
-
     return xNoise
 end
 
@@ -137,4 +137,34 @@ Sample kernel scale from prior for outcome (Y)
 @gen function scaleFromPriorY(hyperparams::HyperParameters)::Float64
     yScale = @trace(inv_gamma(hyperparams["yScaleShape"], hyperparams["yScaleScale"]), :yScale)
     return yScale
+end
+
+"""
+Sample covariates from prior (X)
+"""
+@gen function generateXfromPrior(hyperparams::HyperParameters, n::Int64, nX::Int64)::Covariates
+    X = zeros(n, nX)
+    for k in 1:nX
+        X[:, k] = @trace(mvnormal(zeros(n), LinearAlgebra.I(n)), :X => k => :X)
+    end
+    return X
+end
+
+
+"""
+Sample continuous treatment from prior (T)
+"""
+@gen function generateRealTfromPrior(hyperparams::HyperParameters, n::Int64)::ContinuousTreatment
+    @trace(mvnormal(zeros(n), LinearAlgebra.I(n)), :T)
+end
+
+
+"""
+Sample binary treatment from prior (T)
+"""
+@gen function generateBinaryTfromPrior(hyperparams::HyperParameters, n::Int64)::BinaryTreatment
+    logitTCov = LinearAlgebra.I(n)
+    logitT = @trace(mvnormal(zeros(n), logitTCov), :logitT)
+    T = @trace(MappedGenerateBinaryT(logitT), :T)
+    return T
 end

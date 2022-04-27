@@ -26,8 +26,8 @@ end
     n = size(X, 1)
     utCovLog = rbfKernelLog(U, U, utLS)
     xtCovLog = rbfKernelLog(X, X, xtLS)
-    logittCov = processCov(utCovLog + xtCovLog, tScale, tNoise)
-    logitT = @trace(mvnormal(zeros(n), logittCov), :logitT)
+    logitTCov = processCov(utCovLog + xtCovLog, tScale, tNoise)
+    logitT = @trace(mvnormal(zeros(n), logitTCov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
     return T
 end
@@ -64,8 +64,8 @@ end
     n = size(X, 1)
     xtCovLog = rbfKernelLog(X, X, xtLS)
     @assert size(xtCovLog) == (n, n) "tCov needs to be NxN!"
-    logittCov = processCov(xtCovLog, tScale, tNoise)
-    logitT = @trace(mvnormal(zeros(n), logittCov), :logitT)
+    logitTCov = processCov(xtCovLog, tScale, tNoise)
+    logitT = @trace(mvnormal(zeros(n), logitTCov), :logitT)
     T = @trace(MappedGenerateBinaryT(logitT), :T)
     return T
 end
