@@ -1,1 +1,5 @@
-# TODO: add tests for ITE estimation
+# TODO: add tests for ITE
+
+@testset "Conditional ITE" begin
+
+end

@@ -59,6 +59,11 @@ Outcome = Union{
     Vector{Float64},
 }
 
+"""Intervention (doT)"""
+Intervention = Union{
+    Vector{Float64}
+}
+
 
 """Viable inputs to the rbfKernelLog function in linear algebra datatypes"""
 SupportedRBFVector = Union{

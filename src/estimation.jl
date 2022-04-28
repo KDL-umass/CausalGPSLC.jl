@@ -1,17 +1,17 @@
 export conditionalITE, conditionalSATE, ITEsamples, SATEsamples
 
-"""Full Model Continuous/Binary"""
-function conditionalITE(uyLS::Array{Float64,1}, tyLS::Float64, xyLS::Array{Float64},
-    yNoise::Float64, yScale::Float64, U::Array,
-    X::Array, T, Y::Array, doT)
 
-    nU = length(U)
-    nX = length(X)
-    n = length(T)
+"""Full Model Continuous/Binary"""
+function conditionalITE(uyLS::Vector{Float64}, tyLS::Float64, xyLS::Array{Float64},
+    yNoise::Float64, yScale::Float64, U::Confounders,
+    X::Covariates, T::Treatment, Y::Outcome, doT::Intervention)
+
+    n, nX = size(X)
+    nU = size(U, 2)
 
     # e.g. U's contribution to log cov mat of Y
     uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
-    xyCovLog = sum(broadcast(rbfKernelLog, X, X, xyLS))
+    xyCovLog = rbfKernelLog(X, X, xyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     tyCovLogS = rbfKernelLog(T, fill(doT, n), tyLS)
     tyCovLogSS = rbfKernelLog(fill(doT, n), fill(doT, n), tyLS)
@@ -46,8 +46,8 @@ end
 
 """No Covariates Continuous/Binary"""
 function conditionalITE(uyLS::Vector{Float64}, tyLS::Float64, xyLS::Nothing,
-    yNoise::Float64, yScale::Float64, U::Union{Matrix{Float64},Vector{Float64}},
-    X::Nothing, T::Union{Vector{Float64},Vector{Bool}}, Y::Union{Matrix{Float64},Vector{Float64}}, doT)
+    yNoise::Float64, yScale::Float64, U::Confounders,
+    X::Nothing, T::Treatment, Y::Outcome, doT::Intervention)
 
     nU = length(U)
     n = length(T)
@@ -88,7 +88,7 @@ end
 """No Confounders Continuous/Binary"""
 function conditionalITE(uyLS::Nothing, tyLS::Float64, xyLS::Vector{Float64},
     yNoise::Float64, yScale::Float64, U::Nothing,
-    X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{Vector{Float64},Vector{Bool}}, Y::Vector{Float64}, doT)
+    X::Covariantes, T::Treatment, Y::Outcome, doT::Intervention)
 
     nX = length(X)
     n = length(T)
@@ -129,7 +129,7 @@ end
 """No Confounders No Covariates Continuous/Binary"""
 function conditionalITE(uyLS::Nothing, tyLS::Float64, xyLS::Nothing,
     yNoise::Float64, yScale::Float64, U::Nothing,
-    X::Nothing, T, Y::Array, doT)
+    X::Nothing, T::Treatment, Y::Outcome, doT::Intervention)
 
     n = length(T)
 
@@ -167,8 +167,8 @@ end
 
 """Conditional Sample Average Treatment Effect"""
 function conditionalSATE(uyLS, tyLS::Float64, xyLS,
-    yNoise::Float64, yScale::Float64, U,
-    X, T, Y::Array{Float64}, doT)
+    yNoise::Float64, yScale::Float64, U::Union{Nothing,Confounders},
+    X::Union{Nothing,Covariates}, T::Treatment, Y::Outcome, doT::Intervention)
 
     MeanITE, CovITE = conditionalITE(uyLS, tyLS, xyLS, yNoise, yScale, U, X, T, Y, doT)
 

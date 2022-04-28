@@ -33,7 +33,6 @@ patch = @patch function ProgressBars.tqdm(x)
 end
 
 Mocking.apply(patch) do
-    include("sbc.jl")
     include("utils.jl")
     include("kernel.jl")
     include("model.jl")
@@ -41,6 +40,7 @@ Mocking.apply(patch) do
     include("comparison.jl")
     # Bayesian Workflow -> A guide on writing Bayes code + tests
     # https://arxiv.org/pdf/2011.01808.pdf
+    include("sbc.jl")
 end
 
 end

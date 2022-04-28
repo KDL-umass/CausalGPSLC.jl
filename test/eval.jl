@@ -136,8 +136,7 @@ function load_synthetic(experiment)
 
     data_config_path = config["paths"]["data"]
     SigmaU, U_, T_, X_, Y_, epsY, ftxu = generate_synthetic_confounder(data_config_path)
-    nX = size(X_)[2]
-    n = length(T_)
+    n, nX = size(X_)
 
     obj_size = TOML.parsefile(data_config_path)["data"]["obj_size"]
     label = 1
