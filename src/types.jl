@@ -61,7 +61,10 @@ Outcome = Union{
 
 """Intervention (doT)"""
 Intervention = Union{
-    Vector{Float64}
+    Bool,
+    Vector{Bool},
+    Float64,
+    Vector{Float64},
 }
 
 

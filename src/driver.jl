@@ -15,7 +15,7 @@ Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 """
-function sampleITE(X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{Vector{Float64},Vector{Bool}}, Y::Vector{Float64}, SigmaU;
+function sampleITE(X::Covariates, T::Treatment, Y::Outcome, SigmaU;
     posteriorSample=samplePosterior(X, T, Y, SigmaU),
     doT::Float64=0.6, nU::Int64=1, nOuter::Int64=25,
     burnIn::Int64=10, stepSize::Int64=1, samplesPerPost::Int64=10)
@@ -93,8 +93,10 @@ Returns:
 """
 function summarizeITE(ITEsamples; savetofile::String="")
     meanITE = mean(ITEsamples, dims=2)[:, 1]
-    lowerITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
-    upperITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
+    lowerITE = broadcast(quantile,
+        [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
+    upperITE = broadcast(quantile,
+        [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
     df = DataFrame(Individual=1:size(meanITE)[1], Mean=meanITE, LowerBound=lowerITE, UpperBound=upperITE)
     if savetofile != ""
         CSV.write(savetofile, df)

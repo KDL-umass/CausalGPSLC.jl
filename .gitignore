@@ -4,10 +4,13 @@ docs/build
 build
 secrets
 
-
 *checkpoint*
-*.jld
 *.csv
-!examples/data/*.csv
 *.xlsx
+
+!examples/data/*.csv
+!test/test_results/*
+!test/test_data/*
+
+*.jld
 *.cov
