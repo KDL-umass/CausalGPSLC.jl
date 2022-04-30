@@ -22,7 +22,7 @@ end
 @testset "Submission Comparison" begin
     @testset "NEEC" begin
         expected = CSV.read("$(prefix)test_results/NEEC_sampled_80.csv", DataFrame)
-        actual = testInference("NEEC_sampled", 0.8)
+        actual = testInference("NEEC_sampled", 0.6)
         @test areCloseEnough(expected, actual)
     end
 end

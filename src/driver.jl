@@ -15,7 +15,7 @@ Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 """
-function sampleITE(X::Covariates, T::Treatment, Y::Outcome, SigmaU;
+function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, SigmaU;
     posteriorSample=samplePosterior(X, T, Y, SigmaU),
     doT::Float64=0.6, nU::Int64=1, nOuter::Int64=25,
     burnIn::Int64=10, stepSize::Int64=1, samplesPerPost::Int64=10)
