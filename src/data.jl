@@ -21,6 +21,7 @@ function prepareData(csv_path, confounderEps::Float64=1.0e-13, confounderCov::Fl
     # prepare inputs
     T = Array(df[!, :T])
     Y = Array(df[!, :Y])
+    n = size(T, 1)
 
     cols = names(df)
     cols = deleteat!(cols, cols .== "T")
@@ -31,8 +32,11 @@ function prepareData(csv_path, confounderEps::Float64=1.0e-13, confounderCov::Fl
     else
         X_ = df[!, cols]
         nX = size(X_)[2]
-        X = [Array(X_[!, i]) for i in 1:nX]
+        X = zeros(n, nX)
+        for i in 1:nX
+            X[:, i] = Vector(X_[!, i])
+        end
     end
 
-    X, T, Y, SigmaU
+    return X, T, Y, SigmaU
 end

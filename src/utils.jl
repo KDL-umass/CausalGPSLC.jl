@@ -51,3 +51,11 @@ end
 function toTupleOfVectors(U::Union{Matrix{Bool},Matrix{Int64},Matrix{Float64}})
     Tuple(U[i, :] for i = 1:size(U, 1))
 end
+
+"""Debugging tool to print all available address keys in choicemap"""
+function printAddrs(choices)
+    print("Choicemap addresses: ")
+    for (addr, val) in get_values_shallow(choices)
+        print("$addr, ")
+    end
+end

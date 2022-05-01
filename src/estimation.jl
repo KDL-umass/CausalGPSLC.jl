@@ -10,7 +10,7 @@ function conditionalITE(uyLS::Vector{Float64}, tyLS::Float64, xyLS::Array{Float6
     nU = size(U, 2)
 
     # e.g. U's contribution to log cov mat of Y
-    uyCovLog = sum(broadcast(rbfKernelLog, U, U, uyLS))
+    uyCovLog = rbfKernelLog(U, U, uyLS)
     xyCovLog = rbfKernelLog(X, X, xyLS)
     tyCovLog = rbfKernelLog(T, T, tyLS)
     tyCovLogS = rbfKernelLog(T, fill(doT, n), tyLS)

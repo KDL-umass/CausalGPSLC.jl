@@ -38,7 +38,12 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
         if X === nothing
             xyLS = nothing
         else
-            xyLS = convert(Vector{Float64}, posteriorSample[i][:xyLS])
+            nX = size(X, 2)
+            xyLS = zeros(nX)
+            for k in 1:nX
+                xyLS[k] = posteriorSample[i][:xyLS=>k=>:LS]
+            end
+            # xyLS = convert(Vector{Float64}, posteriorSample[i][:xyLS])
         end
 
         MeanITE, CovITE = conditionalITE(uyLS,
