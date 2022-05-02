@@ -4,6 +4,7 @@ export prepareData
 """TODO: Add loadData function to data.jl and have prepareData take DataFrame as input instead"""
 function prepareData(csv_path, confounderEps::Float64=1.0e-13, confounderCov::Float64=1.0)
     df = CSV.read(csv_path, DataFrame)
+    sort!(df, [:obj])
 
     # build a list of object size
     # [a, a, a, b, c, c] -> [3, 1, 2]

@@ -1,6 +1,6 @@
 function testInference(fname, doT)
     X, T, Y, SigmaU = prepareData("$(prefix)test_data/$fname.csv")
-    posteriorSample = samplePosterior(X, T, Y, SigmaU)
+    posteriorSample = samplePosterior(X, T, Y, SigmaU;)
     ITEsamples = sampleITE(X, T, Y, SigmaU;
         posteriorSample=posteriorSample, doT=doT)
     summarizeITE(ITEsamples)
@@ -22,73 +22,73 @@ end
 
 @testset "Estimation Comparison" begin
     @testset "Additive Linear" begin
-        @testset "0.0" begin
+        @testset "AddLinear 0.0" begin
             expected = CSV.read("$(prefix)test_results/additive_linear_0.csv", DataFrame)
             actual = testInference("additive_linear", 0.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
-        @testset "1.0" begin
+        @testset "AddLinear 1.0" begin
             expected = CSV.read("$(prefix)test_results/additive_linear_1.csv", DataFrame)
             actual = testInference("additive_linear", 1.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
     end
     @testset "Additive Nonlinear" begin
-        @testset "0.0" begin
+        @testset "AddNonlinear 0.0" begin
             expected = CSV.read("$(prefix)test_results/additive_nonlinear_0.csv", DataFrame)
             actual = testInference("additive_nonlinear", 0.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
-        @testset "1.0" begin
+        @testset "AddNonlinear 1.0" begin
             expected = CSV.read("$(prefix)test_results/additive_nonlinear_1.csv", DataFrame)
             actual = testInference("additive_nonlinear", 1.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
     end
     @testset "Multiplicative Linear" begin
-        @testset "0.0" begin
+        @testset "MultiLinear 0.0" begin
             expected = CSV.read("$(prefix)test_results/multiplicative_linear_0.csv", DataFrame)
             actual = testInference("multiplicative_linear", 0.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
-        @testset "1.0" begin
+        @testset "MultiLinear 1.0" begin
             expected = CSV.read("$(prefix)test_results/multiplicative_linear_1.csv", DataFrame)
             actual = testInference("multiplicative_linear", 1.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
     end
     @testset "Multiplicative Nonlinear" begin
-        @testset "0.0" begin
-            expected = CSV.read("$(prefix)test_results/multiplicative_nonlinear_0", DataFrame)
+        @testset "MultiNonLinear 0.0" begin
+            expected = CSV.read("$(prefix)test_results/multiplicative_nonlinear_0.csv", DataFrame)
             actual = testInference("multiplicative_nonlinear", 0.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
-        @testset "1.0" begin
-            expected = CSV.read("$(prefix)test_results/multiplicative_nonlinear_1", DataFrame)
+        @testset "MultiNonLinear 1.0" begin
+            expected = CSV.read("$(prefix)test_results/multiplicative_nonlinear_1.csv", DataFrame)
             actual = testInference("multiplicative_nonlinear", 1.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
     end
     @testset "IHDP" begin
-        @testset "false" begin
+        @testset "IHDP false" begin
             expected = CSV.read("$(prefix)test_results/IHDP_sampled_false.csv", DataFrame)
             actual = testInference("IHDP_sampled", false)
             @test countCloseEnough(expected, actual) >= 0.93
         end
-        @testset "true" begin
+        @testset "IHDP true" begin
             expected = CSV.read("$(prefix)test_results/IHDP_sampled_true.csv", DataFrame)
             actual = testInference("IHDP_sampled", true)
             @test countCloseEnough(expected, actual) >= 0.93
         end
     end
     @testset "NEEC" begin
-        @testset "0.0" begin
-            expected = CSV.read("$(prefix)test_results/NEEC_sampled_0", DataFrame)
+        @testset "NEEC 0.0" begin
+            expected = CSV.read("$(prefix)test_results/NEEC_sampled_0.csv", DataFrame)
             actual = testInference("NEEC_sampled", 0.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
-        @testset "1.0" begin
-            expected = CSV.read("$(prefix)test_results/NEEC_sampled_1", DataFrame)
+        @testset "NEEC 1.0" begin
+            expected = CSV.read("$(prefix)test_results/NEEC_sampled_1.csv", DataFrame)
             actual = testInference("NEEC_sampled", 1.0)
             @test countCloseEnough(expected, actual) >= 0.93
         end
@@ -101,9 +101,4 @@ end
         actual = testInference("NEEC_sampled", 0.6)
         @test countCloseEnough(expected, actual) >= 0.93
     end
-end
-
-@testset "Evaluation Comparison" begin
-    # compare avg actual mean to avg original bounds
-    # analysis/eval.jl
 end

@@ -13,8 +13,9 @@ using HypothesisTests
 using GPSLC
 import CSV
 
+
 import Random
-rng = Random.seed!(0)
+rng = Random.seed!(1234)
 
 # utility functions for getting test data shared between various tests
 include("test_data.jl")

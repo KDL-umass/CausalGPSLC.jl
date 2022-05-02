@@ -17,7 +17,7 @@ Returns:
 """
 function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, SigmaU;
     posteriorSample=samplePosterior(X, T, Y, SigmaU),
-    doT::Float64=0.6, nU::Int64=1, nOuter::Int64=25,
+    doT::Intervention=0.6, nU::Int64=1, nOuter::Int64=25,
     burnIn::Int64=10, stepSize::Int64=1, samplesPerPost::Int64=10)
 
     n = size(T, 1)
