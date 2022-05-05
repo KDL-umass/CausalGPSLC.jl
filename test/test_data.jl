@@ -1,8 +1,3 @@
-"""Load additive linear synthetic data from paper"""
-function loadData()
-    CSV.read("$(prefix)test_data/additive_linear.csv", DataFrame)
-end
-
 """
 Returns `obs` with Toy output data samples set and those outputs `Y`
 

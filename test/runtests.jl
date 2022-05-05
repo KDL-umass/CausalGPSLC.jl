@@ -13,7 +13,6 @@ using HypothesisTests
 using GPSLC
 import CSV
 
-
 import Random
 rng = Random.seed!(1234)
 
@@ -21,9 +20,10 @@ rng = Random.seed!(1234)
 include("test_data.jl")
 include("test_model.jl")
 
-# Adjust file paths
+# Adjust file paths for CI
 prefix = ""
-if pwd()[end-3:end] != "test"
+notInCI = pwd()[end-3:end] != "test"
+if notInCI
     prefix = "test/"
 end
 
@@ -39,9 +39,13 @@ Mocking.apply(patch) do
     include("kernel.jl")
     include("model.jl")
     include("inference.jl")
-    # Bayesian Workflow -> A guide on writing Bayes code + tests
-    # https://arxiv.org/pdf/2011.01808.pdf
-    include("sbc.jl")
+
+    if notInCI # leaving intense tests out of ci pipeline
+        # Bayesian Workflow -> A guide on writing Bayes code + tests
+        # https://arxiv.org/pdf/2011.01808.pdf
+        include("sbc.jl")
+        include("comparison.jl")
+    end
 end
 
 end

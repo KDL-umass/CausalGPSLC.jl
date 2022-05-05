@@ -1,104 +1,100 @@
-function testInference(fname, doT)
-    X, T, Y, SigmaU = prepareData("$(prefix)test_data/$fname.csv")
-    posteriorSample = samplePosterior(X, T, Y, SigmaU;)
-    ITEsamples = sampleITE(X, T, Y, SigmaU;
-        posteriorSample=posteriorSample, doT=doT)
-    summarizeITE(ITEsamples)
-end
+@testset "conditionalITE" begin
+    hyperparams = getHyperParameters()
 
+    uyLS = [1.0]
+    xyLS = [1.0]
+    tyLS = 1.0
+    yScale = 1.0
+    yNoise = 1.0
+    U = [[1.0]]
+    X = ones(1, 1)
+    realT = [1.0]
+    binaryT = [true]
+    Y = [rand()]
 
-"""Count how many of the actual mean values are within the expected bounds"""
-function countCloseEnough(expected, actual)
-    @assert size(expected) == size(actual) "expected and actual aren't same size"
-    n = size(actual, 1)
-    passing = zeros(n)
-    for i = 1:n
-        passing[i] = expected[i, "LowerBound"] <= actual[i, "Mean"] &&
-                     actual[i, "Mean"] <= expected[i, "UpperBound"]
+    @testset "No U, no X, binaryT" begin
+        doT = true
+        meanITE, covITE = conditionalITE(
+            nothing, nothing, tyLS, yNoise, yScale,
+            nothing, nothing, binaryT, Y, doT)
+        @test all(meanITE .== 0.0)
+        @test all(covITE .== 0.0)
     end
-    return sum(passing) / n
-end
+    @testset "No U, binaryT" begin
+        doT = true
+        meanITE, covITE = conditionalITE(
+            nothing, xyLS, tyLS, yNoise, yScale,
+            nothing, X, binaryT, Y, doT)
+        @test all(meanITE .== 0.0)
+        @test all(covITE .== 0.0)
+    end
+    @testset "No X, binaryT" begin
+        doT = true
+        meanITE, covITE = conditionalITE(
+            uyLS, nothing, tyLS, yNoise, yScale,
+            U, nothing, binaryT, Y, doT)
+        @test all(meanITE .== 0.0)
+        @test all(covITE .== 0.0)
+    end
+    @testset "Full model, binaryT" begin
+        doT = true
+        meanITE, covITE = conditionalITE(
+            uyLS, xyLS, tyLS, yNoise, yScale,
+            U, X, binaryT, Y, doT)
+        @test all(meanITE .== 0.0)
+        @test all(covITE .== 0.0)
+    end
 
-
-@testset "Estimation Comparison" begin
-    @testset "Additive Linear" begin
-        @testset "AddLinear 0.0" begin
-            expected = CSV.read("$(prefix)test_results/additive_linear_0.csv", DataFrame)
-            actual = testInference("additive_linear", 0.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
-        @testset "AddLinear 1.0" begin
-            expected = CSV.read("$(prefix)test_results/additive_linear_1.csv", DataFrame)
-            actual = testInference("additive_linear", 1.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
+    @testset "No U, no X, realT" begin
+        doT = true
+        meanITE, covITE = conditionalITE(
+            nothing, nothing, tyLS, yNoise, yScale,
+            nothing, nothing, realT, Y, doT)
+        @test all(meanITE .== 0.0)
+        @test all(covITE .== 0.0)
     end
-    @testset "Additive Nonlinear" begin
-        @testset "AddNonlinear 0.0" begin
-            expected = CSV.read("$(prefix)test_results/additive_nonlinear_0.csv", DataFrame)
-            actual = testInference("additive_nonlinear", 0.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
-        @testset "AddNonlinear 1.0" begin
-            expected = CSV.read("$(prefix)test_results/additive_nonlinear_1.csv", DataFrame)
-            actual = testInference("additive_nonlinear", 1.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
+    @testset "No U, realT" begin
+        doT = true
+        meanITE, covITE = conditionalITE(
+            nothing, xyLS, tyLS, yNoise, yScale,
+            nothing, X, realT, Y, doT)
+        @test all(meanITE .== 0.0)
+        @test all(covITE .== 0.0)
     end
-    @testset "Multiplicative Linear" begin
-        @testset "MultiLinear 0.0" begin
-            expected = CSV.read("$(prefix)test_results/multiplicative_linear_0.csv", DataFrame)
-            actual = testInference("multiplicative_linear", 0.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
-        @testset "MultiLinear 1.0" begin
-            expected = CSV.read("$(prefix)test_results/multiplicative_linear_1.csv", DataFrame)
-            actual = testInference("multiplicative_linear", 1.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
+    @testset "No X, realT" begin
+        doT = true
+        meanITE, covITE = conditionalITE(
+            uyLS, nothing, tyLS, yNoise, yScale,
+            U, nothing, realT, Y, doT)
+        @test all(meanITE .== 0.0)
+        @test all(covITE .== 0.0)
     end
-    @testset "Multiplicative Nonlinear" begin
-        @testset "MultiNonLinear 0.0" begin
-            expected = CSV.read("$(prefix)test_results/multiplicative_nonlinear_0.csv", DataFrame)
-            actual = testInference("multiplicative_nonlinear", 0.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
-        @testset "MultiNonLinear 1.0" begin
-            expected = CSV.read("$(prefix)test_results/multiplicative_nonlinear_1.csv", DataFrame)
-            actual = testInference("multiplicative_nonlinear", 1.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
-    end
-    @testset "IHDP" begin
-        @testset "IHDP false" begin
-            expected = CSV.read("$(prefix)test_results/IHDP_sampled_false.csv", DataFrame)
-            actual = testInference("IHDP_sampled", false)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
-        @testset "IHDP true" begin
-            expected = CSV.read("$(prefix)test_results/IHDP_sampled_true.csv", DataFrame)
-            actual = testInference("IHDP_sampled", true)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
-    end
-    @testset "NEEC" begin
-        @testset "NEEC 0.0" begin
-            expected = CSV.read("$(prefix)test_results/NEEC_sampled_0.csv", DataFrame)
-            actual = testInference("NEEC_sampled", 0.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
-        @testset "NEEC 1.0" begin
-            expected = CSV.read("$(prefix)test_results/NEEC_sampled_1.csv", DataFrame)
-            actual = testInference("NEEC_sampled", 1.0)
-            @test countCloseEnough(expected, actual) >= 0.93
-        end
+    @testset "Full model, realT" begin
+        doT = true
+        meanITE, covITE = conditionalITE(
+            uyLS, xyLS, tyLS, yNoise, yScale,
+            U, X, realT, Y, doT)
+        @test all(meanITE .== 0.0)
+        @test all(covITE .== 0.0)
     end
 end
 
-@testset "Submission Comparison" begin
-    @testset "NEEC" begin
-        expected = CSV.read("$(prefix)test_results/NEEC_sampled_0.6.csv", DataFrame)
-        actual = testInference("NEEC_sampled", 0.6)
-        @test countCloseEnough(expected, actual) >= 0.93
-    end
+@testset "conditionalSATE" begin
+
+end
+
+@testset "SATEsamples" begin
+
+end
+
+@testset "ITEsamples" begin
+
+end
+
+@testset "sampleITE" begin
+
+end
+
+@testset "SummarizeITE" begin
+
 end

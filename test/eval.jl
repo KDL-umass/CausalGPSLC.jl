@@ -286,8 +286,8 @@ function eval_model(posterior_dirs, model::String, T::Vector{Float64}, doTs::Vec
                 else
 
                     MeanITE, CovITE = conditionalITE(uyLS,
-                        post["tyLS"],
                         nothing,
+                        post["tyLS"],
                         post["yNoise"],
                         post["yScale"],
                         U,
@@ -301,8 +301,8 @@ function eval_model(posterior_dirs, model::String, T::Vector{Float64}, doTs::Vec
                     if model == "GP_per_object"
                         post = posts[obj]
                         MeanITE, CovITE = conditionalITE(nothing,
-                            post["tyLS"],
                             nothing,
+                            post["tyLS"],
                             post["yNoise"],
                             post["yScale"],
                             nothing,
@@ -489,8 +489,8 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
                         for (post_idx, p) in enumerate(post)
                             if uyLS == nothing
                                 MeanITE, CovITE = conditionalITE(nothing,
-                                    p["tyLS"],
                                     xyLS[post_idx],
+                                    p["tyLS"],
                                     p["yNoise"],
                                     p["yScale"],
                                     nothing,
@@ -500,8 +500,8 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
                                     doT)
                             else
                                 MeanITE, CovITE = conditionalITE(uyLS[post_idx],
-                                    p["tyLS"],
                                     xyLS[post_idx],
+                                    p["tyLS"],
                                     p["yNoise"],
                                     p["yScale"],
                                     U[post_idx],
@@ -518,8 +518,8 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
 
                     else
                         MeanITE, CovITE = conditionalITE(uyLS,
-                            post["tyLS"],
                             xyLS,
+                            post["tyLS"],
                             post["yNoise"],
                             post["yScale"],
                             U,
@@ -540,8 +540,8 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
                             xyLS = [convert(Array{Float64,1}, p["xyLS"]) for p in post]
                             for (i, p) in enumerate(post)
                                 MeanITE, CovITE = conditionalITE(uyLS[i],
-                                    p["tyLS"],
                                     xyLS[i],
+                                    p["tyLS"],
                                     p["yNoise"],
                                     p["yScale"],
                                     U[i],
@@ -557,8 +557,8 @@ function eval_model(posterior_dir, model::String, T::Vector{Float64}, doTs::Vect
                         else
                             xyLS = convert(Array{Float64,1}, post["xyLS"])
                             MeanITE, CovITE = conditionalITE(nothing,
-                                post["tyLS"],
                                 xyLS,
+                                post["tyLS"],
                                 post["yNoise"],
                                 post["yScale"],
                                 nothing,

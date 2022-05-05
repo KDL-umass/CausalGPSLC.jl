@@ -21,20 +21,20 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
     burnIn::Int64=10, stepSize::Int64=1, samplesPerPost::Int64=10)
 
     n = size(T, 1)
-    ITEsamples = zeros(n, samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
+    # output in Algorithm 3
+    ITEsamples = zeros(n, samplesPerPost * length(burnIn:stepSize:nOuter))
+
     idx = 1
     for i in @mock tqdm(burnIn:stepSize:nOuter)
-        uyLS = []
+        uyLS = zeros(nU)
         U = zeros(n, nU)
         for u in 1:nU
-            push!(uyLS, posteriorSample[i][:uyLS=>u=>:LS])
+            uyLS[u] = posteriorSample[i][:uyLS=>u=>:LS]
             U[:, nU] = posteriorSample[i][:U=>u=>:U]
         end
         U = toMatrix(U, n, nU)
         @assert size(U) == (n, nU)
 
-
-        uyLS = convert(Vector{Float64}, uyLS)
         if X === nothing
             xyLS = nothing
         else
@@ -43,7 +43,6 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
             for k in 1:nX
                 xyLS[k] = posteriorSample[i][:xyLS=>k=>:LS]
             end
-            # xyLS = convert(Vector{Float64}, posteriorSample[i][:xyLS])
         end
 
         MeanITE, CovITE = conditionalITE(uyLS,
@@ -51,14 +50,14 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
             xyLS,
             posteriorSample[i][:yNoise],
             posteriorSample[i][:yScale],
-            U,
-            X,
-            T,
-            Y,
-            doT)
+            U, X, T, Y, doT)
 
         for _ in 1:samplesPerPost
-            samples = rand(MvNormal(MeanITE, Symmetric(CovITE) + I * (1e-10)))
+            dist = Distributions.MvNormal(
+                MeanITE,
+                LinearAlgebra.Symmetric(CovITE) + I * (1e-10)
+            )
+            samples = rand(dist)
             ITEsamples[:, idx] = samples
             idx += 1
         end
