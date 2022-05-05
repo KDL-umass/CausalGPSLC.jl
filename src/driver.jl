@@ -1,8 +1,28 @@
 using Mocking
-export sampleITE, samplePosterior, summarizeITE
+export samplePosterior, sampleITE, summarizeITE
 
 """
-Estimate Individual Treatment Effect using GPSLC model
+    Draw samples from the posterior given the observed data `X,T,Y`.
+
+Params:
+- `X`: Input covariates
+- `T`: Input treatment
+- `Y`: Output
+- `SigmaU`: Object structure
+- `hyperParams`=[`getHyperParameters`](@ref)`()`: Hyperparameters for posterior sampling
+
+Returns:
+
+`posteriorSample`: samples from posterior determined by hyperparameters
+"""
+function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any}=getHyperParameters(), nU::Int64=1, nOuter::Int64=25, nMHInner::Int64=1, nESInner::Int64=1)
+    hyperparams["SigmaU"] = SigmaU # databased hyperparameter
+    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
+    return posteriorSample
+end
+
+"""
+    Estimate Individual Treatment Effect with GPSLC model
 
 Params:
 - `X`: Input covariates
@@ -30,7 +50,7 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
         U = zeros(n, nU)
         for u in 1:nU
             uyLS[u] = posteriorSample[i][:uyLS=>u=>:LS]
-            U[:, nU] = posteriorSample[i][:U=>u=>:U]
+            U[:, u] = posteriorSample[i][:U=>u=>:U]
         end
         U = toMatrix(U, n, nU)
         @assert size(U) == (n, nU)
@@ -45,9 +65,10 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
             end
         end
 
-        MeanITE, CovITE = conditionalITE(uyLS,
-            posteriorSample[i][:tyLS],
+        MeanITE, CovITE = conditionalITE(
+            uyLS,
             xyLS,
+            posteriorSample[i][:tyLS],
             posteriorSample[i][:yNoise],
             posteriorSample[i][:yScale],
             U, X, T, Y, doT)
@@ -65,27 +86,46 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
     return ITEsamples
 end
 
-"""
-Draw samples from the posterior given the observed data `X,T,Y`.
 
-Params:
-- `X`: Input covariates
-- `T`: Input treatment
-- `Y`: Output
-- `SigmaU`: Object structure
-- `hyperParams`=[`getHyperParameters`](@ref)`()`: Hyperparameters for posterior sampling
+"""Individual Treatment Effect Samples"""
+function ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
+    nMixtures = length(MeanITEs[:, 1])
+    n = length(MeanITEs[1, :])
 
-Returns:
+    samples = zeros(nMixtures * nSamplesPerMixture, n)
+    i = 0
+    for j in 1:nMixtures
+        mean = MeanITEs[j]
+        cov = CovITEs[j]
+        for _ in 1:nSamplesPerMixture
+            i += 1
+            samples[i, :] = mvnormal(mean, cov)
+        end
+    end
+    return samples
+end
 
-`posteriorSample`: samples from posterior determined by hyperparameters
-"""
-function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any}=getHyperParameters(), nU::Int64=1, nOuter::Int64=25, nMHInner::Int64=1, nESInner::Int64=1)
-    hyperparams["SigmaU"] = SigmaU # databased hyperparameter
-    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
-    return posteriorSample
+"""Sample Average Treatment Effect samples"""
+function SATEsamples(MeanSATEs, VarSATEs, nSamplesPerMixture)
+    nMixtures = length(MeanSATEs)
+
+    samples = zeros(nMixtures * nSamplesPerMixture)
+
+    i = 0
+    for j in 1:nMixtures
+        mean = MeanSATEs[j]
+        var = VarSATEs[j]
+        for _ in 1:nSamplesPerMixture
+            i += 1
+            samples[i] = normal(mean, var)
+        end
+    end
+    return samples
 end
 
 """
+    Summarize Individual Treatment Estimates
+
 Create dataframe of mean, lower and upper quantiles of the ITE samples.
 
 Params:

@@ -83,18 +83,3 @@ end
 
 end
 
-@testset "SATEsamples" begin
-
-end
-
-@testset "ITEsamples" begin
-
-end
-
-@testset "sampleITE" begin
-
-end
-
-@testset "SummarizeITE" begin
-
-end

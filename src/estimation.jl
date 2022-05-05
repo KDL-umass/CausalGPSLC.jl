@@ -22,9 +22,11 @@ Params:
 
 Full Model Continuous/Binary
 """
-function conditionalITE(uyLS::Vector{Float64}, xyLS::Array{Float64}, tyLS::Float64,
+function conditionalITE(
+    uyLS::Vector{Float64}, xyLS::Array{Float64}, tyLS::Float64,
     yNoise::Float64, yScale::Float64,
-    U::Confounders, X::Covariates, T::Treatment, Y::Outcome, doT::Intervention)
+    U::Confounders, X::Covariates, T::Treatment,
+    Y::Outcome, doT::Intervention)
 
     n = size(Y, 1)
     @assert size(U, 1) == n
@@ -71,9 +73,11 @@ function conditionalITE(uyLS::Vector{Float64}, xyLS::Array{Float64}, tyLS::Float
 end
 
 """No Covariates Continuous/Binary"""
-function conditionalITE(uyLS, xyLS::Nothing, tyLS::Float64,
+function conditionalITE(
+    uyLS::Vector{Float64}, xyLS::Nothing, tyLS::Float64,
     yNoise::Float64, yScale::Float64,
-    U::Confounders, X::Nothing, T::Treatment, Y::Outcome, doT::Intervention)
+    U::Confounders, X::Nothing, T::Treatment,
+    Y::Outcome, doT::Intervention)
 
     n = size(Y, 1)
     @assert size(U, 1) == n
@@ -115,9 +119,11 @@ function conditionalITE(uyLS, xyLS::Nothing, tyLS::Float64,
 end
 
 """No Confounders Continuous/Binary"""
-function conditionalITE(uyLS::Nothing, xyLS::Vector{Float64}, tyLS::Float64,
+function conditionalITE(
+    uyLS::Nothing, xyLS::Vector{Float64}, tyLS::Float64,
     yNoise::Float64, yScale::Float64,
-    U::Nothing, X::Covariates, T::Treatment, Y::Outcome, doT::Intervention)
+    U::Nothing, X::Covariates, T::Treatment,
+    Y::Outcome, doT::Intervention)
 
     n = size(Y, 1)
     @assert size(X, 1) == n
@@ -159,9 +165,11 @@ function conditionalITE(uyLS::Nothing, xyLS::Vector{Float64}, tyLS::Float64,
 end
 
 """No Confounders No Covariates Continuous/Binary"""
-function conditionalITE(uyLS::Nothing, xyLS::Nothing, tyLS::Float64,
+function conditionalITE(
+    uyLS::Nothing, xyLS::Nothing, tyLS::Float64,
     yNoise::Float64, yScale::Float64,
-    U::Nothing, X::Nothing, T::Treatment, Y::Outcome, doT::Intervention)
+    U::Nothing, X::Nothing, T::Treatment,
+    Y::Outcome, doT::Intervention)
 
     n = size(Y, 1)
     @assert size(T, 1) == n
@@ -200,50 +208,16 @@ end
 
 
 """Conditional Sample Average Treatment Effect"""
-function conditionalSATE(uyLS, tyLS::Float64, xyLS,
+function conditionalSATE(
+    uyLS::Vector{Float64}, tyLS::Float64, xyLS::Vector{Float64},
     yNoise::Float64, yScale::Float64,
-    U::Union{Nothing,Confounders}, X::Union{Nothing,Covariates}, T::Treatment, Y::Outcome, doT::Intervention)
+    U::Union{Nothing,Confounders},
+    X::Union{Nothing,Covariates},
+    T::Treatment, Y::Outcome, doT::Intervention)
 
     MeanITE, CovITE = conditionalITE(uyLS, xyLS, tyLS, yNoise, yScale, U, X, T, Y, doT)
 
     MeanSATE = sum(MeanITE) / size(T, 1)
     VarSATE = sum(CovITE) / size(T, 1)^2
     return MeanSATE, VarSATE
-end
-
-"""Sample Average Treatment Effect samples"""
-function SATEsamples(MeanSATEs, VarSATEs, nSamplesPerMixture)
-    nMixtures = length(MeanSATEs)
-
-    samples = zeros(nMixtures * nSamplesPerMixture)
-
-    i = 0
-    for j in 1:nMixtures
-        mean = MeanSATEs[j]
-        var = VarSATEs[j]
-        for _ in 1:nSamplesPerMixture
-            i += 1
-            samples[i] = normal(mean, var)
-        end
-    end
-    return samples
-end
-
-
-"""Individual Treatment Effect Samples"""
-function ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
-    nMixtures = length(MeanITEs[:, 1])
-    n = length(MeanITEs[1, :])
-
-    samples = zeros(nMixtures * nSamplesPerMixture, n)
-    i = 0
-    for j in 1:nMixtures
-        mean = MeanITEs[j]
-        cov = CovITEs[j]
-        for _ in 1:nSamplesPerMixture
-            i += 1
-            samples[i, :] = mvnormal(mean, cov)
-        end
-    end
-    return samples
 end
