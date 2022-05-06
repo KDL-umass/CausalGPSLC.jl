@@ -34,16 +34,16 @@ patch = @patch function ProgressBars.tqdm(x)
 end
 
 Mocking.apply(patch) do
-    include("estimation.jl")
-    include("utils.jl")
-    include("kernel.jl")
-    include("model.jl")
-    include("inference.jl")
+    # include("estimation.jl")
+    # include("utils.jl")
+    # include("kernel.jl")
+    # include("model.jl")
+    # include("inference.jl")
 
     if notInCI # leaving intense tests out of ci pipeline
         # Bayesian Workflow -> A guide on writing Bayes code + tests
         # https://arxiv.org/pdf/2011.01808.pdf
-        include("sbc.jl")
+        # include("sbc.jl")
         include("comparison.jl")
     end
 end

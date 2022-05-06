@@ -184,7 +184,7 @@ function main()
 
     # do inference on latent values and the parameters
     println("Running Inference on U and Kernel Hyperparameters")
-    posteriorSample = samplePosterior(X, T, Y, SigmaU; hyperparams=parsed_args,
+    posteriorSample = samplePosterior(X, T, Y, SigmaU; priorparams=parsed_args,
         nU=nU, nOuter=nOuter, nMHInner=nMHInner, nESInner=nESInner)
 
     # inference of treatment effects

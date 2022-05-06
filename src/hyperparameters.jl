@@ -1,7 +1,7 @@
-export getHyperParameters
+export getPriorParameters
 
 """
-*Hyperparameters*
+    PriorParameters
 
 Defaults are those used in original paper, listed here for modification
 
@@ -32,7 +32,7 @@ Defaults are those used in original paper, listed here for modification
 - `tyLSShape::Float64=4.0`: shape of the InvGamma prior over kernel lengthscale of T and Y
 - `tyLSScale::Float64=4.0`: scale of the InvGamma prior over kernel lengthscale of T and Y
 """
-function getHyperParameters()::HyperParameters
+function getPriorParameters()::PriorParameters
     Dict{String,Any}(
         "uNoiseShape" => 4.0,
         "uNoiseScale" => 4.0,
@@ -60,5 +60,34 @@ function getHyperParameters()::HyperParameters
         "xyLSScale" => 4.0,
         "tyLSShape" => 4.0,
         "tyLSScale" => 4.0,
+    )
+end
+
+"""
+    HyperParameters
+
+Returns default values for hyperparametrs
+
+- `nU = 1`
+- `nOuter = 25`
+- `nInner = 10`
+- `nESInner = 5`
+- `nBurnin = 10`
+- `stepSize = 1`
+"""
+function getHyperParameters()::HyperParameters
+    nU = 1
+    nOuter = 20 # 25
+    nInner = 5 # 10
+    nESInner = 5 # 5
+    burnin = 5 # 10
+    stepSize = 1 # 1
+    HyperParameters(
+        nU,
+        nOuter,
+        nInner,
+        nESInner,
+        burnin,
+        stepSize
     )
 end

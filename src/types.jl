@@ -1,4 +1,7 @@
-export HyperParameters,
+export GPSLCObject, getN, getNU, getNX,
+    HyperParameters,
+    PriorParameters,
+    UStructure,
     Confounders,
     Covariates,
     Treatment,
@@ -11,8 +14,29 @@ export HyperParameters,
     XScaleOrNoise,
     ReshapeableMatrix
 
-"""Global hyperparameters"""
-HyperParameters = Dict{String,Any}
+"""
+    HyperParameters
+Controls the high-level attributes of the inference procedure.
+"""
+mutable struct HyperParameters
+    nU::Int64
+    nOuter::Int64
+    nMHInner::Int64
+    nESInner::Int64
+    nBurnin::Int64
+    stepSize::Int64
+end
+
+"""
+    PriorParameters
+
+Contains shapes and scales for various Inverse Gamma distributions
+used as priors for kernel parameters and other parameters.
+"""
+PriorParameters = Dict{String,Any}
+
+"""SigmaU structured prior for U"""
+UStructure = Matrix{Float64}
 
 """Confounder (U)"""
 Confounders = Union{
@@ -145,3 +169,46 @@ ReshapeableMatrix = Union{
     FunctionalCollections.PersistentVector{FunctionalCollections.PersistentVector{Int64}},
     FunctionalCollections.PersistentVector{FunctionalCollections.PersistentVector{Float64}},
 }
+
+"""
+    GPSLCObject
+
+A type that contains the data and posterior samples
+
+Returned by [`gpslc`](@ref)
+
+"""
+struct GPSLCObject
+    hyperparams::HyperParameters
+    priorparams::PriorParameters
+    SigmaU::UStructure
+    X::Union{Covariates,Nothing}
+    T::Treatment
+    Y::Outcome
+    posteriorSamples::Union{Vector{Any},Nothing}
+end
+
+"""Constructor for GPSLCObject before sampling from posterior."""
+function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::UStructure, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
+    posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
+    GPSLCObject(hyperparams, priorparams, SigmaU, X, T, Y, posteriorSamples)
+end
+
+
+"""Number of individuals."""
+function getN(g::GPSLCObject)
+    size(g.Y, 1)
+end
+
+"""Number of covariates (and observed confounders)."""
+function getNX(g::GPSLCObject)
+    if ndims(g.X) == 2
+        return size(X, 2)
+    end
+    return 1
+end
+
+"""Number of latent confounders to perform inference over."""
+function getNU(g::GPSLCObject)
+    g.hyperparams.nU
+end

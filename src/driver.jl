@@ -1,53 +1,70 @@
 using Mocking
-export samplePosterior, sampleITE, summarizeITE
+export gpslc, samplePosterior, sampleITE, ITEsamples, SATEsamples, summarizeITE
 
 """
-    Draw samples from the posterior given the observed data `X,T,Y`.
+    gpslc
 
-Params:
-- `X`: Input covariates
-- `T`: Input treatment
-- `Y`: Output
-- `SigmaU`: Object structure
-- `hyperParams`=[`getHyperParameters`](@ref)`()`: Hyperparameters for posterior sampling
+Run posterior inference on the input data
 
-Returns:
-
-`posteriorSample`: samples from posterior determined by hyperparameters
+Returns a [`GPSLCObject`](@ref) which stores the 
+hyperparameters, priorparameters, data, and posterior samples.
 """
-function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any}=getHyperParameters(), nU::Int64=1, nOuter::Int64=25, nMHInner::Int64=1, nESInner::Int64=1)
-    hyperparams["SigmaU"] = SigmaU # databased hyperparameter
-    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
-    return posteriorSample
+function gpslc(data::Union{DataFrame,String};
+    hyperparams::HyperParameters=getHyperParameters(),
+    priorparams::PriorParameters=getPriorParameters()
+)::GPSLCObject
+    X, T, Y, SigmaU = prepareData(data)
+    GPSLCObject(hyperparams, priorparams, SigmaU, X, T, Y)
+end
+
+
+"""
+    samplePosterior
+
+Draw samples from the posterior given the observed data.
+
+Params: 
+- [`g::GPSLCObject`](@ref): The GPSLCObject that contains the data and hyperparameters.
+
+Posterior samples are returned as a Vector of Gen choicemaps.
+"""
+function samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
+    # avoid storing SigmaU twice in g
+    priorparams["SigmaU"] = SigmaU # databased priorparameter 
+    posteriorSamples, _ = Posterior(
+        priorparams, X, T, Y,
+        hyperparams.nU,
+        hyperparams.nOuter,
+        hyperparams.nMHInner,
+        hyperparams.nESInner)
+    return posteriorSamples
 end
 
 """
     Estimate Individual Treatment Effect with GPSLC model
 
 Params:
-- `X`: Input covariates
-- `T`: Input treatment
-- `Y`: Output
-- `SigmaU`: Object structure
-- `posteriorSample`=[`samplePosterior`](@ref)`(X,T,Y,SigmaU)`: Samples of parameters from posterior
+- `g::`[`GPSLCObject`](@ref): Contains data and hyperparameters
+- `doT`: The recommended intervention (e.g. set all treatments to 1.0)
+- `samplesPerPosterior`: How many ITE samples to draw per posterior sample from `g`.
 
 Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
 """
-function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, SigmaU;
-    posteriorSample=samplePosterior(X, T, Y, SigmaU),
-    doT::Intervention=0.6, nU::Int64=1, nOuter::Int64=25,
-    burnIn::Int64=10, stepSize::Int64=1, samplesPerPost::Int64=10)
-
-    n = size(T, 1)
+function sampleITE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
+    n = getN(g)
+    nU = getNU(g)
+    burnIn = g.hyperparams.burnIn
+    stepSize = g.hyperparams.stepSize
+    nOuter = g.hyperparams.nOuter
     # output in Algorithm 3
-    ITEsamples = zeros(n, samplesPerPost * length(burnIn:stepSize:nOuter))
+    ITEsamples = zeros(n, samplesPerPosterior * length(burnIn:stepSize:nOuter))
 
     idx = 1
     for i in @mock tqdm(burnIn:stepSize:nOuter)
-        uyLS = zeros(nU)
-        U = zeros(n, nU)
+        uyLS = zeros(g.nU)
+        U = zeros(n, g.nU)
         for u in 1:nU
             uyLS[u] = posteriorSample[i][:uyLS=>u=>:LS]
             U[:, u] = posteriorSample[i][:U=>u=>:U]
@@ -58,7 +75,7 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
         if X === nothing
             xyLS = nothing
         else
-            nX = size(X, 2)
+            nX = getNX(g)
             xyLS = zeros(nX)
             for k in 1:nX
                 xyLS[k] = posteriorSample[i][:xyLS=>k=>:LS]
@@ -73,7 +90,7 @@ function sampleITE(X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome, Sigma
             posteriorSample[i][:yScale],
             U, X, T, Y, doT)
 
-        for _ in 1:samplesPerPost
+        for _ in 1:samplesPerPosterior
             dist = Distributions.MvNormal(
                 MeanITE,
                 LinearAlgebra.Symmetric(CovITE) + I * (1e-10)
@@ -148,3 +165,5 @@ function summarizeITE(ITEsamples; savetofile::String="")
     end
     return df
 end
+
+

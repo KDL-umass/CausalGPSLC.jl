@@ -1,5 +1,5 @@
 @testset "conditionalITE" begin
-    hyperparams = getHyperParameters()
+    priorparams = getPriorParameters()
 
     uyLS = [1.0]
     xyLS = [1.0]

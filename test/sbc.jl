@@ -70,13 +70,13 @@ end
 
 """Assumes outcome has symbol `:Y`"""
 function simulationBasedCalibration(model, posterior,
-    hyperparams, n, nU, nX, nOuter, nMHInner, nESInner
+    priorparams, n, nU, nX, nOuter, nMHInner, nESInner
     ; numTrials=nOuter * 25)
 
     numSamples = nOuter
 
     # Get total number of parameters in the model
-    initial_trace, _ = generate(model, (hyperparams, n, nU, nX))
+    initial_trace, _ = generate(model, (priorparams, n, nU, nX))
     initial_choices = Gen.get_choices(initial_trace)
     data_selection = Gen.select(:X, :T, :Y)
     params_selection = Gen.complement(data_selection)
@@ -90,7 +90,7 @@ function simulationBasedCalibration(model, posterior,
     quantileSamples = zeros(numTrials, numParams)
 
     for t = 1:numTrials
-        initial_trace, _ = generate(model, (hyperparams, n, nU, nX,))
+        initial_trace, _ = generate(model, (priorparams, n, nU, nX,))
         initial_choices = Gen.get_choices(initial_trace)
         data_selection = Gen.select(:X, :T, :Y)
         data_choices = Gen.get_selected(initial_choices, data_selection)
@@ -118,7 +118,7 @@ function simulationBasedCalibration(model, posterior,
         true_params = Gen.get_selected(initial_choices, params_selection)
         theta = flattenPosteriorSamples([true_params])
 
-        posteriorSamples, trace = posterior(hyperparams, X, T, Y, nU, nOuter,
+        posteriorSamples, trace = posterior(priorparams, X, T, Y, nU, nOuter,
             nMHInner, nESInner) # numSamples=nOuter
         samples = flattenPosteriorSamples(posteriorSamples)
 
@@ -134,65 +134,65 @@ function simulationBasedCalibration(model, posterior,
 end
 
 @testset "Simple gen model SBC" begin
-    hyperparams, n, nU, nX, X, binaryT, realT = getToyData(10)
+    priorparams, n, nU, nX, X, binaryT, realT = getToyData(10)
     nOuter = numSamples = 5
     nMHInner = 2
     nESInner = 2
     model, posterior = getToyModel()
-    @test simulationBasedCalibration(model, posterior, hyperparams, n, nothing, nothing, 10, nothing, nothing)
+    @test simulationBasedCalibration(model, posterior, priorparams, n, nothing, nothing, 10, nothing, nothing)
 end
 
 @testset "GPSLC SBC" begin
-    hyperparams, n, nU, nX, X, binaryT, realT = getToyData(10)
+    priorparams, n, nU, nX, X, binaryT, realT = getToyData(10)
     nOuter = numSamples = 5
     nMHInner = 2
     nESInner = 2
 
     @testset "Binary Treatment, No U, No Cov" begin
         @test simulationBasedCalibration(
-            GPSLCNoUNoCovBinaryT, Posterior, hyperparams,
+            GPSLCNoUNoCovBinaryT, Posterior, priorparams,
             n, nothing, nothing, numSamples, nothing, nothing)
     end
 
     @testset "Binary Treatment, No Cov" begin
         @test simulationBasedCalibration(
-            GPSLCNoCovBinaryT, Posterior, hyperparams,
+            GPSLCNoCovBinaryT, Posterior, priorparams,
             n, nU, nothing, numSamples, nMHInner, nESInner)
     end
 
     @testset "Binary Treatment, No U" begin
         @test simulationBasedCalibration(
-            GPSLCNoUBinaryT, Posterior, hyperparams,
+            GPSLCNoUBinaryT, Posterior, priorparams,
             n, nothing, nX, numSamples, nMHInner, nESInner)
     end
 
     @testset "Binary Treatment, Full Model" begin
         @test simulationBasedCalibration(
-            GPSLCBinaryT, Posterior, hyperparams,
+            GPSLCBinaryT, Posterior, priorparams,
             n, nU, nX, numSamples, nMHInner, nESInner)
     end
 
     @testset "Continous Treatment, No U, No Cov" begin
         @test simulationBasedCalibration(
-            GPSLCNoUNoCovRealT, Posterior, hyperparams,
+            GPSLCNoUNoCovRealT, Posterior, priorparams,
             n, nothing, nothing, numSamples, nothing, nothing)
     end
 
     @testset "Continous Treatment, No Cov" begin
         @test simulationBasedCalibration(
-            GPSLCNoCovRealT, Posterior, hyperparams,
+            GPSLCNoCovRealT, Posterior, priorparams,
             n, nU, nothing, numSamples, nMHInner, nESInner)
     end
 
     @testset "Continous Treatment, No U" begin
         @test simulationBasedCalibration(
-            GPSLCNoURealT, Posterior, hyperparams,
+            GPSLCNoURealT, Posterior, priorparams,
             n, nothing, nX, numSamples, nMHInner, nESInner)
     end
 
     @testset "Continous Treatment, Full Model" begin
         @test simulationBasedCalibration(
-            GPSLCRealT, Posterior, hyperparams,
+            GPSLCRealT, Posterior, priorparams,
             n, nU, nX, numSamples, nMHInner, nESInner)
     end
 end

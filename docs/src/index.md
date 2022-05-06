@@ -4,21 +4,8 @@
 CurrentModule = GPSLC
 ```
 
-
 ```@docs
-samplePosterior
-```
-
-```@docs
-getHyperParameters
-```
-
-```@docs
-sampleITE
-```
-
-```@docs
-summarizeITE
+gpslc
 ```
 
 

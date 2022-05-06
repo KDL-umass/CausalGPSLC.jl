@@ -29,58 +29,58 @@ end
 
 
 @testset "Inference" begin
-    hyperparams, n, nU, nX, X, binaryT, realT = getToyData(10, 2, 8)
+    priorparams, n, nU, nX, X, binaryT, realT = getToyData(10, 2, 8)
     nOuter = 10
     nMHInner = 7
     nESInner = 6
 
     @testset "Binary Treatment, No U, No Cov" begin
         _, Y = getToyObservations(n)
-        posteriorSamples, trace = Posterior(hyperparams, nothing, binaryT, Y, nothing, nOuter, nothing, nothing)
+        posteriorSamples, trace = Posterior(priorparams, nothing, binaryT, Y, nothing, nOuter, nothing, nothing)
         testLatentVariablesChanging(posteriorSamples)
         @test true
     end
 
     @testset "Binary Treatment, No Cov" begin
         _, Y = getToyObservations(n)
-        posteriorSamples, trace = Posterior(hyperparams, nothing, binaryT, Y, nU, nOuter, nMHInner, nESInner)
+        posteriorSamples, trace = Posterior(priorparams, nothing, binaryT, Y, nU, nOuter, nMHInner, nESInner)
         testLatentVariablesChanging(posteriorSamples)
         @test true
     end
 
     @testset "Binary Treatment, No U" begin
         _, Y = getToyObservations(n)
-        posteriorSamples, trace = Posterior(hyperparams, X, binaryT, Y, nothing, nOuter, nMHInner, nESInner)
+        posteriorSamples, trace = Posterior(priorparams, X, binaryT, Y, nothing, nOuter, nMHInner, nESInner)
         @test true
     end
 
     @testset "Binary Treatment" begin
         _, Y = getToyObservations(n)
-        posteriorSamples, trace = Posterior(hyperparams, X, binaryT, Y, nU, nOuter, nMHInner, nESInner)
+        posteriorSamples, trace = Posterior(priorparams, X, binaryT, Y, nU, nOuter, nMHInner, nESInner)
         @test true
     end
 
     @testset "Continuous Treatment, No U, No Cov" begin
         _, Y = getToyObservations(n)
-        posteriorSamples, trace = Posterior(hyperparams, nothing, realT, Y, nothing, nOuter, nothing, nothing)
+        posteriorSamples, trace = Posterior(priorparams, nothing, realT, Y, nothing, nOuter, nothing, nothing)
         @test true
     end
 
     @testset "Continuous Treatment, No Cov" begin
         _, Y = getToyObservations(n)
-        posteriorSamples, trace = Posterior(hyperparams, nothing, realT, Y, nU, nOuter, nMHInner, nESInner)
+        posteriorSamples, trace = Posterior(priorparams, nothing, realT, Y, nU, nOuter, nMHInner, nESInner)
         @test true
     end
 
     @testset "Continuous Treatment, No U" begin
         _, Y = getToyObservations(n)
-        posteriorSamples, trace = Posterior(hyperparams, X, realT, Y, nothing, nOuter, nMHInner, nESInner)
+        posteriorSamples, trace = Posterior(priorparams, X, realT, Y, nothing, nOuter, nMHInner, nESInner)
         @test true
     end
 
     @testset "Continuous Treatment" begin
         _, Y = getToyObservations(n)
-        posteriorSamples, trace = Posterior(hyperparams, X, realT, Y, nU, nOuter, nMHInner, nESInner)
+        posteriorSamples, trace = Posterior(priorparams, X, realT, Y, nU, nOuter, nMHInner, nESInner)
         @test true
     end
 

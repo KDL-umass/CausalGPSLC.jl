@@ -20,16 +20,16 @@ end
 Super simple continuous treatment model with standard GPSLC model calling API
 No confounders, no covariates
 """
-@gen function model(hyperparams::GPSLC.HyperParameters, n::Int64, nU::Nothing, nX::Nothing)
+@gen function model(priorparams::GPSLC.PriorParameters, n::Int64, nU::Nothing, nX::Nothing)
     theta = zeros(2) # linear model
     theta[1] = @trace(prior(:intercept))
     theta[2] = @trace(prior(:slope))
-    T = @trace(generateRealTfromPrior(hyperparams, n))
+    T = @trace(generateRealTfromPrior(priorparams, n))
     cov = Matrix{Float64}(I, n, n)
     @trace(mvnormal(T .* theta[2] .+ theta[1], cov), :Y)
 end
 
-function posterior(hyperparams::GPSLC.HyperParameters, X::Nothing, T::GPSLC.ContinuousTreatment, Y::GPSLC.Outcome, nU::Nothing, nOuter,
+function posterior(priorparams::GPSLC.PriorParameters, X::Nothing, T::GPSLC.ContinuousTreatment, Y::GPSLC.Outcome, nU::Nothing, nOuter,
     nMHInner::Nothing, nESInner::Nothing) # numSamples=nOuter
     obs = choicemap()
     obs[:Y] = Y
@@ -37,7 +37,7 @@ function posterior(hyperparams::GPSLC.HyperParameters, X::Nothing, T::GPSLC.Cont
     n = size(T, 1)
     nX = nothing
 
-    (trace, _) = generate(model, (hyperparams, n, nU, nX), obs)
+    (trace, _) = generate(model, (priorparams, n, nU, nX), obs)
     samples = []
     for i in 1:nOuter
         trace, _ = mh(trace, proposal, (:intercept,))
