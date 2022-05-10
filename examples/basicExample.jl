@@ -5,14 +5,11 @@ using GPSLC
 
 export basicExample
 
-function basicExample(dataFile = "examples/data/NEEC_sampled.csv")
-    X, T, Y, SigmaU = prepareData(dataFile)
-
-    println("Running Inference on U and Kernel Hyperparameters")
-    posteriorSample = samplePosterior(X, T, Y, SigmaU)
+function basicExample(dataFile="examples/data/NEEC_sampled.csv")
+    g = gpslc(dataFile)
 
     println("Estimating ITE")
-    ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorSample = posteriorSample)
+    ITEsamples = sampleITE(g, doT=0.6)
 
-    summarizeITE(ITEsamples; savetofile = "examples/results/NEEC_sampled_80.csv")
+    summarizeITE(ITEsamples; savetofile="examples/results/NEEC_sampled_0.6.csv")
 end
