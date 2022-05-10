@@ -69,10 +69,10 @@ end
 Returns default values for hyperparametrs
 
 - `nU = 1`
-- `nOuter = 25`
-- `nInner = 10`
+- `nOuter = 20`
+- `nInner = 5`
 - `nESInner = 5`
-- `nBurnin = 10`
+- `nBurnIn = 5`
 - `stepSize = 1`
 """
 function getHyperParameters()::HyperParameters
@@ -80,14 +80,14 @@ function getHyperParameters()::HyperParameters
     nOuter = 20 # 25
     nInner = 5 # 10
     nESInner = 5 # 5
-    burnin = 5 # 10
+    nBurnIn = 5 # 10
     stepSize = 1 # 1
     HyperParameters(
         nU,
         nOuter,
         nInner,
         nESInner,
-        burnin,
+        nBurnIn,
         stepSize
     )
 end

@@ -55,7 +55,7 @@ Returns:
 function sampleITE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
     n = getN(g)
     nU = getNU(g)
-    burnIn = g.hyperparams.burnIn
+    burnIn = g.hyperparams.nBurnIn
     stepSize = g.hyperparams.stepSize
     nOuter = g.hyperparams.nOuter
     # output in Algorithm 3
@@ -63,32 +63,32 @@ function sampleITE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::I
 
     idx = 1
     for i in @mock tqdm(burnIn:stepSize:nOuter)
-        uyLS = zeros(g.nU)
-        U = zeros(n, g.nU)
+        uyLS = zeros(nU)
+        U = zeros(n, nU)
         for u in 1:nU
-            uyLS[u] = posteriorSample[i][:uyLS=>u=>:LS]
-            U[:, u] = posteriorSample[i][:U=>u=>:U]
+            uyLS[u] = g.posteriorSamples[i][:uyLS=>u=>:LS]
+            U[:, u] = g.posteriorSamples[i][:U=>u=>:U]
         end
         U = toMatrix(U, n, nU)
         @assert size(U) == (n, nU)
 
-        if X === nothing
+        if g.X === nothing
             xyLS = nothing
         else
             nX = getNX(g)
             xyLS = zeros(nX)
             for k in 1:nX
-                xyLS[k] = posteriorSample[i][:xyLS=>k=>:LS]
+                xyLS[k] = g.posteriorSamples[i][:xyLS=>k=>:LS]
             end
         end
 
         MeanITE, CovITE = conditionalITE(
             uyLS,
             xyLS,
-            posteriorSample[i][:tyLS],
-            posteriorSample[i][:yNoise],
-            posteriorSample[i][:yScale],
-            U, X, T, Y, doT)
+            g.posteriorSamples[i][:tyLS],
+            g.posteriorSamples[i][:yNoise],
+            g.posteriorSamples[i][:yScale],
+            U, g.X, g.T, g.Y, doT)
 
         for _ in 1:samplesPerPosterior
             dist = Distributions.MvNormal(

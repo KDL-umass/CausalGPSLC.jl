@@ -23,7 +23,7 @@ mutable struct HyperParameters
     nOuter::Int64
     nMHInner::Int64
     nESInner::Int64
-    nBurnin::Int64
+    nBurnIn::Int64
     stepSize::Int64
 end
 
@@ -185,7 +185,7 @@ struct GPSLCObject
     X::Union{Covariates,Nothing}
     T::Treatment
     Y::Outcome
-    posteriorSamples::Union{Vector{Any},Nothing}
+    posteriorSamples::Vector{Any}
 end
 
 """Constructor for GPSLCObject before sampling from posterior."""
@@ -203,7 +203,7 @@ end
 """Number of covariates (and observed confounders)."""
 function getNX(g::GPSLCObject)
     if ndims(g.X) == 2
-        return size(X, 2)
+        return size(g.X, 2)
     end
     return 1
 end
