@@ -28,7 +28,7 @@ function testLatentVariablesChanging(posteriorSamples)
 end
 
 
-@testset "Inference" begin
+@testset "Latent Variables Changing" begin
     priorparams, n, nU, nX, X, binaryT, realT = getToyData(10, 2, 8)
     nOuter = 10
     nMHInner = 7
