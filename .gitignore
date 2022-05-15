@@ -14,3 +14,4 @@ secrets
 
 *.jld
 *.cov
+*.info
