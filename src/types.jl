@@ -29,16 +29,29 @@ end
 
 """
     PriorParameters
-
 Contains shapes and scales for various Inverse Gamma distributions
 used as priors for kernel parameters and other parameters.
 """
 PriorParameters = Dict{String,Any}
 
-"""SigmaU structured prior for U"""
+"""
+    SigmaU 
+structured prior for U.
+"""
 UStructure = Matrix{Float64}
 
-"""Confounder (U)"""
+"""
+    Object Labels for instances (obj)
+    
+Optional for GPSLC, but per publication it improves performance.
+"""
+ObjectLabels = Any
+
+"""
+    Confounders (U)
+
+Latent confounders that GPSLC performs inference over.
+"""
 Confounders = Union{
     Array{Array{Float64,1}},
     Array{Vector{Float64}},
@@ -51,7 +64,11 @@ Confounders = Union{
 }
 
 
-"""Covariates (X)"""
+"""
+   Covariates (X)
+
+Observed confounders and covariates.
+"""
 Covariates = Union{
     Array{Array{Float64,1}},
     Array{Vector{Float64}},
@@ -92,7 +109,10 @@ Intervention = Union{
 }
 
 
-"""Viable inputs to the rbfKernelLog function in linear algebra datatypes"""
+"""
+    SupportedRBFVector
+Viable inputs to the rbfKernelLog function in linear algebra datatypes.
+"""
 SupportedRBFVector = Union{
     FunctionalCollections.PersistentVector{Float64},
     FunctionalCollections.PersistentVector{Bool},
@@ -104,7 +124,10 @@ SupportedRBFVector = Union{
     Array{Bool,1},
 }
 
-"""Viable inputs to the rbfKernelLog function that are nested lists"""
+"""
+    SupportedRBFData
+Viable inputs to the rbfKernelLog function that are nested lists.
+"""
 SupportedRBFData = Union{
     FunctionalCollections.PersistentVector{Vector{Float64}},
     FunctionalCollections.PersistentVector{Vector{Int64}},
@@ -117,7 +140,10 @@ SupportedRBFData = Union{
     Array{Vector{Bool},1}
 }
 
-"""Viable inputs to the rbfKernelLog function in linear algebra datatypes"""
+"""
+    SupportedRBFMatrix
+Viable inputs to the rbfKernelLog function in linear algebra datatypes.
+"""
 SupportedRBFMatrix = Union{
     Matrix{Float64},
     Matrix{Int64},
@@ -130,7 +156,10 @@ SupportedRBFMatrix = Union{
     FunctionalCollections.PersistentVector{Bool},
 }
 
-"""Viable inputs to the rbfKernelLog function as kernel lengthscales"""
+"""
+    SupportedRBFLengthscale
+Viable inputs to the rbfKernelLog function as kernel lengthscales.
+"""
 SupportedRBFLengthscale = Union{
     Int64,
     Matrix{Int64},
@@ -144,7 +173,10 @@ SupportedRBFLengthscale = Union{
     FunctionalCollections.PersistentVector{Float64},
 }
 
-"""Viable inputs to the processCov function"""
+"""
+    SupportedCovarianceMatrix
+Viable inputs to the processCov function.
+"""
 SupportedCovarianceMatrix = Union{
     Vector{Matrix{Float64}},
 }
@@ -154,7 +186,10 @@ XScaleOrNoise = Union{
     FunctionalCollections.PersistentVector{Float64},
 }
 
-"""Matrix that can be reshaped"""
+"""
+    ReshapeableMatrix
+Matrix that can be reshaped.
+"""
 ReshapeableMatrix = Union{
     Matrix{Bool},
     Matrix{Int64},
@@ -173,25 +208,29 @@ ReshapeableMatrix = Union{
 """
     GPSLCObject
 
-A type that contains the data and posterior samples
+A type that contains the data and posterior samples.
 
 Returned by [`gpslc`](@ref)
-
 """
 struct GPSLCObject
     hyperparams::HyperParameters
     priorparams::PriorParameters
     SigmaU::UStructure
+    obj::ObjectLabels
     X::Union{Covariates,Nothing}
     T::Treatment
     Y::Outcome
     posteriorSamples::Vector{Any}
 end
 
-"""Constructor for GPSLCObject before sampling from posterior."""
-function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::UStructure, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
+"""
+Constructor for GPSLCObject that samples from the 
+    posterior before constructing the GPSLCObject.
+"""
+function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::UStructure, obj::ObjectLabels, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
+    println("Running inference")
     posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
-    GPSLCObject(hyperparams, priorparams, SigmaU, X, T, Y, posteriorSamples)
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y, posteriorSamples)
 end
 
 

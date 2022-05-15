@@ -8,13 +8,17 @@ end
 """
     Prepare Data
 
+Creates the latent confounding structure from the object labels in the data.
+
+Parses matrices for the observed covariates, treatments, and outcomes.
+
 Returns: `X, T, Y, SigmaU`
 """
 function prepareData(df::Union{DataFrame,String}, confounderEps::Float64=1.0e-13, confounderCov::Float64=1.0)
+    println("Preparing Data")
     if typeof(df) == String
         df::DataFrame = loadData(df)
     end
-
     if "obj" in names(df)
         DataFrames.sort!(df, :obj)
 
@@ -28,11 +32,13 @@ function prepareData(df::Union{DataFrame,String}, confounderEps::Float64=1.0e-13
                 counts[o] = 1
             end
         end
+        obj = Array(df[!, :obj])
         obj_count = [counts[o] for o in removeAdjacent(df[!, :obj])]
         SigmaU = generateSigmaU(obj_count, confounderEps, confounderCov)
     else
         println("No object labels to assign latent confounders to 
-                (column must be titled `obj`")
+                (column must be titled `obj`)")
+        obj = nothing
         println("Assuming no latent confounding")
     end
 
@@ -47,7 +53,7 @@ function prepareData(df::Union{DataFrame,String}, confounderEps::Float64=1.0e-13
     cols = deleteat!(cols, cols .== "obj")
 
     if length(cols) == 0
-        println("No observed covariates or confounders found in data")
+        println("No observed confounders or covariates found in data")
         X = nothing
     else
         X_ = df[!, cols]
@@ -58,5 +64,5 @@ function prepareData(df::Union{DataFrame,String}, confounderEps::Float64=1.0e-13
         end
     end
 
-    return X, T, Y, SigmaU
+    return SigmaU, obj, X, T, Y
 end

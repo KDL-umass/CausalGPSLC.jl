@@ -1,6 +1,6 @@
 """
 Reshape `posteriorSamples`, a Vector of `DSLChoiceMap`s 
-into matrix samples by parameters
+into matrix samples by parameters.
 """
 function flattenPosteriorSamples(posteriorSamples)
     function getNumParams(sample)
@@ -25,7 +25,7 @@ function flattenPosteriorSamples(posteriorSamples)
     return samples
 end
 
-"""Calculate the quantile of `dist` that this `theta` falls into"""
+"""Calculate the quantile of `dist` that this `theta` falls into."""
 function thetaQuantile(dist, theta)
     dist = sort(vec(dist))
     if theta < dist[1]
@@ -40,7 +40,7 @@ function thetaQuantile(dist, theta)
     return dist[end]
 end
 
-"""Confirm that dist is approximately uniform with `confidence`"""
+"""Confirm that dist is approximately uniform with `confidence`."""
 function isApproxUniform(dist, numTrials, numSamples, confidence=0.05)
     numParams = size(dist, 2)
     @test numTrials == size(dist, 1)
@@ -68,7 +68,7 @@ function isApproxUniform(dist, numTrials, numSamples, confidence=0.05)
     return true # reject null hypothesis
 end
 
-"""Assumes outcome has symbol `:Y`"""
+"""Assumes outcome has symbol `:Y`."""
 function simulationBasedCalibration(model, posterior,
     priorparams, n, nU, nX, nOuter, nMHInner, nESInner
     ; numTrials=nOuter * 25)
@@ -133,20 +133,17 @@ function simulationBasedCalibration(model, posterior,
     false
 end
 
-@testset "Simple gen model SBC" begin
-    priorparams, n, nU, nX, X, binaryT, realT = getToyData(10)
-    nOuter = numSamples = 5
-    nMHInner = 2
-    nESInner = 2
-    model, posterior = getToyModel()
-    @test simulationBasedCalibration(model, posterior, priorparams, n, nothing, nothing, 10, nothing, nothing)
-end
 
-@testset "GPSLC SBC" begin
+@testset "Simulation-based Calibration" begin
     priorparams, n, nU, nX, X, binaryT, realT = getToyData(10)
     nOuter = numSamples = 5
     nMHInner = 2
     nESInner = 2
+
+    @testset "Simple gen model SBC" begin
+        model, posterior = getToyModel()
+        @test simulationBasedCalibration(model, posterior, priorparams, n, nothing, nothing, 10, nothing, nothing)
+    end
 
     @testset "Binary Treatment, No U, No Cov" begin
         @test simulationBasedCalibration(

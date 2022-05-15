@@ -4,7 +4,14 @@ export gpslc, samplePosterior, sampleITE, ITEsamples, SATEsamples, summarizeITE
 """
     gpslc
 
-Run posterior inference on the input data
+Run posterior inference on the input data.
+
+Datatypes of DataFrame or CSV must follow these standards:
+    
+- `T` (Boolean/Float64)
+- `Y` (Float64)
+- `X1...XN` (Float64...Float64)
+- `obj` (Any)
 
 Returns a [`GPSLCObject`](@ref) which stores the 
 hyperparameters, priorparameters, data, and posterior samples.
@@ -13,8 +20,8 @@ function gpslc(data::Union{DataFrame,String};
     hyperparams::HyperParameters=getHyperParameters(),
     priorparams::PriorParameters=getPriorParameters()
 )::GPSLCObject
-    X, T, Y, SigmaU = prepareData(data)
-    GPSLCObject(hyperparams, priorparams, SigmaU, X, T, Y)
+    SigmaU, obj, X, T, Y = prepareData(data)
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
 end
 
 
@@ -50,7 +57,7 @@ Params:
 
 Returns:
 
-`ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
+`ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples.
 """
 function sampleITE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
     n = getN(g)
