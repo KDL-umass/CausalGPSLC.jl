@@ -1,87 +1,92 @@
 using Mocking
-export sampleITE, samplePosterior, summarizeITE
+export gpslc, samplePosterior, sampleITE, ITEsamples, SATEsamples, summarizeITE
 
 """
-Estimate Individual Treatment Effect using GPSLC model
+    gpslc
+
+Run posterior inference on the input data.
+
+Datatypes of DataFrame or CSV must follow these standards:
+    
+- `T` (Boolean/Float64)
+- `Y` (Float64)
+- `X1...XN` (Float64...Float64)
+- `obj` (Any)
+
+Returns a [`GPSLCObject`](@ref) which stores the 
+hyperparameters, priorparameters, data, and posterior samples.
+"""
+function gpslc(data::Union{DataFrame,String};
+    hyperparams::HyperParameters=getHyperParameters(),
+    priorparams::PriorParameters=getPriorParameters()
+)::GPSLCObject
+    SigmaU, obj, X, T, Y = prepareData(data)
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
+end
+
+
+"""
+    samplePosterior
+
+Draw samples from the posterior given the observed data.
+
+Params: 
+- [`g::GPSLCObject`](@ref): The GPSLCObject that contains the data and hyperparameters.
+
+Posterior samples are returned as a Vector of Gen choicemaps.
+"""
+function samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
+    # avoid storing SigmaU twice in g
+    priorparams["SigmaU"] = SigmaU # databased priorparameter 
+    posteriorSamples, _ = Posterior(
+        priorparams, X, T, Y,
+        hyperparams.nU,
+        hyperparams.nOuter,
+        hyperparams.nMHInner,
+        hyperparams.nESInner)
+    return posteriorSamples
+end
+
+
+"""
+    Estimate Individual Treatment Effect with GPSLC model
 
 Params:
-- `X`: Input covariates
-- `T`: Input treatment
-- `Y`: Output
-- `SigmaU`: Object structure
-- `posteriorSample`=[`samplePosterior`](@ref)`(X,T,Y,SigmaU)`: Samples of parameters from posterior
+- `g::`[`GPSLCObject`](@ref): Contains data and hyperparameters
+- `doT`: The recommended intervention (e.g. set all treatments to 1.0)
+- `samplesPerPosterior`: How many ITE samples to draw per posterior sample from `g`.
 
 Returns:
 
-`ITEsamples`: `n x m` matrix where `n` is the number of data, and `m` is the number of samples
+`ITEsamples`: `n x m` matrix where `n` is the number of individuals, and `m` is the number of samples.
 """
-function sampleITE(X::Union{Nothing,Matrix{Float64},Vector{Float64}}, T::Union{Vector{Float64},Vector{Bool}}, Y::Vector{Float64}, SigmaU;
-    posteriorSample=samplePosterior(X, T, Y, SigmaU),
-    doT::Float64=0.6, nU::Int64=1, nOuter::Int64=25,
-    burnIn::Int64=10, stepSize::Int64=1, samplesPerPost::Int64=10)
-
-    n = size(T, 1)
-    ITEsamples = zeros(n, samplesPerPost * length(burnIn:stepSize:nOuter)) # output in Algorithm 3
-    idx = 1
-    for i in @mock tqdm(burnIn:stepSize:nOuter)
-        uyLS = []
-        U = zeros(n, nU)
-        for u in 1:nU
-            push!(uyLS, posteriorSample[i][:uyLS=>u=>:LS])
-            U[:, nU] = posteriorSample[i][:U=>u=>:U]
-        end
-        U = toMatrix(U, n, nU)
-        @assert size(U) == (n, nU)
-
-
-        uyLS = convert(Vector{Float64}, uyLS)
-        if X === nothing
-            xyLS = nothing
-        else
-            xyLS = convert(Vector{Float64}, posteriorSample[i][:xyLS])
-        end
-
-        MeanITE, CovITE = conditionalITE(uyLS,
-            posteriorSample[i][:tyLS],
-            xyLS,
-            posteriorSample[i][:yNoise],
-            posteriorSample[i][:yScale],
-            U,
-            X,
-            T,
-            Y,
-            doT)
-
-        for _ in 1:samplesPerPost
-            samples = rand(MvNormal(MeanITE, Symmetric(CovITE) + I * (1e-10)))
-            ITEsamples[:, idx] = samples
-            idx += 1
-        end
-    end
-    return ITEsamples
+function sampleITE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
+    MeanITEs, CovITEs = ITEDistributions(g, doT)
+    ITEsamples(MeanITEs, CovITEs, samplesPerPosterior)
 end
 
+
 """
-Draw samples from the posterior given the observed data `X,T,Y`.
+    Estimate Sample Average Treatment Effect with GPSLC model
 
 Params:
-- `X`: Input covariates
-- `T`: Input treatment
-- `Y`: Output
-- `SigmaU`: Object structure
-- `hyperParams`=[`getHyperParameters`](@ref)`()`: Hyperparameters for posterior sampling
+- `g::`[`GPSLCObject`](@ref): Contains data and hyperparameters
+- `doT`: The recommended intervention (e.g. set all treatments to 1.0)
+- `samplesPerPosterior`: How many ITE samples to draw per posterior sample from `g`.
 
 Returns:
 
-`posteriorSample`: samples from posterior determined by hyperparameters
+`SATEsamples`: `n x m` matrix where `n` is the number of individuals, and `m` is the number of samples.
 """
-function samplePosterior(X, T, Y, SigmaU; hyperparams::Dict{String,Any}=getHyperParameters(), nU::Int64=1, nOuter::Int64=25, nMHInner::Int64=1, nESInner::Int64=1)
-    hyperparams["SigmaU"] = SigmaU # databased hyperparameter
-    posteriorSample, _ = Posterior(hyperparams, X, T, Y, nU, nOuter, nMHInner, nESInner)
-    return posteriorSample
+function sampleSATE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
+    MeanSATEs, CovSATEs = conditionalSATE(g, doT)
+    SATEsamples(MeanSATEs, CovSATEs, samplesPerPosterior)
 end
 
+
 """
+    Summarize Individual Treatment Estimates
+
 Create dataframe of mean, lower and upper quantiles of the ITE samples.
 
 Params:
@@ -93,8 +98,10 @@ Returns:
 """
 function summarizeITE(ITEsamples; savetofile::String="")
     meanITE = mean(ITEsamples, dims=2)[:, 1]
-    lowerITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
-    upperITE = broadcast(quantile, [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
+    lowerITE = broadcast(quantile,
+        [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
+    upperITE = broadcast(quantile,
+        [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
     df = DataFrame(Individual=1:size(meanITE)[1], Mean=meanITE, LowerBound=lowerITE, UpperBound=upperITE)
     if savetofile != ""
         CSV.write(savetofile, df)
@@ -102,3 +109,5 @@ function summarizeITE(ITEsamples; savetofile::String="")
     end
     return df
 end
+
+

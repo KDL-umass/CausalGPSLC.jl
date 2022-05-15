@@ -6,7 +6,7 @@ Generate block matrix for U given object counts
 SigmaU is shorthand for the object structure of the latent confounder
 """
 function generateSigmaU(nIndividualsArray::Array{Int64},
-    eps::Float64=1e-13, cov::Float64=1.0)
+    eps::Float64=1e-13, cov::Float64=1.0)::UStructure
 
     n = sum(nIndividualsArray)
     SigmaU = Matrix{Float64}(I, n, n)
@@ -50,4 +50,12 @@ end
 """Convert matrix to list of lists"""
 function toTupleOfVectors(U::Union{Matrix{Bool},Matrix{Int64},Matrix{Float64}})
     Tuple(U[i, :] for i = 1:size(U, 1))
+end
+
+"""Debugging tool to print all available address keys in choicemap"""
+function printAddrs(choices)
+    print("Choicemap addresses: ")
+    for (addr, val) in get_values_shallow(choices)
+        print("$addr, ")
+    end
 end

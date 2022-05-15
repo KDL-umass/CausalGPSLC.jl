@@ -25,6 +25,19 @@ This will let reviewers know that the PR is in-progress and looking for feedback
 Feel free to add any extra comments or extend the description to indicate
 what you would like reviwed.
 
+## Setup
+
+It's recommended to create a `~/.julia/config/startup.jl` file with the following contents:
+
+```julia
+using Pkg
+if isfile("Project.toml") && isfile("Manifest.toml")
+    Pkg.activate(".")
+end
+```
+
+This makes it so `$ julia` bash commands will run in the GPSLC environment.
+
 ## Revise
 
 In the julia REPL execute
@@ -56,4 +69,12 @@ or to run the full test suite including package installation verification
 
 ```julia
 import Pkg; Pkg.test("GPSLC")
+```
+
+## Coverage
+
+To check code coverage, run 
+
+```bash
+julia --code-coverage test/runtests.jl
 ```

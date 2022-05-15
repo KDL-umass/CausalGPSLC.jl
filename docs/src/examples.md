@@ -2,15 +2,13 @@
 
 ## Simple example
 
-The file `examples/basicExample.jl` has a simple use case for 
+The file `examples/basicExample.jl` has a simple use case for getting 
+individual treatment effect samples
 ```@doc
-julia> X, T, Y, SigmaU = prepareData("examples/data/NEEC_sampled.csv")
-
-julia> println("Running Inference on U and Kernel Hyperparameters")
-julia> posteriorSample = samplePosterior(X, T, Y, SigmaU)
-julia> println("Estimating ITE")
-julia> ITEsamples = sampleITE(X, T, Y, SigmaU; posteriorSample = posteriorSample)
-julia> summarizeITE(ITEsamples; savetofile = "examples/results/NEEC_sampled_80.csv")
+julia> dataFile = "examples/data/NEEC_sampled.csv"
+julia> g = gpslc(dataFile)
+julia> ITEsamples = sampleITE(g, doT=0.6)
+julia> summarizeITE(ITEsamples)
 ```
 
 

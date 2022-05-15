@@ -1,5 +1,5 @@
 @testset "Model Generation" begin
-    hyperparams, n, nU, nX, X, binaryT, realT = getToyData()
+    priorparams, n, nU, nX, X, binaryT, realT = getToyData()
 
     @testset "Binary" begin
         # Treatment
@@ -9,11 +9,11 @@
         end
 
         @testset "GPSLCNoUNoCovBinaryT" begin
-            (trace, _) = generate(GPSLCNoUNoCovBinaryT, (hyperparams, nothing, nothing, binaryT), obs)
+            (trace, _) = generate(GPSLCNoUNoCovBinaryT, (priorparams, n, nothing, nothing), obs)
             @test true
         end
         @testset "GPSLCNoCovBinaryT" begin
-            (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU, nothing, binaryT), obs)
+            (trace, _) = generate(GPSLCNoCovBinaryT, (priorparams, n, nU, nothing), obs)
             @test true
         end
 
@@ -22,26 +22,27 @@
             obs[:X=>k=>:X] = X[:, k]
         end
         @testset "GPSLCNoUBinaryT" begin
-            (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, nothing, X, binaryT), obs)
+            (trace, _) = generate(GPSLCNoUBinaryT, (priorparams, n, nothing, nX), obs)
             @test true
         end
         @testset "GPSLCBinaryT" begin
-            (trace, _) = generate(GPSLCBinaryT, (hyperparams, nU, X, binaryT), obs)
+            (trace, _) = generate(GPSLCBinaryT, (priorparams, n, nU, nX), obs)
             @test true
         end
     end
 
     @testset "Real" begin
         obs, _ = getToyObservations(n)
+        obs[:T] = realT
 
         @testset "GPSLCNoUNoCovRealT" begin
-            (trace, _) = generate(GPSLCNoUNoCovRealT, (hyperparams, nothing, nothing, realT), obs)
+            (trace, _) = generate(GPSLCNoUNoCovRealT, (priorparams, n, nothing, nothing), obs)
             @test true
         end
 
         obs[:T] = realT # whole symbol because no logit Map
         @testset "GPSLCNoCovRealT" begin
-            (trace, _) = generate(GPSLCNoCovRealT, (hyperparams, nU, nothing, realT), obs)
+            (trace, _) = generate(GPSLCNoCovRealT, (priorparams, n, nU, nothing), obs)
             @test true
         end
 
@@ -50,12 +51,12 @@
             obs[:X=>k=>:X] = X[:, k]
         end
         @testset "GPSLCNoURealT" begin
-            (trace, _) = generate(GPSLCNoURealT, (hyperparams, nothing, X, realT), obs)
+            (trace, _) = generate(GPSLCNoURealT, (priorparams, n, nothing, nU), obs)
             @test true
         end
 
         @testset "GPSLCRealT" begin
-            (trace, _) = generate(GPSLCRealT, (hyperparams, nU, X, realT), obs)
+            (trace, _) = generate(GPSLCRealT, (priorparams, n, nU, nX), obs)
             @test true
         end
 

@@ -9,20 +9,23 @@ using ProgressBars
 using DataFrames
 using FunctionalCollections
 using Distributions
+using Statistics
 using HypothesisTests
 using GPSLC
 import CSV
 
 import Random
-rng = Random.seed!(0)
+rng = Random.seed!(1234)
 
 # utility functions for getting test data shared between various tests
 include("test_data.jl")
 include("test_model.jl")
+include("test_utils.jl")
 
-# Adjust file paths
+# Adjust file paths for CI
 prefix = ""
-if pwd()[end-3:end] != "test"
+notInCI = pwd()[end-3:end] != "test" # leaving intense tests out of ci pipeline
+if notInCI
     prefix = "test/"
 end
 
@@ -33,14 +36,21 @@ patch = @patch function ProgressBars.tqdm(x)
 end
 
 Mocking.apply(patch) do
-    include("sbc.jl")
+    include("estimation.jl")
     include("utils.jl")
     include("kernel.jl")
     include("model.jl")
     include("inference.jl")
-    include("comparison.jl")
+    include("driver.jl")
+
     # Bayesian Workflow -> A guide on writing Bayes code + tests
     # https://arxiv.org/pdf/2011.01808.pdf
+    notInCI = false
+    if notInCI
+        include("posterior.jl")
+        include("sbc.jl")
+        include("comparison.jl")
+    end
 end
 
 end

@@ -1,7 +1,7 @@
 name = "GPSLC"
 uuid = "e033fc31-0bf0-4add-9518-8e0675b669ea"
 authors = ["Jack Kenney <jack@kenney.dev> and contributors"]
-version = "0.1.1"
+version = "1.0.0"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"

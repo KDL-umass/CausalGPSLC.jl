@@ -1,4 +1,7 @@
-export HyperParameters,
+export GPSLCObject, getN, getNU, getNX,
+    HyperParameters,
+    PriorParameters,
+    UStructure,
     Confounders,
     Covariates,
     Treatment,
@@ -11,10 +14,44 @@ export HyperParameters,
     XScaleOrNoise,
     ReshapeableMatrix
 
-"""Global hyperparameters"""
-HyperParameters = Dict{String,Any}
+"""
+    HyperParameters
+Controls the high-level attributes of the inference procedure.
+"""
+mutable struct HyperParameters
+    nU::Int64
+    nOuter::Int64
+    nMHInner::Int64
+    nESInner::Int64
+    nBurnIn::Int64
+    stepSize::Int64
+end
 
-"""Confounder (U)"""
+"""
+    PriorParameters
+Contains shapes and scales for various Inverse Gamma distributions
+used as priors for kernel parameters and other parameters.
+"""
+PriorParameters = Dict{String,Any}
+
+"""
+    SigmaU 
+structured prior for U.
+"""
+UStructure = Matrix{Float64}
+
+"""
+    Object Labels for instances (obj)
+    
+Optional for GPSLC, but per publication it improves performance.
+"""
+ObjectLabels = Any
+
+"""
+    Confounders (U)
+
+Latent confounders that GPSLC performs inference over.
+"""
 Confounders = Union{
     Array{Array{Float64,1}},
     Array{Vector{Float64}},
@@ -27,7 +64,11 @@ Confounders = Union{
 }
 
 
-"""Covariates (X)"""
+"""
+   Covariates (X)
+
+Observed confounders and covariates.
+"""
 Covariates = Union{
     Array{Array{Float64,1}},
     Array{Vector{Float64}},
@@ -59,8 +100,19 @@ Outcome = Union{
     Vector{Float64},
 }
 
+"""Intervention (doT)"""
+Intervention = Union{
+    Bool,
+    Vector{Bool},
+    Float64,
+    Vector{Float64},
+}
 
-"""Viable inputs to the rbfKernelLog function in linear algebra datatypes"""
+
+"""
+    SupportedRBFVector
+Viable inputs to the rbfKernelLog function in linear algebra datatypes.
+"""
 SupportedRBFVector = Union{
     FunctionalCollections.PersistentVector{Float64},
     FunctionalCollections.PersistentVector{Bool},
@@ -72,7 +124,10 @@ SupportedRBFVector = Union{
     Array{Bool,1},
 }
 
-"""Viable inputs to the rbfKernelLog function that are nested lists"""
+"""
+    SupportedRBFData
+Viable inputs to the rbfKernelLog function that are nested lists.
+"""
 SupportedRBFData = Union{
     FunctionalCollections.PersistentVector{Vector{Float64}},
     FunctionalCollections.PersistentVector{Vector{Int64}},
@@ -85,7 +140,10 @@ SupportedRBFData = Union{
     Array{Vector{Bool},1}
 }
 
-"""Viable inputs to the rbfKernelLog function in linear algebra datatypes"""
+"""
+    SupportedRBFMatrix
+Viable inputs to the rbfKernelLog function in linear algebra datatypes.
+"""
 SupportedRBFMatrix = Union{
     Matrix{Float64},
     Matrix{Int64},
@@ -98,7 +156,10 @@ SupportedRBFMatrix = Union{
     FunctionalCollections.PersistentVector{Bool},
 }
 
-"""Viable inputs to the rbfKernelLog function as kernel lengthscales"""
+"""
+    SupportedRBFLengthscale
+Viable inputs to the rbfKernelLog function as kernel lengthscales.
+"""
 SupportedRBFLengthscale = Union{
     Int64,
     Matrix{Int64},
@@ -112,7 +173,10 @@ SupportedRBFLengthscale = Union{
     FunctionalCollections.PersistentVector{Float64},
 }
 
-"""Viable inputs to the processCov function"""
+"""
+    SupportedCovarianceMatrix
+Viable inputs to the processCov function.
+"""
 SupportedCovarianceMatrix = Union{
     Vector{Matrix{Float64}},
 }
@@ -122,7 +186,10 @@ XScaleOrNoise = Union{
     FunctionalCollections.PersistentVector{Float64},
 }
 
-"""Matrix that can be reshaped"""
+"""
+    ReshapeableMatrix
+Matrix that can be reshaped.
+"""
 ReshapeableMatrix = Union{
     Matrix{Bool},
     Matrix{Int64},
@@ -137,3 +204,49 @@ ReshapeableMatrix = Union{
     FunctionalCollections.PersistentVector{FunctionalCollections.PersistentVector{Int64}},
     FunctionalCollections.PersistentVector{FunctionalCollections.PersistentVector{Float64}},
 }
+
+"""
+    GPSLCObject
+
+A type that contains the data and posterior samples.
+
+Returned by [`gpslc`](@ref)
+"""
+struct GPSLCObject
+    hyperparams::HyperParameters
+    priorparams::PriorParameters
+    SigmaU::UStructure
+    obj::ObjectLabels
+    X::Union{Covariates,Nothing}
+    T::Treatment
+    Y::Outcome
+    posteriorSamples::Vector{Any}
+end
+
+"""
+Constructor for GPSLCObject that samples from the 
+    posterior before constructing the GPSLCObject.
+"""
+function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::UStructure, obj::ObjectLabels, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
+    posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y, posteriorSamples)
+end
+
+
+"""Number of individuals."""
+function getN(g::GPSLCObject)
+    size(g.Y, 1)
+end
+
+"""Number of covariates (and observed confounders)."""
+function getNX(g::GPSLCObject)
+    if ndims(g.X) == 2
+        return size(g.X, 2)
+    end
+    return 1
+end
+
+"""Number of latent confounders to perform inference over."""
+function getNU(g::GPSLCObject)
+    g.hyperparams.nU
+end

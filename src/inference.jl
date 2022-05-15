@@ -1,7 +1,7 @@
 export Posterior
 
 """Continuous Treatment Full Model"""
-function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::Outcome,
+function Posterior(priorparams::PriorParameters, X::Covariates, T::ContinuousTreatment, Y::Outcome,
     nU::Int64, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
 
     n, nX = size(X)
@@ -17,7 +17,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCRealT, (hyperparams, nU, X, T), obs)
+    (trace, _) = generate(GPSLCRealT, (priorparams, n, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -45,7 +45,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::
         end
 
         # Algorithm 3 Confounder Update
-        uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
+        uCov = priorparams["SigmaU"] * get_choices(trace)[:uNoise]
 
         for j = 1:nESInner
             for k = 1:nU
@@ -59,7 +59,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::
 end
 
 """Continuous Treatment No Covariates"""
-function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Outcome,
+function Posterior(priorparams::PriorParameters, X::Nothing, T::ContinuousTreatment, Y::Outcome,
     nU::Int64, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
     n = size(T, 1)
 
@@ -70,7 +70,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Out
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovRealT, (hyperparams, nU, nothing, T), obs)
+    (trace, _) = generate(GPSLCNoCovRealT, (priorparams, n, nU, nothing), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise"),))
@@ -88,7 +88,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Out
         end
 
         # Algorithm 3 Confounder Update
-        uCov = hyperparams["SigmaU"] * get_choices(trace)[:uNoise]
+        uCov = priorparams["SigmaU"] * get_choices(trace)[:uNoise]
 
         for j = 1:nESInner
             for k = 1:nU
@@ -109,7 +109,7 @@ Continuous Treatment No Confounders
     ES to learn hyperparameters for the support of binary variables
     which are not usually supported by Gaussian processes.
 """
-function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::Outcome,
+function Posterior(priorparams::PriorParameters, X::Covariates, T::ContinuousTreatment, Y::Outcome,
     nU::Nothing, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
     n, nX = size(X)
 
@@ -120,7 +120,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoURealT, (hyperparams, nothing, X, T), obs)
+    (trace, _) = generate(GPSLCNoURealT, (priorparams, n, nothing, nX), obs)
     for i = @mock tqdm(1:nOuter)
 
         for j = 1:nMHInner # Support for loop added after paper
@@ -143,7 +143,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::ContinuousTreatment, Y::
 end
 
 """Continuous Treatment No Confounders No Covariates"""
-function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Outcome,
+function Posterior(priorparams::PriorParameters, X::Nothing, T::ContinuousTreatment, Y::Outcome,
     nU::Nothing, nOuter::Int64, nMHInner::Nothing, nESInner::Nothing)
     n = size(T, 1)
 
@@ -153,7 +153,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::ContinuousTreatment, Y::Out
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUNoCovRealT, (hyperparams, nothing, nothing, T), obs)
+    (trace, _) = generate(GPSLCNoUNoCovRealT, (priorparams, n, nothing, nothing), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
@@ -166,7 +166,7 @@ end
 
 
 """Binary Treatment Full Model"""
-function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outcome,
+function Posterior(priorparams::PriorParameters, X::Covariates, T::BinaryTreatment, Y::Outcome,
     nU::Int64, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
 
     n, nX = size(X)
@@ -186,7 +186,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCBinaryT, (hyperparams, nU, X, T), obs)
+    (trace, _) = generate(GPSLCBinaryT, (priorparams, n, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -224,13 +224,13 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
 
         utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
         xtCovLog = rbfKernelLog(X, X, xtLS)
-        logittCov = processCov(utCovLog + xtCovLog, tScale, tNoise)
+        logitTCov = processCov(utCovLog + xtCovLog, tScale, tNoise)
 
         # Algorithm 3 Confounder Update
-        uCov = hyperparams["SigmaU"] * uNoise
+        uCov = priorparams["SigmaU"] * uNoise
 
         for j = 1:nESInner
-            trace = elliptical_slice(trace, :logitT, zeros(n), logittCov)
+            trace = elliptical_slice(trace, :logitT, zeros(n), logitTCov)
             for k = 1:nU
                 trace = elliptical_slice(trace, :U => k => :U, zeros(n), uCov)
             end
@@ -242,7 +242,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
 end
 
 """Binary Treatment No Covariates"""
-function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome,
+function Posterior(priorparams::PriorParameters, X::Nothing, T::BinaryTreatment, Y::Outcome,
     nU::Int64, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
 
     n = size(T, 1)
@@ -258,7 +258,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovBinaryT, (hyperparams, nU, nothing, T), obs)
+    (trace, _) = generate(GPSLCNoCovBinaryT, (priorparams, n, nU, nothing), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
@@ -284,13 +284,13 @@ function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome
         uNoise = choices[:uNoise]
 
         utCovLog = sum(broadcast(rbfKernelLog, U, U, utLS))
-        logittCov = processCov(utCovLog, tScale, tNoise)
+        logitTCov = processCov(utCovLog, tScale, tNoise)
 
         # Algorithm 3 Confounder Update
-        uCov = hyperparams["SigmaU"] * uNoise
+        uCov = priorparams["SigmaU"] * uNoise
 
         for j = 1:nESInner
-            trace = elliptical_slice(trace, :logitT, zeros(n), logittCov)
+            trace = elliptical_slice(trace, :logitT, zeros(n), logitTCov)
             for k = 1:nU
                 trace = elliptical_slice(trace, :U => k => :U, zeros(n), uCov)
             end
@@ -302,7 +302,7 @@ function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome
 end
 
 """Binary Treatment with No Confounders"""
-function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outcome,
+function Posterior(priorparams::PriorParameters, X::Covariates, T::BinaryTreatment, Y::Outcome,
     nU::Nothing, nOuter::Int64, nMHInner::Int64, nESInner::Int64)
 
     n, nX = size(X)
@@ -318,7 +318,7 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUBinaryT, (hyperparams, nothing, X, T), obs)
+    (trace, _) = generate(GPSLCNoUBinaryT, (priorparams, n, nothing, nX), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
@@ -341,10 +341,10 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
         tNoise = choices[:tNoise]
 
         xtCovLog = rbfKernelLog(X, X, xtLS)
-        logittCov = processCov(xtCovLog, tScale, tNoise)
+        logitTCov = processCov(xtCovLog, tScale, tNoise)
 
         for j = 1:nESInner
-            trace = elliptical_slice(trace, :logitT, zeros(n), logittCov)
+            trace = elliptical_slice(trace, :logitT, zeros(n), logitTCov)
         end
 
         push!(posteriorSamples, get_choices(trace))
@@ -353,20 +353,21 @@ function Posterior(hyperparams::Dict, X::Covariates, T::BinaryTreatment, Y::Outc
 end
 
 """Binary Treatment No Confounders No Covariates"""
-function Posterior(hyperparams::Dict, X::Nothing, T::BinaryTreatment, Y::Outcome,
+function Posterior(priorparams::PriorParameters, X::Nothing, T::BinaryTreatment, Y::Outcome,
     nU::Nothing, nOuter::Int64, nMHInner::Nothing, nESInner::Nothing)
 
     n = size(T, 1)
 
     obs = Gen.choicemap()
-
     obs[:Y] = Y
-    obs[:T] = T
+    for i in 1:n
+        obs[:T=>i=>:T] = T[i]
+    end
 
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUNoCovBinaryT, (hyperparams, nothing, nothing, T), obs)
+    (trace, _) = generate(GPSLCNoUNoCovBinaryT, (priorparams, n, nothing, nothing), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
