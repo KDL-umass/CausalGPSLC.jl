@@ -19,12 +19,13 @@ export GPSLCObject, getN, getNU, getNX,
 Controls the high-level attributes of the inference procedure.
 """
 mutable struct HyperParameters
-    nU::Int64
+    nU::Union{Int64,Nothing}
     nOuter::Int64
-    nMHInner::Int64
-    nESInner::Int64
+    nMHInner::Union{Int64,Nothing}
+    nESInner::Union{Int64,Nothing}
     nBurnIn::Int64
     stepSize::Int64
+    iteCovarianceNoise::Float64
 end
 
 """
@@ -215,8 +216,8 @@ Returned by [`gpslc`](@ref)
 struct GPSLCObject
     hyperparams::HyperParameters
     priorparams::PriorParameters
-    SigmaU::UStructure
-    obj::ObjectLabels
+    SigmaU::Union{UStructure,Nothing}
+    obj::Union{ObjectLabels,Nothing}
     X::Union{Covariates,Nothing}
     T::Treatment
     Y::Outcome
@@ -226,12 +227,29 @@ end
 """
 Constructor for GPSLCObject that samples from the 
     posterior before constructing the GPSLCObject.
+
+    Full Model or model with no observed Covariates
 """
 function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::UStructure, obj::ObjectLabels, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
     posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
     GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y, posteriorSamples)
 end
 
+"""No Confounders"""
+function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::Nothing, obj::Nothing, X::Covariates, T::Treatment, Y::Outcome)
+    hyperparams.nU = nothing
+    posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y, posteriorSamples)
+end
+
+"""No Confounders, No Covariates"""
+function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::Nothing, obj::Nothing, X::Nothing, T::Treatment, Y::Outcome)
+    hyperparams.nU = nothing
+    hyperparams.nMHInner = nothing
+    hyperparams.nESInner = nothing
+    posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y, posteriorSamples)
+end
 
 """Number of individuals."""
 function getN(g::GPSLCObject)

@@ -24,6 +24,17 @@ function gpslc(data::Union{DataFrame,String};
     GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
 end
 
+function gpslc(obj::Union{ObjectLabels,Nothing}, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome; hyperparams::HyperParameters=getHyperParameters(),
+    priorparams::PriorParameters=getPriorParameters()
+)::GPSLCObject
+    if obj !== nothing
+        SigmaU = generateSigmaU(obj, priorparams["sigmaUNoise"], priorparams["sigmaUCov"])
+    else
+        SigmaU = nothing
+    end
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
+end
+
 
 """
     samplePosterior
@@ -79,7 +90,7 @@ Returns:
 `SATEsamples`: `n x m` matrix where `n` is the number of individuals, and `m` is the number of samples.
 """
 function sampleSATE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
-    MeanSATEs, CovSATEs = conditionalSATE(g, doT)
+    MeanSATEs, CovSATEs = SATEDistributions(g, doT)
     SATEsamples(MeanSATEs, CovSATEs, samplesPerPosterior)
 end
 

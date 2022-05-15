@@ -1,5 +1,9 @@
-export conditionalITE, conditionalSATE, ITEsamples, SATEsamples
-
+export conditionalITE,
+    ITEDistributions,
+    ITEsamples,
+    conditionalSATE,
+    SATEDistributions,
+    SATEsamples
 
 """
     Conditional Individual Treatment Estimation
@@ -213,14 +217,19 @@ Wrapper for conditionalITE that extracts parameters from `g::GPSLCObject` at pos
 function conditionalITE(g::GPSLCObject, i::Int64, doT::Intervention)
     n = getN(g)
     nU = getNU(g)
-    uyLS = zeros(nU)
-    U = zeros(n, nU)
-    for u in 1:nU
-        uyLS[u] = g.posteriorSamples[i][:uyLS=>u=>:LS]
-        U[:, u] = g.posteriorSamples[i][:U=>u=>:U]
+    if nU === nothing
+        uyLS = nothing
+        U = nothing
+    else
+        uyLS = zeros(nU)
+        U = zeros(n, nU)
+        for u in 1:nU
+            uyLS[u] = g.posteriorSamples[i][:uyLS=>u=>:LS]
+            U[:, u] = g.posteriorSamples[i][:U=>u=>:U]
+        end
+        U = toMatrix(U, n, nU)
+        @assert size(U) == (n, nU)
     end
-    U = toMatrix(U, n, nU)
-    @assert size(U) == (n, nU)
 
     if g.X === nothing
         xyLS = nothing
@@ -260,7 +269,7 @@ function ITEDistributions(g::GPSLCObject, doT::Intervention)
         MeanITE, CovITE = conditionalITE(g, i, doT)
 
         MeanITEs[idx, :] = MeanITE
-        CovITEs[idx, :, :] = LinearAlgebra.Symmetric(CovITE) + I * (1e-10)
+        CovITEs[idx, :, :] = LinearAlgebra.Symmetric(CovITE) + I * g.hyperparams.iteCovarianceNoise
         idx += 1
     end
     return MeanITEs, CovITEs

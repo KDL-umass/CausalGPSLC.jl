@@ -22,10 +22,13 @@ include("test_data.jl")
 include("test_model.jl")
 include("test_utils.jl")
 
+# Long running intense inference tests inappropriate for CI load
+runIntenseTests = false
+
 # Adjust file paths for CI
 prefix = ""
-notInCI = pwd()[end-3:end] != "test" # leaving intense tests out of ci pipeline
-if notInCI
+inCI = pwd()[end-3:end] == "test" # leaving intense tests out of ci pipeline
+if !inCI
     prefix = "test/"
 end
 
@@ -45,8 +48,7 @@ Mocking.apply(patch) do
 
     # Bayesian Workflow -> A guide on writing Bayes code + tests
     # https://arxiv.org/pdf/2011.01808.pdf
-    notInCI = false
-    if notInCI
+    if runIntenseTests
         include("posterior.jl")
         include("sbc.jl")
         include("comparison.jl")

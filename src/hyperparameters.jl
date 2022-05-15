@@ -60,6 +60,8 @@ function getPriorParameters()::PriorParameters
         "xyLSScale" => 4.0,
         "tyLSShape" => 4.0,
         "tyLSScale" => 4.0,
+        "sigmaUNoise" => 1.0e-13,
+        "sigmaUCov" => 1.0,
     )
 end
 
@@ -77,17 +79,19 @@ Returns default values for hyperparametrs
 """
 function getHyperParameters()::HyperParameters
     nU = 1
-    nOuter = 24 # 25
-    nInner = 10 # 10
-    nESInner = 5 # 5
-    nBurnIn = 10 # 10
-    stepSize = 1 # 1
+    nOuter = 24
+    nInner = 10
+    nESInner = 5
+    nBurnIn = 10
+    stepSize = 1
+    iteCovarianceNoise = 1e-10
     HyperParameters(
         nU,
         nOuter,
         nInner,
         nESInner,
         nBurnIn,
-        stepSize
+        stepSize,
+        iteCovarianceNoise
     )
 end
