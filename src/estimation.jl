@@ -207,17 +207,125 @@ function conditionalITE(
 end
 
 
+"""
+Wrapper for conditionalITE that extracts parameters from `g::GPSLCObject` at posterior sample `i` and applies intervention `doT`.
+"""
+function conditionalITE(g::GPSLCObject, i::Int64, doT::Intervention)
+    n = getN(g)
+    nU = getNU(g)
+    uyLS = zeros(nU)
+    U = zeros(n, nU)
+    for u in 1:nU
+        uyLS[u] = g.posteriorSamples[i][:uyLS=>u=>:LS]
+        U[:, u] = g.posteriorSamples[i][:U=>u=>:U]
+    end
+    U = toMatrix(U, n, nU)
+    @assert size(U) == (n, nU)
+
+    if g.X === nothing
+        xyLS = nothing
+    else
+        nX = getNX(g)
+        xyLS = zeros(nX)
+        for k in 1:nX
+            xyLS[k] = g.posteriorSamples[i][:xyLS=>k=>:LS]
+        end
+    end
+
+    conditionalITE(
+        uyLS, xyLS, g.posteriorSamples[i][:tyLS],
+        g.posteriorSamples[i][:yNoise], g.posteriorSamples[i][:yScale],
+        U, g.X, g.T, g.Y,
+        doT)
+end
+
+"""
+    ITEDistributions
+
+Collect MeanITEs and CovITEs from the posterior with conditionalITE.
+"""
+function ITEDistributions(g::GPSLCObject, doT::Intervention)
+    n = getN(g)
+    burnIn = g.hyperparams.nBurnIn
+    stepSize = g.hyperparams.stepSize
+    nOuter = g.hyperparams.nOuter
+
+    numPosteriorSamples = length(burnIn:stepSize:nOuter)
+
+    MeanITEs = zeros(numPosteriorSamples, n)
+    CovITEs = zeros(numPosteriorSamples, n, n)
+
+    idx = 1
+    for i in @mock tqdm(burnIn:stepSize:nOuter)
+        MeanITE, CovITE = conditionalITE(g, i, doT)
+
+        MeanITEs[idx, :] = MeanITE
+        CovITEs[idx, :, :] = LinearAlgebra.Symmetric(CovITE) + I * (1e-10)
+        idx += 1
+    end
+    return MeanITEs, CovITEs
+end
+
+
+"""Individual Treatment Effect Samples"""
+function ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
+    nMixtures, n = size(MeanITEs)
+
+    samples = zeros(nMixtures * nSamplesPerMixture, n)
+    i = 0
+    for j in 1:nMixtures
+        mean = MeanITEs[j, :]
+        cov = CovITEs[j, :, :]
+        for _ in 1:nSamplesPerMixture
+            i += 1
+            samples[i, :] = mvnormal(mean, cov)
+        end
+    end
+    return samples
+end
+
+
 """Conditional Sample Average Treatment Effect"""
-function conditionalSATE(
-    uyLS::Vector{Float64}, tyLS::Float64, xyLS::Vector{Float64},
-    yNoise::Float64, yScale::Float64,
-    U::Union{Nothing,Confounders},
-    X::Union{Nothing,Covariates},
-    T::Treatment, Y::Outcome, doT::Intervention)
-
-    MeanITE, CovITE = conditionalITE(uyLS, xyLS, tyLS, yNoise, yScale, U, X, T, Y, doT)
-
-    MeanSATE = sum(MeanITE) / size(T, 1)
-    VarSATE = sum(CovITE) / size(T, 1)^2
+function conditionalSATE(MeanITE, CovITE)
+    n = size(MeanITE, 1)
+    MeanSATE = sum(MeanITE) / n
+    VarSATE = sum(CovITE) / n^2
     return MeanSATE, VarSATE
+end
+
+function SATEDistributions(g::GPSLCObject, doT::Intervention)
+    MeanITEs, CovITEs = ITEDistributions(g, doT)
+
+    nMixtures, n = size(MeanITEs)
+    MeanSATEs = zeros(nMixtures)
+    VarSATEs = zeros(nMixtures)
+    for i in 1:nMixtures
+        MeanITE = MeanITEs[i, :]
+        CovITE = CovITEs[i, :, :]
+
+        MeanSATEs[i], VarSATEs[i] = conditionalSATE(MeanITE, CovITE)
+    end
+    return MeanSATEs, VarSATEs
+end
+
+"""
+Sample Average Treatment Effect samples
+
+returns 
+"""
+function SATEsamples(MeanSATEs, VarSATEs, nSamplesPerMixture)
+    nMixtures = length(MeanSATEs)
+
+    samples = zeros(nMixtures * nSamplesPerMixture)
+
+    i = 0
+    for j in 1:nMixtures
+        mean = MeanSATEs[j]
+        var = VarSATEs[j]
+        for _ in 1:nSamplesPerMixture
+            i += 1
+            samples[i] = normal(mean, var)
+        end
+    end
+    return samples
 end

@@ -15,7 +15,6 @@ Parses matrices for the observed covariates, treatments, and outcomes.
 Returns: `X, T, Y, SigmaU`
 """
 function prepareData(df::Union{DataFrame,String}, confounderEps::Float64=1.0e-13, confounderCov::Float64=1.0)
-    println("Preparing Data")
     if typeof(df) == String
         df::DataFrame = loadData(df)
     end

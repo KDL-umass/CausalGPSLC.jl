@@ -77,10 +77,10 @@ Returns default values for hyperparametrs
 """
 function getHyperParameters()::HyperParameters
     nU = 1
-    nOuter = 20 # 25
-    nInner = 5 # 10
+    nOuter = 24 # 25
+    nInner = 10 # 10
     nESInner = 5 # 5
-    nBurnIn = 5 # 10
+    nBurnIn = 10 # 10
     stepSize = 1 # 1
     HyperParameters(
         nU,
