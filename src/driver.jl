@@ -1,5 +1,5 @@
 using Mocking
-export gpslc, samplePosterior, sampleITE, ITEsamples, SATEsamples, summarizeITE
+export gpslc, samplePosterior, sampleITE, sampleSATE, summarizeITE
 
 """
     gpslc
@@ -71,7 +71,7 @@ Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of individuals, and `m` is the number of samples.
 """
-function sampleITE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
+function sampleITE(g::GPSLCObject, doT::Intervention; samplesPerPosterior::Int64=10)
     MeanITEs, CovITEs = ITEDistributions(g, doT)
     ITEsamples(MeanITEs, CovITEs, samplesPerPosterior)
 end
@@ -89,7 +89,7 @@ Returns:
 
 `SATEsamples`: `n x m` matrix where `n` is the number of individuals, and `m` is the number of samples.
 """
-function sampleSATE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
+function sampleSATE(g::GPSLCObject, doT::Intervention; samplesPerPosterior::Int64=10)
     MeanSATEs, CovSATEs = SATEDistributions(g, doT)
     SATEsamples(MeanSATEs, CovSATEs, samplesPerPosterior)
 end

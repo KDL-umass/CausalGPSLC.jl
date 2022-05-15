@@ -16,8 +16,8 @@ obj = [1]
 
 @testset "conditionalITE" begin
 
+    doT = true
     @testset "No U, no X, binaryT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             nothing, nothing, tyLS, yNoise, yScale,
             nothing, nothing, binaryT, Y, doT)
@@ -25,7 +25,6 @@ obj = [1]
         @test all(covITE .== 0.0)
     end
     @testset "No U, binaryT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             nothing, xyLS, tyLS, yNoise, yScale,
             nothing, X, binaryT, Y, doT)
@@ -33,7 +32,6 @@ obj = [1]
         @test all(covITE .== 0.0)
     end
     @testset "No X, binaryT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             uyLS, nothing, tyLS, yNoise, yScale,
             U, nothing, binaryT, Y, doT)
@@ -41,7 +39,6 @@ obj = [1]
         @test all(covITE .== 0.0)
     end
     @testset "Full model, binaryT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             uyLS, xyLS, tyLS, yNoise, yScale,
             U, X, binaryT, Y, doT)
@@ -49,9 +46,8 @@ obj = [1]
         @test all(covITE .== 0.0)
     end
 
-
+    doT = 1.0
     @testset "No U, no X, realT" begin
-        doT = 1.0
         meanITE, covITE = conditionalITE(
             nothing, nothing, tyLS, yNoise, yScale,
             nothing, nothing, realT, Y, doT)
@@ -59,7 +55,6 @@ obj = [1]
         @test all(covITE .== 0.0)
     end
     @testset "No U, realT" begin
-        doT = 1.0
         meanITE, covITE = conditionalITE(
             nothing, xyLS, tyLS, yNoise, yScale,
             nothing, X, realT, Y, doT)
@@ -67,7 +62,6 @@ obj = [1]
         @test all(covITE .== 0.0)
     end
     @testset "No X, realT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             uyLS, nothing, tyLS, yNoise, yScale,
             U, nothing, realT, Y, doT)
@@ -75,7 +69,6 @@ obj = [1]
         @test all(covITE .== 0.0)
     end
     @testset "Full model, realT" begin
-        doT = 1.0
         meanITE, covITE = conditionalITE(
             uyLS, xyLS, tyLS, yNoise, yScale,
             U, X, realT, Y, doT)
@@ -85,8 +78,8 @@ obj = [1]
 end
 
 @testset "conditionalSATE" begin
+    doT = true
     @testset "No U, no X, binaryT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             nothing, nothing, tyLS, yNoise, yScale,
             nothing, nothing, binaryT, Y, doT)
@@ -95,7 +88,6 @@ end
         @test varSATE == 0.0
     end
     @testset "No U, binaryT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             nothing, xyLS, tyLS, yNoise, yScale,
             nothing, X, binaryT, Y, doT)
@@ -104,7 +96,6 @@ end
         @test varSATE == 0.0
     end
     @testset "No X, binaryT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             uyLS, nothing, tyLS, yNoise, yScale,
             U, nothing, binaryT, Y, doT)
@@ -113,7 +104,6 @@ end
         @test varSATE == 0.0
     end
     @testset "Full model, binaryT" begin
-        doT = true
         meanITE, covITE = conditionalITE(
             uyLS, xyLS, tyLS, yNoise, yScale,
             U, X, binaryT, Y, doT)
@@ -122,9 +112,8 @@ end
         @test varSATE == 0.0
     end
 
-
+    doT = 1.0
     @testset "No U, no X, realT" begin
-        doT = 1.0
         meanITE, covITE = conditionalITE(
             nothing, nothing, tyLS, yNoise, yScale,
             nothing, nothing, realT, Y, doT)
@@ -133,7 +122,6 @@ end
         @test varSATE == 0.0
     end
     @testset "No U, realT" begin
-        doT = 1.0
         meanITE, covITE = conditionalITE(
             nothing, xyLS, tyLS, yNoise, yScale,
             nothing, X, realT, Y, doT)
@@ -142,7 +130,6 @@ end
         @test varSATE == 0.0
     end
     @testset "No X, realT" begin
-        doT = 1.0
         meanITE, covITE = conditionalITE(
             uyLS, nothing, tyLS, yNoise, yScale,
             U, nothing, realT, Y, doT)
@@ -151,7 +138,6 @@ end
         @test varSATE == 0.0
     end
     @testset "Full model, realT" begin
-        doT = 1.0
         meanITE, covITE = conditionalITE(
             uyLS, xyLS, tyLS, yNoise, yScale,
             U, X, realT, Y, doT)
@@ -162,53 +148,54 @@ end
 end
 
 @testset "ITEDistributions" begin
+    doT = true
     @testset "No U, no X, binaryT" begin
         g = gpslc(nothing, nothing, binaryT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         @test mean(MeanITEs) ≈ 0.0
         @test mean(CovITEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "No U, binaryT" begin
         g = gpslc(nothing, X, binaryT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         @test mean(MeanITEs) ≈ 0.0
         @test mean(CovITEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "No X, binaryT" begin
         g = gpslc(obj, nothing, binaryT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         @test mean(MeanITEs) ≈ 0.0
         @test mean(CovITEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "Full model, binaryT" begin
         g = gpslc(obj, X, binaryT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         @test mean(MeanITEs) ≈ 0.0
         @test mean(CovITEs) ≈ hyperparams.iteCovarianceNoise
     end
 
-
+    doT = 1.0
     @testset "No U, no X, realT" begin
         g = gpslc(nothing, nothing, realT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         @test mean(MeanITEs) ≈ 0.0
         @test mean(CovITEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "No U, realT" begin
         g = gpslc(nothing, X, realT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         @test mean(MeanITEs) ≈ 0.0
         @test mean(CovITEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "No X, realT" begin
         g = gpslc(obj, nothing, realT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         @test mean(MeanITEs) ≈ 0.0
         @test mean(CovITEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "Full model, realT" begin
         g = gpslc(obj, X, realT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         @test mean(MeanITEs) ≈ 0.0
         @test mean(CovITEs) ≈ hyperparams.iteCovarianceNoise
     end
@@ -216,53 +203,55 @@ end
 
 
 @testset "SATEDistributions" begin
+    doT = true
     @testset "No U, no X, binaryT" begin
         g = gpslc(nothing, nothing, binaryT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         @test mean(MeanSATEs) ≈ 0.0
         @test mean(CovSATEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "No U, binaryT" begin
         g = gpslc(nothing, X, binaryT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         @test mean(MeanSATEs) ≈ 0.0
         @test mean(CovSATEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "No X, binaryT" begin
         g = gpslc(obj, nothing, binaryT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         @test mean(MeanSATEs) ≈ 0.0
         @test mean(CovSATEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "Full model, binaryT" begin
         g = gpslc(obj, X, binaryT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         @test mean(MeanSATEs) ≈ 0.0
         @test mean(CovSATEs) ≈ hyperparams.iteCovarianceNoise
     end
 
 
+    doT = 1.0
     @testset "No U, no X, realT" begin
         g = gpslc(nothing, nothing, realT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         @test mean(MeanSATEs) ≈ 0.0
         @test mean(CovSATEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "No U, realT" begin
         g = gpslc(nothing, X, realT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         @test mean(MeanSATEs) ≈ 0.0
         @test mean(CovSATEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "No X, realT" begin
         g = gpslc(obj, nothing, realT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         @test mean(MeanSATEs) ≈ 0.0
         @test mean(CovSATEs) ≈ hyperparams.iteCovarianceNoise
     end
     @testset "Full model, realT" begin
         g = gpslc(obj, X, realT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         @test mean(MeanSATEs) ≈ 0.0
         @test mean(CovSATEs) ≈ hyperparams.iteCovarianceNoise
     end
@@ -271,140 +260,143 @@ end
 
 
 @testset "ITEsamples" begin
+    doT = true
     @testset "No U, no X, binaryT" begin
         g = gpslc(nothing, nothing, binaryT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         samples = ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovITEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "No U, binaryT" begin
         g = gpslc(nothing, X, binaryT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         samples = ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovITEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "No X, binaryT" begin
         g = gpslc(obj, nothing, binaryT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         samples = ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovITEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "Full model, binaryT" begin
         g = gpslc(obj, X, binaryT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         samples = ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovITEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
 
-
+    doT = 1.0
     @testset "No U, no X, realT" begin
         g = gpslc(nothing, nothing, realT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         samples = ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovITEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "No U, realT" begin
         g = gpslc(nothing, X, realT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         samples = ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovITEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "No X, realT" begin
         g = gpslc(obj, nothing, realT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         samples = ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovITEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "Full model, realT" begin
         g = gpslc(obj, X, realT, Y)
-        MeanITEs, CovITEs = ITEDistributions(g, true)
+        MeanITEs, CovITEs = ITEDistributions(g, doT)
         samples = ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovITEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
 end
 
 
 @testset "SATEsamples" begin
+    doT = true
     @testset "No U, no X, binaryT" begin
         g = gpslc(nothing, nothing, binaryT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         samples = SATEsamples(MeanSATEs, CovSATEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovSATEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "No U, binaryT" begin
         g = gpslc(nothing, X, binaryT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         samples = SATEsamples(MeanSATEs, CovSATEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovSATEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "No X, binaryT" begin
         g = gpslc(obj, nothing, binaryT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         samples = SATEsamples(MeanSATEs, CovSATEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovSATEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "Full model, binaryT" begin
         g = gpslc(obj, X, binaryT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         samples = SATEsamples(MeanSATEs, CovSATEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovSATEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
 
 
+    doT = 1.0
     @testset "No U, no X, realT" begin
         g = gpslc(nothing, nothing, realT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         samples = SATEsamples(MeanSATEs, CovSATEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovSATEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "No U, realT" begin
         g = gpslc(nothing, X, realT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         samples = SATEsamples(MeanSATEs, CovSATEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovSATEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "No X, realT" begin
         g = gpslc(obj, nothing, realT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         samples = SATEsamples(MeanSATEs, CovSATEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovSATEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
     @testset "Full model, realT" begin
         g = gpslc(obj, X, realT, Y)
-        MeanSATEs, CovSATEs = SATEDistributions(g, true)
+        MeanSATEs, CovSATEs = SATEDistributions(g, doT)
         samples = SATEsamples(MeanSATEs, CovSATEs, nSamplesPerMixture)
         @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
         @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(CovSATEs) <= hyperparams.iteCovarianceNoise
+        @test isapprox(Statistics.var(samples), hyperparams.iteCovarianceNoise, atol=1e-9)
     end
 end

@@ -50,6 +50,7 @@ Mocking.apply(patch) do
     # Bayesian Workflow -> A guide on writing Bayes code + tests
     # https://arxiv.org/pdf/2011.01808.pdf
     if runIntenseTests
+        include("gpslc.jl")
         include("posterior.jl")
         include("sbc.jl")
         include("comparison.jl")
