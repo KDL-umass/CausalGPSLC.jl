@@ -228,7 +228,6 @@ Constructor for GPSLCObject that samples from the
     posterior before constructing the GPSLCObject.
 """
 function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::UStructure, obj::ObjectLabels, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
-    println("Running inference")
     posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
     GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y, posteriorSamples)
 end

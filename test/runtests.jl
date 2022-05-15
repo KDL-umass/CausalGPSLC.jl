@@ -20,10 +20,11 @@ rng = Random.seed!(1234)
 # utility functions for getting test data shared between various tests
 include("test_data.jl")
 include("test_model.jl")
+include("test_utils.jl")
 
 # Adjust file paths for CI
 prefix = ""
-notInCI = pwd()[end-3:end] != "test"
+notInCI = pwd()[end-3:end] != "test" # leaving intense tests out of ci pipeline
 if notInCI
     prefix = "test/"
 end
@@ -40,12 +41,14 @@ Mocking.apply(patch) do
     include("kernel.jl")
     include("model.jl")
     include("inference.jl")
-    include("posterior.jl")
-    include("sbc.jl")
+    include("driver.jl")
 
-    if notInCI # leaving intense tests out of ci pipeline
-        # Bayesian Workflow -> A guide on writing Bayes code + tests
-        # https://arxiv.org/pdf/2011.01808.pdf
+    # Bayesian Workflow -> A guide on writing Bayes code + tests
+    # https://arxiv.org/pdf/2011.01808.pdf
+    notInCI = false
+    if notInCI
+        include("posterior.jl")
+        include("sbc.jl")
         include("comparison.jl")
     end
 end
