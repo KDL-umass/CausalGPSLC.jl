@@ -39,8 +39,9 @@ patch = @patch function ProgressBars.tqdm(x)
 end
 
 Mocking.apply(patch) do
-    include("estimation.jl")
     include("utils.jl")
+    include("data.jl")
+    include("estimation.jl")
     include("kernel.jl")
     include("model.jl")
     include("inference.jl")

@@ -38,6 +38,7 @@ function prepareData(df::Union{DataFrame,String}, confounderEps::Float64=1.0e-13
         println("No object labels to assign latent confounders to 
                 (column must be titled `obj`)")
         obj = nothing
+        SigmaU = nothing
         println("Assuming no latent confounding")
     end
 

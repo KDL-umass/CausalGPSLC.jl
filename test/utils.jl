@@ -38,4 +38,12 @@
         actual = toTupleOfVectors(data)
         @test expected == actual
     end
+
+    @testset "getChoiceAddresses" begin
+        choices = choicemap()
+        choices[:T] = 1.0
+        actual = getAddresses(choices)
+        expected = [:T]
+        @test expected == actual
+    end
 end

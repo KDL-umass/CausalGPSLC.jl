@@ -1,7 +1,7 @@
 export GPSLCObject, getN, getNU, getNX,
     HyperParameters,
     PriorParameters,
-    UStructure,
+    ConfounderStructure,
     Confounders,
     Covariates,
     Treatment,
@@ -39,7 +39,7 @@ PriorParameters = Dict{String,Any}
     SigmaU 
 structured prior for U.
 """
-UStructure = Matrix{Float64}
+ConfounderStructure = Matrix{Float64}
 
 """
     Object Labels for instances (obj)
@@ -216,7 +216,7 @@ Returned by [`gpslc`](@ref)
 struct GPSLCObject
     hyperparams::HyperParameters
     priorparams::PriorParameters
-    SigmaU::Union{UStructure,Nothing}
+    SigmaU::Union{ConfounderStructure,Nothing}
     obj::Union{ObjectLabels,Nothing}
     X::Union{Covariates,Nothing}
     T::Treatment
@@ -230,7 +230,7 @@ Constructor for GPSLCObject that samples from the
 
     Full Model or model with no observed Covariates
 """
-function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::UStructure, obj::ObjectLabels, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
+function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::ConfounderStructure, obj::ObjectLabels, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
     posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
     GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y, posteriorSamples)
 end
