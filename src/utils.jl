@@ -60,3 +60,42 @@ function getAddresses(choices::Gen.ChoiceMap)
     end
     return addresses
 end
+
+"""
+    extractParameters
+Pull out `uyLS, xyLS, tyLS, yNoise, yScale, U` from `g`
+some of which are allowed to be Nothing
+"""
+function extractParameters(g::GPSLCObject, posteriorSampleIdx::Int64)
+    i = posteriorSampleIdx
+    n = getN(g)
+    nU = getNU(g)
+    if nU === nothing
+        uyLS = nothing
+        U = nothing
+    else
+        uyLS = zeros(nU)
+        U = zeros(n, nU)
+        for u in 1:nU
+            uyLS[u] = g.posteriorSamples[i][:uyLS=>u=>:LS]
+            U[:, u] = g.posteriorSamples[i][:U=>u=>:U]
+        end
+        U = toMatrix(U, n, nU)
+        @assert size(U) == (n, nU)
+    end
+
+    if g.X === nothing
+        xyLS = nothing
+    else
+        nX = getNX(g)
+        xyLS = zeros(nX)
+        for k in 1:nX
+            xyLS[k] = g.posteriorSamples[i][:xyLS=>k=>:LS]
+        end
+    end
+    tyLS = g.posteriorSamples[i][:tyLS]
+    yNoise = g.posteriorSamples[i][:yNoise]
+    yScale = g.posteriorSamples[i][:yScale]
+
+    return uyLS, xyLS, tyLS, yNoise, yScale, U
+end

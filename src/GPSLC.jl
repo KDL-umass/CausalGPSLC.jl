@@ -22,6 +22,8 @@ include("model.jl")
 include("proposal.jl")
 
 include("inference.jl")
+include("likelihood.jl")
+include("prediction.jl")
 include("estimation.jl")
 include("driver.jl")
 

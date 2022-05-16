@@ -84,7 +84,7 @@ function getHyperParameters()::HyperParameters
     nESInner = 5
     nBurnIn = 10
     stepSize = 1
-    iteCovarianceNoise = 1e-10
+    predictionCovarianceNoise = 1e-10
     HyperParameters(
         nU,
         nOuter,
@@ -92,6 +92,6 @@ function getHyperParameters()::HyperParameters
         nESInner,
         nBurnIn,
         stepSize,
-        iteCovarianceNoise
+        predictionCovarianceNoise
     )
 end

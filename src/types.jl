@@ -25,7 +25,7 @@ mutable struct HyperParameters
     nESInner::Union{Int64,Nothing}
     nBurnIn::Int64
     stepSize::Int64
-    iteCovarianceNoise::Float64
+    predictionCovarianceNoise::Float64
 end
 
 """

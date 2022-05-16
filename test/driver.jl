@@ -28,16 +28,16 @@ end
     nX = getNX(g)
     @testset "sampleITE" begin
         samples = sampleITE(g, doT)
-        @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
-        @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(samples) <= hyperparams.iteCovarianceNoise
+        @test -sqrt(hyperparams.predictionCovarianceNoise) <= mean(samples)
+        @test mean(samples) <= sqrt(hyperparams.predictionCovarianceNoise)
+        @test Statistics.var(samples) <= hyperparams.predictionCovarianceNoise
     end
 
     @testset "sampleSATE" begin
         samples = sampleSATE(g, doT)
-        @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
-        @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
-        @test Statistics.var(samples) <= hyperparams.iteCovarianceNoise
+        @test -sqrt(hyperparams.predictionCovarianceNoise) <= mean(samples)
+        @test mean(samples) <= sqrt(hyperparams.predictionCovarianceNoise)
+        @test Statistics.var(samples) <= hyperparams.predictionCovarianceNoise
     end
 end
 

@@ -1,5 +1,5 @@
 using Mocking
-export gpslc, samplePosterior, sampleITE, sampleSATE, summarizeITE
+export gpslc, samplePosterior, sampleITE, sampleSATE, summarizeEstimates
 
 """
     gpslc
@@ -98,24 +98,26 @@ end
 
 
 """
-    Summarize Individual Treatment Estimates
+    Summarize Predicted Estimates 
 
-Create dataframe of mean, lower and upper quantiles of the ITE samples from [`sampleITE`](@ref).
+    (Counterfactual Outcomes or Individual Treatment Effects)
+
+Create dataframe of mean, lower and upper quantiles of the samples from [`sampleITE`](@ref) or [`predictCounterfactualOutcomes`](@ref).
 
 Params:
-- `ITEsamples`: `n x m` array of ITE samples
+- `samples`: `n x m` array of samples
 - `savetofile`: Optionally save the resultant dataframe as CSV to the filename passed.
 
 Returns:
 - `df`: Dataframe of Individual, Mean, LowerBound, and UpperBound values for the samples.
 """
-function summarizeITE(ITEsamples; savetofile::String="")
-    meanITE = mean(ITEsamples, dims=2)[:, 1]
-    lowerITE = broadcast(quantile,
-        [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.05)
-    upperITE = broadcast(quantile,
-        [ITEsamples[i, :] for i in 1:size(ITEsamples)[1]], 0.95)
-    df = DataFrame(Individual=1:size(meanITE)[1], Mean=meanITE, LowerBound=lowerITE, UpperBound=upperITE)
+function summarizeEstimates(samples; savetofile::String="")
+    Mean = mean(samples, dims=2)[:, 1]
+    LowerBound = broadcast(quantile,
+        [samples[i, :] for i in 1:size(samples)[1]], 0.05)
+    UpperBound = broadcast(quantile,
+        [samples[i, :] for i in 1:size(samples)[1]], 0.95)
+    df = DataFrame(Individual=1:size(Mean)[1], Mean=Mean, LowerBound=LowerBound, UpperBound=UpperBound)
     if savetofile != ""
         CSV.write(savetofile, df)
         println("Saved ITE mean and 90% credible intervals to " * savetofile)
