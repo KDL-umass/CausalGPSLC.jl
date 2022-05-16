@@ -35,9 +35,9 @@ function prepareData(df::Union{DataFrame,String}, confounderEps::Float64=1.0e-13
         obj_count = [counts[o] for o in removeAdjacent(df[!, :obj])]
         SigmaU = generateSigmaU(obj_count, confounderEps, confounderCov)
     else
-        println("No object labels to assign latent confounders to 
-                (column must be titled `obj`)")
+        println("No object labels to assign latent confounders to (column must be titled `obj`)")
         obj = nothing
+        SigmaU = nothing
         println("Assuming no latent confounding")
     end
 
@@ -52,7 +52,7 @@ function prepareData(df::Union{DataFrame,String}, confounderEps::Float64=1.0e-13
     cols = deleteat!(cols, cols .== "obj")
 
     if length(cols) == 0
-        println("No observed confounders or covariates found in data")
+        println("No observed covariates found in data")
         X = nothing
     else
         X_ = df[!, cols]

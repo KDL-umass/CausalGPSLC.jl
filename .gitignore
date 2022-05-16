@@ -13,4 +13,6 @@ secrets
 !test/test_data/*
 
 *.jld
+coverage/*
 *.cov
+*.info

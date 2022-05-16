@@ -26,12 +26,7 @@ function rbfKernelLog(X1::SupportedRBFMatrix, X2::SupportedRBFMatrix, LS::Suppor
     n = size(X1, 1)
     cov = zeros(n, n)
     for i = 1:n, ip = 1:n
-        if ndims(LS) == 2
-            ls = LS[i, :]
-        else
-            ls = LS
-        end
-        cov[i, ip] = rbfKernelLogScalar(X1[i, :], X2[ip, :], ls)
+        cov[i, ip] = rbfKernelLogScalar(X1[i, :], X2[ip, :], LS)
     end
     return cov
 end
@@ -41,12 +36,7 @@ function rbfKernelLog(X1::SupportedRBFData, X2::SupportedRBFData, LS::SupportedR
     @assert size(X1) == size(X2) "X1 and X2 are different sizes!"
     cov = zeros(n, n)
     for i = 1:n, ip = 1:n
-        if ndims(LS) == 2
-            ls = LS[i, :]
-        else
-            ls = LS
-        end
-        cov[i, ip] = rbfKernelLogScalar(X1[i], X2[ip], ls)
+        cov[i, ip] = rbfKernelLogScalar(X1[i], X2[ip], LS)
     end
     return cov
 end

@@ -1,26 +1,52 @@
-@testset "gpslc" begin
-    @testset "NEEC" begin
-        expected = CSV.read("$(prefix)test_results/NEEC_sampled_0.6.csv", DataFrame)
-        g = gpslc("$(prefix)test_data/NEEC_sampled.csv")
-        ITEsamples = sampleITE(g; doT=0.6)
-        actual = summarizeITE(ITEsamples)
-        @test countCloseEnough(expected, actual) >= 0.85
+@testset "gpslc scale tests" begin
+    g = gpslc("$(prefix)test_data/minimal.csv")
+    n = getN(g)
+    nU = getNU(g)
+    nX = getNX(g)
+end
+
+@testset "Sampled Treatment Effects" begin
+    priorparams = getPriorParameters()
+    hyperparams = GPSLC.getHyperParameters()
+    nSamplesPerMixture = 30
+    uyLS = [1.0]
+    xyLS = [1.0]
+    tyLS = 1.0
+    yScale = 1.0
+    yNoise = 1.0
+    U = [[1.0]]
+    X = ones(1, 1)
+    realT = [1.0]
+    Y = [rand()]
+    obj = [1]
+
+    doT = 1.0
+
+    g = gpslc(obj, X, realT, Y)
+    n = getN(g)
+    nU = getNU(g)
+    nX = getNX(g)
+    @testset "sampleITE" begin
+        samples = sampleITE(g, doT)
+        @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
+        @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
+        @test Statistics.var(samples) <= hyperparams.iteCovarianceNoise
+    end
+
+    @testset "sampleSATE" begin
+        samples = sampleSATE(g, doT)
+        @test -sqrt(hyperparams.iteCovarianceNoise) <= mean(samples)
+        @test mean(samples) <= sqrt(hyperparams.iteCovarianceNoise)
+        @test Statistics.var(samples) <= hyperparams.iteCovarianceNoise
     end
 end
 
-
-@testset "ITEsamples" begin
-
-end
-
-@testset "SATEsamples" begin
-
-end
-
-@testset "sampleITE" begin
-
-end
-
 @testset "SummarizeITE" begin
-
+    @testset "NEEC" begin
+        expected = CSV.read("$(prefix)test_results/NEEC_sampled_0.6.csv", DataFrame)
+        g = gpslc("$(prefix)test_data/NEEC_sampled.csv")
+        ITEsamples = sampleITE(g, 0.6)
+        actual = summarizeITE(ITEsamples; savetofile="tmp.csv")
+        @test countCloseEnough(expected, actual) >= 0.85
+    end
 end

@@ -1,5 +1,5 @@
 using Mocking
-export gpslc, samplePosterior, sampleITE, ITEsamples, SATEsamples, summarizeITE
+export gpslc, samplePosterior, sampleITE, sampleSATE, summarizeITE
 
 """
     gpslc
@@ -21,6 +21,17 @@ function gpslc(data::Union{DataFrame,String};
     priorparams::PriorParameters=getPriorParameters()
 )::GPSLCObject
     SigmaU, obj, X, T, Y = prepareData(data)
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
+end
+
+function gpslc(obj::Union{ObjectLabels,Nothing}, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome; hyperparams::HyperParameters=getHyperParameters(),
+    priorparams::PriorParameters=getPriorParameters()
+)::GPSLCObject
+    if obj !== nothing
+        SigmaU = generateSigmaU(obj, priorparams["sigmaUNoise"], priorparams["sigmaUCov"])
+    else
+        SigmaU = nothing
+    end
     GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
 end
 
@@ -60,7 +71,7 @@ Returns:
 
 `ITEsamples`: `n x m` matrix where `n` is the number of individuals, and `m` is the number of samples.
 """
-function sampleITE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
+function sampleITE(g::GPSLCObject, doT::Intervention; samplesPerPosterior::Int64=10)
     MeanITEs, CovITEs = ITEDistributions(g, doT)
     ITEsamples(MeanITEs, CovITEs, samplesPerPosterior)
 end
@@ -78,8 +89,8 @@ Returns:
 
 `SATEsamples`: `n x m` matrix where `n` is the number of individuals, and `m` is the number of samples.
 """
-function sampleSATE(g::GPSLCObject; doT::Intervention=0.6, samplesPerPosterior::Int64=10)
-    MeanSATEs, CovSATEs = conditionalSATE(g, doT)
+function sampleSATE(g::GPSLCObject, doT::Intervention; samplesPerPosterior::Int64=10)
+    MeanSATEs, CovSATEs = SATEDistributions(g, doT)
     SATEsamples(MeanSATEs, CovSATEs, samplesPerPosterior)
 end
 

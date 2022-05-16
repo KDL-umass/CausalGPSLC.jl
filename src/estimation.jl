@@ -1,5 +1,9 @@
-export conditionalITE, conditionalSATE, ITEsamples, SATEsamples
-
+export conditionalITE,
+    ITEDistributions,
+    ITEsamples,
+    conditionalSATE,
+    SATEDistributions,
+    SATEsamples
 
 """
     Conditional Individual Treatment Estimation
@@ -213,14 +217,19 @@ Wrapper for conditionalITE that extracts parameters from `g::GPSLCObject` at pos
 function conditionalITE(g::GPSLCObject, i::Int64, doT::Intervention)
     n = getN(g)
     nU = getNU(g)
-    uyLS = zeros(nU)
-    U = zeros(n, nU)
-    for u in 1:nU
-        uyLS[u] = g.posteriorSamples[i][:uyLS=>u=>:LS]
-        U[:, u] = g.posteriorSamples[i][:U=>u=>:U]
+    if nU === nothing
+        uyLS = nothing
+        U = nothing
+    else
+        uyLS = zeros(nU)
+        U = zeros(n, nU)
+        for u in 1:nU
+            uyLS[u] = g.posteriorSamples[i][:uyLS=>u=>:LS]
+            U[:, u] = g.posteriorSamples[i][:U=>u=>:U]
+        end
+        U = toMatrix(U, n, nU)
+        @assert size(U) == (n, nU)
     end
-    U = toMatrix(U, n, nU)
-    @assert size(U) == (n, nU)
 
     if g.X === nothing
         xyLS = nothing
@@ -260,7 +269,7 @@ function ITEDistributions(g::GPSLCObject, doT::Intervention)
         MeanITE, CovITE = conditionalITE(g, i, doT)
 
         MeanITEs[idx, :] = MeanITE
-        CovITEs[idx, :, :] = LinearAlgebra.Symmetric(CovITE) + I * (1e-10)
+        CovITEs[idx, :, :] = LinearAlgebra.Symmetric(CovITE) + I * g.hyperparams.iteCovarianceNoise
         idx += 1
     end
     return MeanITEs, CovITEs
@@ -285,7 +294,10 @@ function ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
 end
 
 
-"""Conditional Sample Average Treatment Effect"""
+"""
+    conditionalSATE
+Conditional Sample Average Treatment Effect
+"""
 function conditionalSATE(MeanITE, CovITE)
     n = size(MeanITE, 1)
     MeanSATE = sum(MeanITE) / n
@@ -293,6 +305,10 @@ function conditionalSATE(MeanITE, CovITE)
     return MeanSATE, VarSATE
 end
 
+"""
+    SATEDistributions
+Collect SATE Mean and Variance corresponding to each posterior sample.
+"""
 function SATEDistributions(g::GPSLCObject, doT::Intervention)
     MeanITEs, CovITEs = ITEDistributions(g, doT)
 
@@ -309,9 +325,11 @@ function SATEDistributions(g::GPSLCObject, doT::Intervention)
 end
 
 """
-Sample Average Treatment Effect samples
+    SATEsamples
+Collect Sample Average Treatment Effect corresponding to each posterior sample.
 
-returns 
+Returns a vector of `nSamplesPerMixture` samples for each posterior 
+sample's SATE distribution parameters.
 """
 function SATEsamples(MeanSATEs, VarSATEs, nSamplesPerMixture)
     nMixtures = length(MeanSATEs)
