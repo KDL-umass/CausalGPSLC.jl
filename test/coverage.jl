@@ -2,7 +2,6 @@ using Coverage
 using LocalCoverage
 
 function simpleCoverage()
-
     # process '*.cov' files
     coverage = process_folder() # defaults to src/; alternatively, supply the folder name as argument
     # coverage = append!(coverage, process_folder("deps"))  # useful if you want to analyze more than just src/
@@ -28,7 +27,8 @@ Generate local coverage report with web interface to explore
 files that are uncovered.
 """
 function interactiveCoverage()
-
     generate_coverage("GPSLC", genhtml=true, show_summary=true, genxml=false)
     open_coverage("GPSLC")
 end
+
+interactiveCoverage()

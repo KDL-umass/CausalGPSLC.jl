@@ -71,10 +71,6 @@ Confounders = Union{
 Observed confounders and covariates.
 """
 Covariates = Union{
-    Array{Array{Float64,1}},
-    Array{Vector{Float64}},
-    Vector{Vector{Float64}},
-    Array{Float64,2},
     Matrix{Float64},
 }
 
@@ -258,10 +254,7 @@ end
 
 """Number of covariates (and observed confounders)."""
 function getNX(g::GPSLCObject)
-    if ndims(g.X) == 2
-        return size(g.X, 2)
-    end
-    return 1
+    size(g.X, 2)
 end
 
 """Number of latent confounders to perform inference over."""

@@ -1,3 +1,10 @@
+@testset "gpslc scale tests" begin
+    g = gpslc("$(prefix)test_data/minimal.csv")
+    n = getN(g)
+    nU = getNU(g)
+    nX = getNX(g)
+end
+
 @testset "Sampled Treatment Effects" begin
     priorparams = getPriorParameters()
     hyperparams = GPSLC.getHyperParameters()
