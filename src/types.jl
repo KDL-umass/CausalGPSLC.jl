@@ -261,3 +261,11 @@ end
 function getNU(g::GPSLCObject)
     g.hyperparams.nU
 end
+
+"""Number of posterior samples that will be used based on hyperparameters."""
+function getNumPosteriorSamples(g::GPSLCObject)
+    burnIn = g.hyperparams.nBurnIn
+    stepSize = g.hyperparams.stepSize
+    nOuter = g.hyperparams.nOuter
+    length(burnIn:stepSize:nOuter)
+end

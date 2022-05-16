@@ -64,8 +64,8 @@ end
 
 Params:
 - `g::`[`GPSLCObject`](@ref): Contains data and hyperparameters
-- `doT`: The recommended intervention (e.g. set all treatments to 1.0)
-- `samplesPerPosterior`: How many ITE samples to draw per posterior sample from `g`.
+- `doT`: The requested intervention (e.g. set all treatments to 1.0)
+- `samplesPerPosterior`: How many ITE samples to draw per posterior sample in `g`.
 
 Returns:
 
@@ -80,10 +80,12 @@ end
 """
     Estimate Sample Average Treatment Effect with GPSLC model
 
+Using [`sampleITE`](@ref), samples can be drawn for the sample average treatment effect
+
 Params:
 - `g::`[`GPSLCObject`](@ref): Contains data and hyperparameters
-- `doT`: The recommended intervention (e.g. set all treatments to 1.0)
-- `samplesPerPosterior`: How many ITE samples to draw per posterior sample from `g`.
+- `doT`: The requested intervention (e.g. set all treatments to 1.0)
+- `samplesPerPosterior`: How many samples to draw per posterior sample in `g`.
 
 Returns:
 
@@ -98,7 +100,7 @@ end
 """
     Summarize Individual Treatment Estimates
 
-Create dataframe of mean, lower and upper quantiles of the ITE samples.
+Create dataframe of mean, lower and upper quantiles of the ITE samples from [`sampleITE`](@ref).
 
 Params:
 - `ITEsamples`: `n x m` array of ITE samples
@@ -120,5 +122,3 @@ function summarizeITE(ITEsamples; savetofile::String="")
     end
     return df
 end
-
-

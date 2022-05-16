@@ -276,18 +276,23 @@ function ITEDistributions(g::GPSLCObject, doT::Intervention)
 end
 
 
-"""Individual Treatment Effect Samples"""
+"""
+    Individual Treatment Effect Samples
+Returns `nMixtures * nSamplesPerMixture` outcome (Y) samples for each individual
+`[nMixtures * nSamplesPerMixture, n]`
+where nMixtures is the number of posterior samples (nOuter)
+"""
 function ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
     nMixtures, n = size(MeanITEs)
 
-    samples = zeros(nMixtures * nSamplesPerMixture, n)
+    samples = zeros(n, nMixtures * nSamplesPerMixture)
     i = 0
     for j in 1:nMixtures
         mean = MeanITEs[j, :]
         cov = CovITEs[j, :, :]
         for _ in 1:nSamplesPerMixture
             i += 1
-            samples[i, :] = mvnormal(mean, cov)
+            samples[:, i] = mvnormal(mean, cov)
         end
     end
     return samples

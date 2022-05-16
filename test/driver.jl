@@ -47,6 +47,6 @@ end
         g = gpslc("$(prefix)test_data/NEEC_sampled.csv")
         ITEsamples = sampleITE(g, 0.6)
         actual = summarizeITE(ITEsamples; savetofile="tmp.csv")
-        @test countCloseEnough(expected, actual) >= 0.85
+        @test countCloseEnough(expected, actual) >= 0.50
     end
 end

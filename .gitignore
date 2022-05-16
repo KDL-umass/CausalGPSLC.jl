@@ -9,6 +9,7 @@ secrets
 *.xlsx
 
 !examples/data/*.csv
+!docs/example_data/*.csv
 !test/test_results/*
 !test/test_data/*
 

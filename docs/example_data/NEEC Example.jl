@@ -1,13 +1,3 @@
-# Examples
-
-The examples below are similar to those found in the original GPSLC paper. 
-
-
-## New England Energy Consumption
-
-This example creates an example plot of the NEEC treatment vs outcome data. Plots the original and the intervened data together.
-
-```@example
 import Random # hide
 Random.seed!(1234) # hide
 
@@ -41,6 +31,3 @@ scatter!(g.T[idx] .* 100, s[!, "Mean"][idx] .* 10000, label="$(o) doT", markersh
 xlabel!("Temperature °F")
 ylabel!("Energy Consumption")
 title!("Energy Consumption for Massachusetts")
-```
-
-The data can be found [here](../example_data/NEEC_sampled.csv).

@@ -1,6 +1,6 @@
 function testInference(fname, doT)
     g = gpslc("$(prefix)test_data/" * fname * ".csv")
-    ITEsamples = sampleITE(g; doT=doT)
+    ITEsamples = sampleITE(g, doT)
     summarizeITE(ITEsamples)
 end
 

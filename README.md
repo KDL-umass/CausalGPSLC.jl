@@ -11,16 +11,6 @@
 This project provides a software interface in Julia for performing causal inference using Gaussian processes with structured latent confounders, as defined in the ICML 2020 [paper](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf). 
 
 
-## Examples
-
-The examples can be run by executing the following line:
-
-```bash
-julia examples/basicExample.jl
-```
-
-In summary, this code estimates posterior distributions over individual treatment effects given an observational dataset and an intervention assignment.
-
 ## Contributing
 
 Please review the contribution instructions in [CONTRIBUTING.md](CONTRIBUTING.md)
