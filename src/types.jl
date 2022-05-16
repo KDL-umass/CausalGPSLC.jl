@@ -1,4 +1,4 @@
-export GPSLCObject, getN, getNU, getNX,
+export GPSLCObject, getN, getNU, getNX, getNumPosteriorSamples,
     HyperParameters,
     PriorParameters,
     ConfounderStructure,

@@ -9,17 +9,18 @@ dataFile = "docs/example_data/NEEC_sampled.csv"
 g = gpslc(dataFile)
 
 println("Estimating ITE")
-range = 0.0:0.1:1.0
 
 nsamples = 30
 numPosteriorSamples = getNumPosteriorSamples(g)
 
-ites = zeros(length(range), getN(g), nsamples * numPosteriorSamples)
-for (i, doT) in enumerate(range)
+ites = zeros(getN(g), getN(g), nsamples * numPosteriorSamples)
+
+for (i, doT) in enumerate(g.T)
+    println(doT)
     ites[i, :, :] = sampleITE(g, doT; samplesPerPosterior=nsamples)
 end
 
-ite = mean(ites, dims=1)[1, :, :]
+ite = mean(ites, dims=[2])[:, 1, :]
 s = summarizeITE(ite)
 
 plot(legend=:outertopright, size=(750, 400))
