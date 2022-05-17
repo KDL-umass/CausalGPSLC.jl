@@ -1,54 +1,36 @@
-function counterfactualOutcomeDistribution(
-    uyLS::Union{Vector{Float64},Nothing},
-    xyLS::Union{Array{Float64},Nothing}, tyLS::Float64,
-    yNoise::Float64, yScale::Float64,
-    U::Union{Confounders,Nothing}, X::Union{Covariates,Nothing},
-    T::Treatment, Y::Outcome, doT::Intervention
-)
-    Y, CovWW, CovWWs, CovWWp, CovC11, CovC12, CovC21, CovC22 = likelihoodDistribution(
-        uyLS, xyLS, tyLS, yNoise, yScale, U, X, T, Y, doT
-    )
+export predictCounterfactualEffects
 
-    MeanY = CovWW \ CovWW * Y
-    MeanYs = CovWWs \ CovWW * Y
-    MeanYYs = vcat(MeanY, MeanYs)
+"""
+    predictCounterfactualOutcomes(g, nSamplesPerMixture)
+    predictCounterfactualOutcomes(g, nSamplesPerMixture; fidelity=100)
+    predictCounterfactualOutcomes(g, nSamplesPerMixture; fidelity=100, minDoT=0, maxDoT=5)
 
-    CovYYs = hcat(vcat(CovC11, CovC21), vcat(CovC12, CovC22))
-    CovYYs = hcat(vcat(CovC11, CovC21), vcat(CovC12, CovC22))
-    return MeanYYs, CovYYs
-end
+Params
+- `g::`[`GPSLCObject`](@ref): The `GPSLCObject` that inference has already been computed for.
+- `nSamplesPerMixture::Int64`: The number of outcome samples to 
+draw from each set of inferred posterior parameters.
+- `fidelity::Int64`: How many intervention values to use to cover the domain of treatment values. Higher means more samples.
+- `minDoT::Float64=min(g.T...)`: The lowest interventional treatment to use.Defaults to the data `g.T`'s lowest treatment value.
+- `maxDoT::Float64=max(g.T...)`: The highest interventional treatment to use. Defaults to the data `g.T`'s highest treatment value.
 
-function counterfactualOutcomeDistribution(g::GPSLCObject, posteriorSampleIdx::Int64, doT::Intervention)
-    uyLS, xyLS, tyLS, yNoise, yScale, U = extractParameters(g, posteriorSampleIdx)
-    counterfactualOutcomeDistribution(uyLS, xyLS, tyLS, yNoise, yScale, U, g.X, g.T, g.Y, doT)
-end
+```julia
+julia> ite, doT = predictCounterfactualEffects(g, 30; fidelity=100)
+```
 
-function predictCounterfactualOutcomes(g::GPSLCObject, doT::Intervention, nSamplesPerMixture::Int64)
-    n = getN(g)
+Returns 
+- `ite::Matrix{Float64}`: An array of size `[d, n, numPosteriorSamples * nSamplesPerMixture]` where d is the number of interventional values defined by `fidelity` and the range of treatments in `g.T` - `doTrange::Vector{Float64}`: The list values of doT used, in order that matches the rows of `ite`.
+"""
+function predictCounterfactualEffects(g::GPSLCObject, nSamplesPerMixture::Int64; fidelity::Int64=100, minDoT=min(g.T...), maxDoT=max(g.T...))
+    delta = abs(maxDoT - minDoT)
     nps = getNumPosteriorSamples(g)
-    Means = zeros(nps, 2 * n)
-    Covs = zeros(nps, 2 * n, 2 * n)
-    idx = 1
-    for i in @mock tqdm(burnIn:stepSize:nOuter)
-        MeanYYs, CovYYs = counterfactualOutcomeDistribution(g, i, doT)
+    numSamples = nps * nSamplesPerMixture
+    step = delta / fidelity
+    doTrange = minDoT:step:maxDoT
 
-        Means[idx, :] = MeanYYs
-        Covs[idx, :, :] = LinearAlgebra.Symmetric(CovYYs) +
-                          I * g.hyperparams.predictionCovarianceNoise
-
-        idx += 1
+    ite = zeros(length(doTrange), getN(g), numSamples)
+    for (i, doT) in enumerate(doTrange)
+        ite[i, :, :] = sampleITE(g, doT; samplesPerPosterior=nSamplesPerMixture)
     end
 
-    nMixtures, n = size(Means)
-    samples = zeros(n, nMixtures * nSamplesPerMixture)
-    i = 0
-    for j in 1:nMixtures
-        mean = Means[j, :]
-        cov = Covs[j, :, :]
-        for _ in 1:nSamplesPerMixture
-            i += 1
-            samples[:, i] = mvnormal(mean, cov)[-n:end]
-        end
-    end
-    return samples
+    return ite, doTrange
 end

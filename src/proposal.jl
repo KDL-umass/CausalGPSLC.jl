@@ -1,6 +1,7 @@
 export getProposalAddress, paramProposal
 
 """
+    getProposalAddress(name, i, j)
 Optimizes `paramProposal` by providing compact way to access trace address symbols
 """
 function getProposalAddress(name::String; i::Int64=-1, j::Int64=-1)
@@ -23,6 +24,7 @@ function getProposalAddress(name::String; i::Int64=-1, j::Int64=-1)
 end
 
 """
+    paramProposal(trace, variance, addr)
 Like a Gaussian drift, we match the moments of our proposal
 with the previous noise sample with a fixed variance.
 See https://arxiv.org/pdf/1605.01019.pdf.

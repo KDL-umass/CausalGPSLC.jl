@@ -1,3 +1,10 @@
+export likelihoodDistribution
+
+"""
+    likelihoodDistribution
+
+A utility that uses multiple dispatch to take in one set of parameters for GPSLC and the observed data, plus an intervention `doT`, and outputs the necessary matrices to compute MeanITE and CovITE, as well as other predictions, like directly predicting ``Y_cf``.
+"""
 function likelihoodDistribution(
     uyLS::Vector{Float64}, xyLS::Array{Float64}, tyLS::Float64,
     yNoise::Float64, yScale::Float64,

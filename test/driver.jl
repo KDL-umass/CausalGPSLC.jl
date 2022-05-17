@@ -46,7 +46,7 @@ end
         expected = CSV.read("$(prefix)test_results/NEEC_sampled_0.6.csv", DataFrame)
         g = gpslc("$(prefix)test_data/NEEC_sampled.csv")
         ITEsamples = sampleITE(g, 0.6)
-        actual = summarizeITE(ITEsamples; savetofile="tmp.csv")
+        actual = summarizeEstimates(ITEsamples; savetofile="tmp.csv")
         @test countCloseEnough(expected, actual) >= 0.50
     end
 end

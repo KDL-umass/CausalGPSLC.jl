@@ -24,63 +24,14 @@ Params:
 - `Y`: Outcome
 - `doT`: Treatment intervention
 
-Full Model Continuous/Binary
+Returns:
+- `MeanITE::Vector{Float64}`: The mean value for the `n` individual treatment effects
+- `CovITE::Matrix{Float64}`: The covariance matrix for the `n` individual treatment effects.
 """
 function conditionalITE(
-    uyLS::Vector{Float64}, xyLS::Array{Float64}, tyLS::Float64,
+    uyLS::Union{Vector{Float64},Nothing}, xyLS::Union{Array{Float64},Nothing}, tyLS::Float64,
     yNoise::Float64, yScale::Float64,
-    U::Confounders, X::Covariates, T::Treatment,
-    Y::Outcome, doT::Intervention)
-
-    Y, CovWW, CovWWs, CovWWp, CovC11, CovC12, CovC21, CovC22 = likelihoodDistribution(
-        uyLS, xyLS, tyLS, yNoise, yScale, U, X, T, Y, doT
-    )
-
-    MeanITE = (CovWWs' - CovWW) * (CovWWp \ Y)
-    CovITE = CovC11 - CovC12 - CovC21 + CovC22
-
-    return MeanITE, CovITE
-end
-
-"""No Covariates Continuous/Binary"""
-function conditionalITE(
-    uyLS::Vector{Float64}, xyLS::Nothing, tyLS::Float64,
-    yNoise::Float64, yScale::Float64,
-    U::Confounders, X::Nothing, T::Treatment,
-    Y::Outcome, doT::Intervention)
-
-    Y, CovWW, CovWWs, CovWWp, CovC11, CovC12, CovC21, CovC22 = likelihoodDistribution(
-        uyLS, xyLS, tyLS, yNoise, yScale, U, X, T, Y, doT
-    )
-
-    MeanITE = (CovWWs' - CovWW) * (CovWWp \ Y)
-    CovITE = CovC11 - CovC12 - CovC21 + CovC22
-
-    return MeanITE, CovITE
-end
-
-"""No Confounders Continuous/Binary"""
-function conditionalITE(
-    uyLS::Nothing, xyLS::Vector{Float64}, tyLS::Float64,
-    yNoise::Float64, yScale::Float64,
-    U::Nothing, X::Covariates, T::Treatment,
-    Y::Outcome, doT::Intervention)
-
-    Y, CovWW, CovWWs, CovWWp, CovC11, CovC12, CovC21, CovC22 = likelihoodDistribution(
-        uyLS, xyLS, tyLS, yNoise, yScale, U, X, T, Y, doT
-    )
-
-    MeanITE = (CovWWs' - CovWW) * (CovWWp \ Y)
-    CovITE = CovC11 - CovC12 - CovC21 + CovC22
-
-    return MeanITE, CovITE
-end
-
-"""No Confounders No Covariates Continuous/Binary"""
-function conditionalITE(
-    uyLS::Nothing, xyLS::Nothing, tyLS::Float64,
-    yNoise::Float64, yScale::Float64,
-    U::Nothing, X::Nothing, T::Treatment,
+    U::Union{Confounders,Nothing}, X::Union{Covariates,Nothing}, T::Treatment,
     Y::Outcome, doT::Intervention)
 
     Y, CovWW, CovWWs, CovWWp, CovC11, CovC12, CovC21, CovC22 = likelihoodDistribution(
@@ -132,9 +83,7 @@ end
 
 """
     Individual Treatment Effect Samples
-Returns `nMixtures * nSamplesPerMixture` outcome (Y) samples for each individual
-`[nMixtures * nSamplesPerMixture, n]`
-where nMixtures is the number of posterior samples (nOuter)
+Returns `nMixtures * nSamplesPerMixture` outcome (Y) samples for each individual `[nMixtures * nSamplesPerMixture, n]` where nMixtures is the number of posterior samples (nOuter)
 """
 function ITEsamples(MeanITEs, CovITEs, nSamplesPerMixture)
     nMixtures, n = size(MeanITEs)
@@ -187,8 +136,7 @@ end
     SATEsamples
 Collect Sample Average Treatment Effect corresponding to each posterior sample.
 
-Returns a vector of `nSamplesPerMixture` samples for each posterior 
-sample's SATE distribution parameters.
+Returns a vector of `nSamplesPerMixture` samples for each posterior sample's SATE distribution parameters.
 """
 function SATEsamples(MeanSATEs, VarSATEs, nSamplesPerMixture)
     nMixtures = length(MeanSATEs)
