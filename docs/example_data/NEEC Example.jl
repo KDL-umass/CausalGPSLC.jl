@@ -16,7 +16,7 @@ Ycf = mean(g.Y[idx]) .+ ite[:, idx, :]
 
 # get credible interval on counterfactual outcomes
 sate = mean(Ycf, dims=2)[:, 1, :]
-summary = summarizeEstimates(sate)
+interval = summarizeEstimates(sate)
 
 # plot outcomes and credible interval
 treatmentScale = 100
@@ -30,9 +30,9 @@ scatter!(T, Y, label="MA obs", markershape=:circle)
 
 # counterfactual
 T = doT .* treatmentScale
-Y = summary[!, "Mean"] .* outcomeScale
+Y = interval[!, "Mean"] .* outcomeScale
 plot!(T, Y, label="MA cf", color=:green,
-    ribbon=(summary[!, "LowerBound"], summary[!, "UpperBound"]))
+    ribbon=(interval[!, "LowerBound"], interval[!, "UpperBound"]))
 
 xlabel!("Temperature °F")
 ylabel!("Energy Consumption (GWh)")
