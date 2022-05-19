@@ -34,6 +34,10 @@ using Pkg
 if isfile("Project.toml") && isfile("Manifest.toml")
     Pkg.activate(".")
 end
+try
+    using Revise
+catch 
+end
 ```
 
 This makes it so `$ julia` bash commands will run in the GPSLC environment.
