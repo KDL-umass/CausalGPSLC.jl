@@ -1,5 +1,5 @@
 Contributing to GPSLC.jl
-=====
+========================
 
 # Development
 
@@ -34,13 +34,17 @@ using Pkg
 if isfile("Project.toml") && isfile("Manifest.toml")
     Pkg.activate(".")
 end
+try
+    using Revise
+catch 
+end
 ```
 
 This makes it so `$ julia` bash commands will run in the GPSLC environment.
 
 ## Revise
 
-In the julia REPL execute
+In the Julia REPL execute
 
 ```julia
 using Pkg, Revise
@@ -78,3 +82,12 @@ To check code coverage, run
 ```bash
 julia --code-coverage test/runtests.jl
 ```
+
+To create an interactive code coverage session
+
+```bash
+julia test/coverage.jl
+```
+
+Which will work assuming you have followed the instructions 
+in [Setup](#setup))

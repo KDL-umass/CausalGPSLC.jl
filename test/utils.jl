@@ -46,4 +46,11 @@
         expected = [:T]
         @test expected == actual
     end
+
+    @testset "getNumPosteriorSamples" begin
+        g = gpslc("$(prefix)test_data/no_objects_no_cov.csv")
+        expected = g.hyperparams.nOuter - g.hyperparams.nBurnIn + 1
+        actual = getNumPosteriorSamples(g)
+        @test expected == actual
+    end
 end

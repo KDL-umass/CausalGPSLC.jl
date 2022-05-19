@@ -1,4 +1,4 @@
-export GPSLCObject, getN, getNU, getNX,
+export GPSLCObject,
     HyperParameters,
     PriorParameters,
     ConfounderStructure,
@@ -16,7 +16,7 @@ export GPSLCObject, getN, getNU, getNX,
 
 """
     HyperParameters
-Controls the high-level attributes of the inference procedure.
+Define the high-level attributes of the inference procedure. More information on each of the attributes can be found in [`getHyperParameters`](@ref).
 """
 mutable struct HyperParameters
     nU::Union{Int64,Nothing}
@@ -25,13 +25,12 @@ mutable struct HyperParameters
     nESInner::Union{Int64,Nothing}
     nBurnIn::Int64
     stepSize::Int64
-    iteCovarianceNoise::Float64
+    predictionCovarianceNoise::Float64
 end
 
 """
     PriorParameters
-Contains shapes and scales for various Inverse Gamma distributions
-used as priors for kernel parameters and other parameters.
+Contains shapes and scales for various Inverse Gamma distributions used as priors for kernel parameters and other parameters. More information on each of the attributes can be found in [`getPriorParameters`](@ref).
 """
 PriorParameters = Dict{String,Any}
 
@@ -50,8 +49,9 @@ ObjectLabels = Any
 
 """
     Confounders (U)
-
 Latent confounders that GPSLC performs inference over.
+
+Either 1D or 2D matrices of `Float64` values.
 """
 Confounders = Union{
     Array{Array{Float64,1}},
@@ -67,8 +67,9 @@ Confounders = Union{
 
 """
    Covariates (X)
-
 Observed confounders and covariates.
+
+`Matrix{Float64}` is the only valid structure for covariates
 """
 Covariates = Union{
     Matrix{Float64},
@@ -86,13 +87,20 @@ ContinuousTreatment = Union{
     FunctionalCollections.PersistentVector{Float64},
 }
 
-"""Treatment (T)"""
+"""
+    Treatment (T)
+Is made up of `BinaryTreatment` which is an alias for `Vector{Bool}` and `ContinuousTreatment` which is an alias for `Vector{Float64}`.
+These types support other vector types to afford compatibility with internal libraries.
+"""
 Treatment = Union{
     BinaryTreatment,
     ContinuousTreatment
 }
 
-"""Outcome (Y)"""
+"""
+    Outcome (Y)
+The outcome for the series of Gaussian Process predictions is a `Vector{Float64}`. Currently only continuous values are supported as outcomes for input data.
+"""
 Outcome = Union{
     Vector{Float64},
 }
@@ -205,7 +213,7 @@ ReshapeableMatrix = Union{
 """
     GPSLCObject
 
-A type that contains the data and posterior samples.
+This is the struct in GPSLC.jl that contains the data, hyperparamters, prior parameters, and posterior samples. It provides the primary interfaces to abstract the internals of GPSLC away from the higher-order functions like [`sampleITE`](@ref) and [`sampleSATE`](@ref).
 
 Returned by [`gpslc`](@ref)
 """
@@ -221,10 +229,12 @@ struct GPSLCObject
 end
 
 """
-Constructor for GPSLCObject that samples from the 
-    posterior before constructing the GPSLCObject.
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
 
-    Full Model or model with no observed Covariates
+Constructor for GPSLCObject that samples from the 
+posterior before constructing the GPSLCObject.
+
+Full Model or model with no observed Covariates
 """
 function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters, SigmaU::ConfounderStructure, obj::ObjectLabels, X::Union{Covariates,Nothing}, T::Treatment, Y::Outcome)
     posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
@@ -245,19 +255,4 @@ function GPSLCObject(hyperparams::HyperParameters, priorparams::PriorParameters,
     hyperparams.nESInner = nothing
     posteriorSamples = samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
     GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y, posteriorSamples)
-end
-
-"""Number of individuals."""
-function getN(g::GPSLCObject)
-    size(g.Y, 1)
-end
-
-"""Number of covariates (and observed confounders)."""
-function getNX(g::GPSLCObject)
-    size(g.X, 2)
-end
-
-"""Number of latent confounders to perform inference over."""
-function getNU(g::GPSLCObject)
-    g.hyperparams.nU
 end
