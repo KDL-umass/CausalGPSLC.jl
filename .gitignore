@@ -18,3 +18,5 @@ coverage/*
 *.cov
 *.info
 .DS_Store
+*.png
+*.svg

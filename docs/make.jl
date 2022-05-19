@@ -5,7 +5,9 @@ push!(LOAD_PATH, "@stdlib")
 push!(LOAD_PATH, "../src/")
 push!(LOAD_PATH, "..")
 import Pkg
-Pkg.activate("..")
+# Pkg.activate("..")
+# import Pkg;
+Pkg.add("Documenter");
 
 using Documenter, GPSLC
 
