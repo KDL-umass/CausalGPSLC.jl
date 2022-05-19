@@ -3,6 +3,7 @@
     n = getN(g)
     nU = getNU(g)
     nX = getNX(g)
+    @test true
 end
 
 @testset "Sampled Treatment Effects" begin
