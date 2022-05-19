@@ -33,6 +33,7 @@ These are standard values for scale and shape of Inverse Gamma priors over kerne
 - `tyLSScale::Float64=4.0`: scale of the InvGamma prior over kernel lengthscale of T and Y
 - `sigmaUNoise::Float64=1.0e-13`: noise added to matrix to make covariance stable and invertible
 - `sigmaUCov::Float64=1.0`: assumed covariance over structured confounders
+- `drift::Float64=0.5`: as in the paper, Metropolis Hastings Gaussian Drift
 """
 function getPriorParameters()::PriorParameters
     Dict{String,Any}(
@@ -64,6 +65,7 @@ function getPriorParameters()::PriorParameters
         "tyLSScale" => 4.0,
         "sigmaUNoise" => 1.0e-13,
         "sigmaUCov" => 1.0,
+        "drift" => 0.5,
     )
 end
 

@@ -20,28 +20,28 @@ function Posterior(priorparams::PriorParameters, X::Covariates, T::ContinuousTre
     (trace, _) = generate(GPSLCRealT, (priorparams, n, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
 
             for k::Int64 = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uyLS", i=k)))
                 for l = 1:nX
-                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i=k, j=l)))
+                    (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uxLS", i=k, j=l)))
                 end
             end
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xNoise", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xScale", i=k)))
             end
 
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yScale")))
         end
 
         # Algorithm 3 Confounder Update
@@ -73,18 +73,18 @@ function Posterior(priorparams::PriorParameters, X::Nothing, T::ContinuousTreatm
     (trace, _) = generate(GPSLCNoCovRealT, (priorparams, n, nU, nothing), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise"),))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uNoise"),))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uyLS", i=k)))
             end
 
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yScale")))
         end
 
         # Algorithm 3 Confounder Update
@@ -124,17 +124,17 @@ function Posterior(priorparams::PriorParameters, X::Covariates, T::ContinuousTre
     for i = @mock tqdm(1:nOuter)
 
         for j = 1:nMHInner # Support for loop added after paper
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xyLS", i=k)))
             end
 
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yScale")))
         end
 
         push!(posteriorSamples, get_choices(trace))
@@ -155,9 +155,9 @@ function Posterior(priorparams::PriorParameters, X::Nothing, T::ContinuousTreatm
 
     (trace, _) = generate(GPSLCNoUNoCovRealT, (priorparams, n, nothing, nothing), obs)
     for i = @mock tqdm(1:nOuter)
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
+        (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
+        (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
+        (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yScale")))
 
         push!(posteriorSamples, get_choices(trace))
     end
@@ -189,28 +189,28 @@ function Posterior(priorparams::PriorParameters, X::Covariates, T::BinaryTreatme
     (trace, _) = generate(GPSLCBinaryT, (priorparams, n, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uyLS", i=k)))
                 for l = 1:nX
-                    (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uxLS", i=k, j=l)))
+                    (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uxLS", i=k, j=l)))
                 end
             end
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xNoise", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xScale", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xNoise", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xScale", i=k)))
             end
 
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yScale")))
         end
 
         choices = get_choices(trace)
@@ -261,18 +261,18 @@ function Posterior(priorparams::PriorParameters, X::Nothing, T::BinaryTreatment,
     (trace, _) = generate(GPSLCNoCovBinaryT, (priorparams, n, nU, nothing), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
 
             for k = 1:nU
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("utLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("uyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("utLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uyLS", i=k)))
             end
 
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yScale")))
         end
 
         choices = get_choices(trace)
@@ -321,17 +321,17 @@ function Posterior(priorparams::PriorParameters, X::Covariates, T::BinaryTreatme
     (trace, _) = generate(GPSLCNoUBinaryT, (priorparams, n, nothing, nX), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
 
             for k = 1:nX
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xtLS", i=k)))
-                (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("xyLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xtLS", i=k)))
+                (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("xyLS", i=k)))
             end
 
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tScale")))
-            (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tScale")))
+            (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yScale")))
         end
 
         choices = get_choices(trace)
@@ -369,9 +369,9 @@ function Posterior(priorparams::PriorParameters, X::Nothing, T::BinaryTreatment,
 
     (trace, _) = generate(GPSLCNoUNoCovBinaryT, (priorparams, n, nothing, nothing), obs)
     for i = @mock tqdm(1:nOuter)
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yNoise")))
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("tyLS")))
-        (trace, _) = mh(trace, paramProposal, (0.5, getProposalAddress("yScale")))
+        (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
+        (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
+        (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yScale")))
 
         push!(posteriorSamples, get_choices(trace))
     end
