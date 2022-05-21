@@ -1,4 +1,4 @@
-# GPSLC.jl
+# GPSLC Package
 
 ```@meta
 CurrentModule = GPSLC
