@@ -20,3 +20,4 @@ coverage/*
 .DS_Store
 *.png
 *.svg
+*.jld2
