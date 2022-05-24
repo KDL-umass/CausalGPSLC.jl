@@ -12,8 +12,8 @@
         loadedG = loadGPSLCObject("tmp")
         @test loadedG.X == X
         @test loadedG.obj == obj
-        @test loadedG.realT == realT
-        @test loadedG.Y == y
+        @test loadedG.T == realT
+        @test loadedG.Y == Y
         @test loadedG.posteriorSamples == savedG.posteriorSamples
         @test loadedG.priorparams == savedG.priorparams
         @test loadedG.hyperparams == savedG.hyperparams

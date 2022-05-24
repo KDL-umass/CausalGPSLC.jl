@@ -21,3 +21,4 @@ coverage/*
 *.png
 *.svg
 *.jld2
+*.gpslc

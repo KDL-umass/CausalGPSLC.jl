@@ -28,6 +28,33 @@ mutable struct HyperParameters
     predictionCovarianceNoise::Float64
 end
 
+function ==(a::HyperParameters, b::HyperParameters)
+    nU = a.nU == b.nU
+    nOuter = a.nOuter == b.nOuter
+    nMHInner = a.nMHInner == b.nMHInner
+    nESInner = a.nESInner == b.nESInner
+    nBurnIn = a.nBurnIn == b.nBurnIn
+    stepSize = a.stepSize == b.stepSize
+    predictionCovarianceNoise = a.predictionCovarianceNoise == b.predictionCovarianceNoise
+
+    @assert nU "nU didn't match"
+    @assert nOuter "nOuter didn't match"
+    @assert nMHInner "nMHInner didn't match"
+    @assert nESInner "nESInner didn't match"
+    @assert nBurnIn "nBurnIn didn't match"
+    @assert stepSize "stepSize didn't match"
+    @assert predictionCovarianceNoise "predictionCovarianceNoise didn't match"
+
+    (nU &&
+     nOuter &&
+     nMHInner &&
+     nESInner &&
+     nBurnIn &&
+     stepSize &&
+     predictionCovarianceNoise)
+end
+
+
 """
     PriorParameters
 Contains shapes and scales for various Inverse Gamma distributions used as priors for kernel parameters and other parameters. More information on each of the attributes can be found in [`getPriorParameters`](@ref).
