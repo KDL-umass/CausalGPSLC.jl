@@ -28,7 +28,7 @@ mutable struct HyperParameters
     predictionCovarianceNoise::Float64
 end
 
-function ==(a::HyperParameters, b::HyperParameters)
+function isequal(a::HyperParameters, b::HyperParameters)
     nU = a.nU == b.nU
     nOuter = a.nOuter == b.nOuter
     nMHInner = a.nMHInner == b.nMHInner

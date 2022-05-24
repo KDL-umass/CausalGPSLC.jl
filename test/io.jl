@@ -16,6 +16,6 @@
         @test loadedG.Y == Y
         @test loadedG.posteriorSamples == savedG.posteriorSamples
         @test loadedG.priorparams == savedG.priorparams
-        @test loadedG.hyperparams == savedG.hyperparams
+        @test isequal(loadedG.hyperparams, savedG.hyperparams)
     end
 end
