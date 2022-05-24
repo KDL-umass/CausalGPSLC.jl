@@ -14,8 +14,6 @@ hyperparams.nESInner = 5
 dataFile = "docs/example_data/NEEC_sampled.csv"
 g = gpslc(dataFile; hyperparams=hyperparams)
 saveGPSLCObject(g, "example$(hyperparams.nOuter)-$(hyperparams.nU)")
-# g = loadGPSLCObject("example1000")
-
 
 # collect counterfactual outcomes
 nsamples = 100
