@@ -161,7 +161,19 @@ getPriorParameters
 GPSLCObject
 ```
 
-Helpful functions for retrieving meta values from a `GPSLCObject`
+#### I/O interface
+
+`GPSLCObject`s contain all the posterior samples, which can be intensive to calculate and can be reused for various estimations, we provide a pair of interfaces to save and load the `GPSLCObjects` from the filesystem.
+
+```@docs
+saveGPSLCObject
+```
+
+```@docs
+loadGPSLCObject
+```
+
+#### Helpful functions for retrieving meta values from a `GPSLCObject`
 
 ```@docs
 getN
