@@ -20,3 +20,5 @@ coverage/*
 .DS_Store
 *.png
 *.svg
+*.jld2
+*.gpslc

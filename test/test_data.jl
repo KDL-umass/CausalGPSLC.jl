@@ -25,3 +25,28 @@ function getToyData(n=10, nU=2, nX=5)
     priorparams["SigmaU"] = generateSigmaU(objectCounts)
     return priorparams, n, nU, nX, X, binaryT, realT
 end
+
+""" 
+    (priorparams, hyperparams, uyLS, xyLS, tyLS, yScale, yNoise,
+    U, X, realT, binaryT, Y, obj) = getEstimationTestParams()
+
+Returns simple dataset and params for estimation testing.
+"""
+function getEstimationTestParams()
+    priorparams = getPriorParameters()
+    hyperparams = GPSLC.getHyperParameters()
+    uyLS = [1.0]
+    xyLS = [1.0]
+    tyLS = 1.0
+    yScale = 1.0
+    yNoise = 1.0
+    U = [[1.0]]
+    X = ones(1, 1)
+    realT = [1.0]
+    binaryT = [true]
+    Y = [rand()]
+    obj = [1]
+    return (priorparams, hyperparams,
+        uyLS, xyLS, tyLS, yScale, yNoise,
+        U, X, realT, binaryT, Y, obj)
+end

@@ -1,18 +1,7 @@
 
-priorparams = getPriorParameters()
-hyperparams = GPSLC.getHyperParameters()
-nSamplesPerMixture = 30
-uyLS = [1.0]
-xyLS = [1.0]
-tyLS = 1.0
-yScale = 1.0
-yNoise = 1.0
-U = [[1.0]]
-X = ones(1, 1)
-realT = [1.0]
-binaryT = [true]
-Y = [rand()]
-obj = [1]
+(priorparams, hyperparams,
+    uyLS, xyLS, tyLS, yScale, yNoise,
+    U, X, realT, binaryT, Y, obj) = getEstimationTestParams()
 
 @testset "conditionalITE" begin
 
