@@ -79,7 +79,7 @@ hyperparams.nMHInner = 3
 hyperparams.nESInner = 5
 
 # run inference
-dataFile = "docs/example_data/NEEC_sampled.csv"
+dataFile = "../example_data/NEEC_sampled.csv"
 g = gpslc(dataFile; hyperparams=hyperparams)
 saveGPSLCObject(g, "example$(hyperparams.nOuter)-$(hyperparams.nU)")
 
