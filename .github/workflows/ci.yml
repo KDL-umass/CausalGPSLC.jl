@@ -67,6 +67,6 @@ jobs:
     steps:
       - uses: JuliaRegistries/TagBot@v1.10.0
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # # add nightly that pulls latest versions of dependencies
