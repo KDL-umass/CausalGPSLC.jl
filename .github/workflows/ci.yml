@@ -61,8 +61,8 @@ jobs:
             using GPSLC
             DocMeta.setdocmeta!(GPSLC, :DocTestSetup, :(using GPSLC); recursive=true)
             doctest(GPSLC)'
-    tag:
-      - name: Julia TagBot
-        uses: JuliaRegistries/TagBot@v1.10.0
+  tag:
+    name: Julia TagBot
+    uses: JuliaRegistries/TagBot@v1.10.0
 
   # # add nightly that pulls latest versions of dependencies
