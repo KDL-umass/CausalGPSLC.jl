@@ -70,7 +70,7 @@ function ITEDistributions(g::GPSLCObject, doT::Intervention)
     CovITEs = zeros(numPosteriorSamples, n, n)
 
     idx = 1
-    for i in @mock tqdm(burnIn:stepSize:nOuter)
+    for i in burnIn:stepSize:nOuter
         MeanITE, CovITE = conditionalITE(g, i, doT)
 
         MeanITEs[idx, :] = MeanITE

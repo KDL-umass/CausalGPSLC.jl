@@ -144,7 +144,7 @@ end
 
 """Continuous Treatment No Confounders No Covariates"""
 function Posterior(priorparams::PriorParameters, X::Nothing, T::ContinuousTreatment, Y::Outcome,
-    nU::Nothing, nOuter::Int64, nMHInner::Nothing, nESInner::Nothing)
+    nU::Nothing, nOuter::Int64, nMHInner::Union{Nothing,Int64}, nESInner::Union{Nothing,Int64})
     n = size(T, 1)
 
     obs = Gen.choicemap()
@@ -354,7 +354,7 @@ end
 
 """Binary Treatment No Confounders No Covariates"""
 function Posterior(priorparams::PriorParameters, X::Nothing, T::BinaryTreatment, Y::Outcome,
-    nU::Nothing, nOuter::Int64, nMHInner::Nothing, nESInner::Nothing)
+    nU::Nothing, nOuter::Int64, nMHInner::Union{Nothing,Int64}, nESInner::Union{Nothing,Int64})
 
     n = size(T, 1)
 
