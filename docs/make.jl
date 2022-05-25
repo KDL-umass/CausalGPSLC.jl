@@ -5,13 +5,11 @@ push!(LOAD_PATH, "@stdlib")
 push!(LOAD_PATH, "../src/")
 push!(LOAD_PATH, "..")
 import Pkg
-# Pkg.activate("..")
-# import Pkg;
 Pkg.add("Documenter");
 
 using Documenter, GPSLC
 
-makedocs(sitename="GPSLC")
+makedocs(sitename="GPSLC.jl")
 
 deploydocs(
     repo="github.com/KDL-umass/GPSLC.jl.git",

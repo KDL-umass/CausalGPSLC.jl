@@ -28,7 +28,7 @@ function predictCounterfactualEffects(g::GPSLCObject, nSamplesPerMixture::Int64;
     doTrange = minDoT:step:maxDoT
 
     ite = zeros(length(doTrange), getN(g), numSamples)
-    for (i, doT) in enumerate(doTrange)
+    for (i, doT) in @mock tqdm(enumerate(doTrange))
         ite[i, :, :] = sampleITE(g, doT; samplesPerPosterior=nSamplesPerMixture)
     end
 

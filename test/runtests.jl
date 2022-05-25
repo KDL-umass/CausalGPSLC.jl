@@ -46,6 +46,7 @@ Mocking.apply(patch) do
     include("model.jl")
     include("inference.jl")
     include("driver.jl")
+    include("io.jl")
     include("prediction.jl")
 
     # Bayesian Workflow -> A guide on writing Bayes code + tests

@@ -4,45 +4,53 @@ using GPSLC # hide
 using Plots # hide
 using Statistics # hide
 
-# run inference
-dataFile = "docs/example_data/NEEC_sampled.csv"
 hyperparams = getHyperParameters()
-hyperparams.nOuter = 25
-hyperparams.nU = 3
+hyperparams.nOuter = 100
+hyperparams.nU = 2
 hyperparams.nMHInner = 3
 hyperparams.nESInner = 5
 
+# run inference
+dataFile = "docs/example_data/NEEC_sampled.csv"
 g = gpslc(dataFile; hyperparams=hyperparams)
+saveGPSLCObject(g, "example$(hyperparams.nOuter)-$(hyperparams.nU)")
 
 # collect counterfactual outcomes
-idx = vec(g.obj .== "MA")
+nsamples = 100
+ite, doT = predictCounterfactualEffects(g, nsamples; fidelity=100)
 
-ite, doT = predictCounterfactualEffects(g, 30)
-Ycf = mean(g.Y[idx]) .+ ite[:, idx, :]
+idx = vec(g.obj .== "MA")
+maITE = ite[:, idx, :]
 
 # get credible interval on counterfactual outcomes
-sate = mean(Ycf, dims=2)[:, 1, :]
+sate = mean(maITE, dims=2)[:, 1, :]
 interval = summarizeEstimates(sate)
+lowerSATE = interval[!, "LowerBound"]
+meanSATE = interval[!, "Mean"]
+upperSATE = interval[!, "UpperBound"]
 
 # plot outcomes and credible interval
 treatmentScale = 100
 outcomeScale = 10
 
+
 # observed data
-plot(legend=:outertopright, size=(750, 400), margin=0.5Plots.cm)
+plot(legend=:outertopright, size=(750, 400), margin=0.5Plots.cm, dpi=600)
 T = g.T[idx] .* treatmentScale
 Y = g.Y[idx] .* outcomeScale
 scatter!(T, Y, label="MA obs", markershape=:circle)
 
 # counterfactual
 T = doT .* treatmentScale
-Y = interval[!, "Mean"] .* outcomeScale
+meanOutcome = mean(g.Y[idx])
+Y = (meanOutcome .+ meanSATE) .* outcomeScale
+upper = (upperSATE .- meanSATE) .* outcomeScale
+lower = (meanSATE .- lowerSATE) .* outcomeScale
+
 plot!(T, Y, label="MA cf", color=:green,
-    ribbon=(interval[!, "LowerBound"] .* outcomeScale,
-        interval[!, "UpperBound"] .* outcomeScale
-    ))
+    ribbon=(lower, upper))
 
 xlabel!("Temperature °F")
 ylabel!("Energy Consumption (GWh)")
 title!("Energy Consumption for Massachusetts")
-# savefig("neec25.png")
+savefig("neec$(hyperparams.nOuter)-$(hyperparams.nU).png")

@@ -7,16 +7,19 @@ secrets
 *checkpoint*
 *.csv
 *.xlsx
+*.jld2
+*.jld
 
 !examples/data/*.csv
 !docs/example_data/*.csv
 !test/test_results/*
 !test/test_data/*
 
-*.jld
 coverage/*
 *.cov
 *.info
 .DS_Store
 *.png
 *.svg
+
+*.gpslc

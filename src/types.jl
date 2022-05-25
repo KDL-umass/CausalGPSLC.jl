@@ -1,5 +1,6 @@
 export GPSLCObject,
     HyperParameters,
+    areequal,
     PriorParameters,
     ConfounderStructure,
     Confounders,
@@ -27,6 +28,33 @@ mutable struct HyperParameters
     stepSize::Int64
     predictionCovarianceNoise::Float64
 end
+
+function areequal(a::HyperParameters, b::HyperParameters)
+    nU = a.nU == b.nU
+    nOuter = a.nOuter == b.nOuter
+    nMHInner = a.nMHInner == b.nMHInner
+    nESInner = a.nESInner == b.nESInner
+    nBurnIn = a.nBurnIn == b.nBurnIn
+    stepSize = a.stepSize == b.stepSize
+    predictionCovarianceNoise = a.predictionCovarianceNoise == b.predictionCovarianceNoise
+
+    @assert nU "nU didn't match"
+    @assert nOuter "nOuter didn't match"
+    @assert nMHInner "nMHInner didn't match"
+    @assert nESInner "nESInner didn't match"
+    @assert nBurnIn "nBurnIn didn't match"
+    @assert stepSize "stepSize didn't match"
+    @assert predictionCovarianceNoise "predictionCovarianceNoise didn't match"
+
+    (nU &&
+     nOuter &&
+     nMHInner &&
+     nESInner &&
+     nBurnIn &&
+     stepSize &&
+     predictionCovarianceNoise)
+end
+
 
 """
     PriorParameters
