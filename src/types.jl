@@ -1,5 +1,6 @@
 export GPSLCObject,
     HyperParameters,
+    areequal,
     PriorParameters,
     ConfounderStructure,
     Confounders,
@@ -28,7 +29,7 @@ mutable struct HyperParameters
     predictionCovarianceNoise::Float64
 end
 
-function isequal(a::HyperParameters, b::HyperParameters)
+function areequal(a::HyperParameters, b::HyperParameters)
     nU = a.nU == b.nU
     nOuter = a.nOuter == b.nOuter
     nMHInner = a.nMHInner == b.nMHInner

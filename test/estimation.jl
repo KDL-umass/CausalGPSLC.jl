@@ -249,6 +249,7 @@ end
 
 
 @testset "ITEsamples" begin
+    nSamplesPerMixture = 5
     doT = true
     @testset "No U, no X, binaryT" begin
         g = gpslc(nothing, nothing, binaryT, Y)
@@ -320,6 +321,7 @@ end
 
 
 @testset "SATEsamples" begin
+    nSamplesPerMixture = 5
     doT = true
     @testset "No U, no X, binaryT" begin
         g = gpslc(nothing, nothing, binaryT, Y)
