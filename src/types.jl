@@ -29,7 +29,8 @@ mutable struct HyperParameters
     predictionCovarianceNoise::Float64
 end
 
-function areequal(a::HyperParameters, b::HyperParameters)
+import Base.==
+function (==)(a::HyperParameters, b::HyperParameters)
     nU = a.nU == b.nU
     nOuter = a.nOuter == b.nOuter
     nMHInner = a.nMHInner == b.nMHInner
@@ -241,7 +242,7 @@ ReshapeableMatrix = Union{
 """
     GPSLCObject
 
-This is the struct in GPSLC.jl that contains the data, hyperparamters, prior parameters, and posterior samples. It provides the primary interfaces to abstract the internals of GPSLC away from the higher-order functions like [`sampleITE`](@ref) and [`sampleSATE`](@ref).
+This is the struct in GPSLC.jl that contains the data, hyperparamters, prior parameters, and posterior samples. It provides the primary interfaces to abstract the internals of GPSLC away from the higher-order functions like [`sampleITE`](@ref), [`sampleSATE`](@ref), and [`predictCounterfactualEffects`](@ref).
 
 Returned by [`gpslc`](@ref)
 """
@@ -257,10 +258,13 @@ struct GPSLCObject
 end
 
 """
-    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
-
 Constructor for GPSLCObject that samples from the 
 posterior before constructing the GPSLCObject.
+
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, X, T, Y)
+    GPSLCObject(hyperparams, priorparams, SigmaU, obj, nothing, T, Y)
+    GPSLCObject(hyperparams, priorparams, nothing, nothing, X, T, Y)
+    GPSLCObject(hyperparams, priorparams, nothing, nothing, nothing, T, Y)
 
 Full Model or model with no observed Covariates
 """

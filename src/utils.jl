@@ -125,7 +125,7 @@ end
 
 """
     getN(g)
-Number of individuals.
+Number of individuals in dataset.
 """
 function getN(g::GPSLCObject)
     size(g.Y, 1)
@@ -133,7 +133,7 @@ end
 
 """
     getNX(g)
-Number of covariates (and observed confounders).
+Number of covariates (and observed confounders) in dataset.
 """
 function getNX(g::GPSLCObject)
     size(g.X, 2)
@@ -141,7 +141,7 @@ end
 
 """
     getNU(g)    
-Number of latent confounders to perform inference over.
+Number of latent confounders to perform inference over (hyperparameter).
 """
 function getNU(g::GPSLCObject)
     g.hyperparams.nU
@@ -150,6 +150,8 @@ end
 """
     getNumPosteriorSamples(g)
 Number of posterior samples that will be used based on hyperparameters.
+
+`(total posterior samples - burn in) / step size = nBurnIn:stepSize:nOuter`
 """
 function getNumPosteriorSamples(g::GPSLCObject)
     burnIn = g.hyperparams.nBurnIn

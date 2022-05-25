@@ -1,15 +1,18 @@
 export prepareData
 
-"""Returns dataframe of csv at path."""
+"""
+    loadData("path/to/filename.csv")
+Returns DataFrame of CSV at path.
+"""
 function loadData(csv_path)
     CSV.read(csv_path, DataFrame)
 end
 
 """
-    Prepare Data
-
+    prepareData(df, confounderEps, confounderCov)
+    prepareData("path/to/filename.csv", confounderEps, confounderCov)
+Prepare Data
 Creates the latent confounding structure from the object labels in the data.
-
 Parses matrices for the observed covariates, treatments, and outcomes.
 
 Returns: `X, T, Y, SigmaU`
