@@ -1,4 +1,4 @@
-@testset "gpslc scale tests" begin
+@testset "gpslc meta information tests" begin
     g = gpslc("$(prefix)test_data/minimal.csv")
     n = getN(g)
     nU = getNU(g)
@@ -6,7 +6,7 @@
     @test true
 end
 
-@testset "Sampled Treatment Effects" begin
+@testset "Sample Treatment Effects for Toy Examples" begin
     priorparams = getPriorParameters()
     hyperparams = GPSLC.getHyperParameters()
     nSamplesPerMixture = 30
@@ -42,7 +42,7 @@ end
     end
 end
 
-@testset "SummarizeITE" begin
+@testset "SummarizeITE after gpslc" begin
     @testset "NEEC" begin
         expected = CSV.read("$(prefix)test_results/NEEC_sampled_0.6.csv", DataFrame)
         g = gpslc("$(prefix)test_data/NEEC_sampled.csv")

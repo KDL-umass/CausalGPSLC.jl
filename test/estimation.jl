@@ -3,7 +3,7 @@
     uyLS, xyLS, tyLS, yScale, yNoise,
     U, X, realT, binaryT, Y, obj) = getEstimationTestParams()
 
-@testset "conditionalITE" begin
+@testset "conditionalITE equals 0 if intervention equals treatment" begin
 
     doT = true
     @testset "No U, no X, binaryT" begin
@@ -248,7 +248,7 @@ end
 
 
 
-@testset "ITEsamples" begin
+@testset "ITEsamples: toy variance should match prediction covariance noise" begin
     nSamplesPerMixture = 5
     doT = true
     @testset "No U, no X, binaryT" begin
@@ -320,7 +320,7 @@ end
 end
 
 
-@testset "SATEsamples" begin
+@testset "SATEsamples: toy variance should match prediction covariance noise" begin
     nSamplesPerMixture = 5
     doT = true
     @testset "No U, no X, binaryT" begin

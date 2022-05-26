@@ -39,6 +39,13 @@ patch = @patch function ProgressBars.tqdm(x)
 end
 
 Mocking.apply(patch) do
+    # Bayesian Workflow -> A guide on writing Bayes code + tests
+    # https://arxiv.org/pdf/2011.01808.pdf
+    if runIntenseTests
+        include("posterior.jl")
+        include("sbc.jl")
+    end
+
     include("utils.jl")
     include("data.jl")
     include("estimation.jl")
@@ -46,17 +53,9 @@ Mocking.apply(patch) do
     include("model.jl")
     include("inference.jl")
     include("driver.jl")
+    include("gpslc.jl")
     include("io.jl")
     include("prediction.jl")
-
-    # Bayesian Workflow -> A guide on writing Bayes code + tests
-    # https://arxiv.org/pdf/2011.01808.pdf
-    if runIntenseTests
-        include("gpslc.jl")
-        include("posterior.jl")
-        include("sbc.jl")
-        include("comparison.jl")
-    end
 end
 
 end

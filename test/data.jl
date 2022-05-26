@@ -1,6 +1,6 @@
 
 @testset "Data Input" begin
-    @testset "File Parsing" begin
+    @testset "File Parsing from CSV" begin
         @testset "No Covariates" begin
             SigmaU, obj, X, T, Y = prepareData("$(prefix)test_data/NEEC_sampled.csv")
             @test typeof(X) == Nothing

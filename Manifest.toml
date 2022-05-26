@@ -393,12 +393,6 @@ uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
-[[deps.LocalCoverage]]
-deps = ["CoverageTools", "DocStringExtensions", "Pkg", "PrettyTables", "Printf"]
-git-tree-sha1 = "f7d725df3f2fb908ac19c34933e7863a3805dd24"
-uuid = "5f6e1e16-694c-5876-87ef-16b5274f298e"
-version = "0.3.0"
-
 [[deps.LogExpFunctions]]
 deps = ["ChainRulesCore", "ChangesOfVariables", "DocStringExtensions", "InverseFunctions", "IrrationalConstants", "LinearAlgebra"]
 git-tree-sha1 = "09e4b894ce6a976c354a69041a04748180d43637"
