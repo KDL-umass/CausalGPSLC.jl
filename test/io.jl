@@ -6,10 +6,12 @@
     @testset "saveGPSLCObject" begin
         savedG = gpslc(obj, X, realT, Y)
         saveGPSLCObject(savedG, "tmp")
+        saveGPSLCObject(savedG, "tmp.gpslc")
         @test true
     end
     @testset "loadGPSLCObject" begin
         loadedG = loadGPSLCObject("tmp")
+        loadedG = loadGPSLCObject("tmp.gpslc")
         @test loadedG.X == X
         @test loadedG.obj == obj
         @test loadedG.T == realT
