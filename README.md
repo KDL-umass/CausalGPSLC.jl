@@ -13,7 +13,7 @@ This project provides a software interface in Julia for performing causal infere
 
 ## Contributing
 
-Please review the contribution instructions in [docs/src/contributing.md](CONTRIBUTING.md)
+Please review the contribution instructions in the [contributing](docs/src/contributing.md) page.
 
 ## Acknowledgements
 
