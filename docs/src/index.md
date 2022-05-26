@@ -1,17 +1,19 @@
 ```@meta
 CurrentModule = GPSLC
 ```
+Gaussian Processes with Structured Latent Confounders
+=====================================================
+
+`GPSLC.jl` is a Julia package for semi-parametric causal effect estimation with structured latent confounding. It provides interfaces for performing causal inference over the latent variables and Gaussian process parameters to produce accurate causal effect estimates.
+
+The original GP-SLC paper can be found here: [http://proceedings.mlr.press/v119/witty20a/witty20a.pdf](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf).
 
 ```@contents
 Pages=["index.md"]
 Depth = 3
 ```
 
-# Gaussian Processes with Structured Latent Confounders
-
-`GPSLC.jl` is a Julia package for semi-parametric causal effect estimation with structured latent confounding. It provides interfaces for performing causal inference over the latent variables and Gaussian process parameters to produce accurate causal effect estimates.
-
-The original GP-SLC paper can be found here: [http://proceedings.mlr.press/v119/witty20a/witty20a.pdf](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf).
+# Inference
 
 ```@docs
 gpslc
@@ -19,7 +21,7 @@ gpslc
 
 The primary struct that we provide interfaces for is the
 [`GPSLCObject`](@ref), which most of the high-level functions like the 
-[treatment effect](#treatment-effects) functions take as input 
+[treatment effect](#Treatment-Effects) functions take as input 
 in addition to their other arguments.
 
 # Treatment Effects
@@ -44,7 +46,7 @@ sampleSATE
 ## Counterfactual Effects
 
 It can be helpful to calculate treatment effect estimates for the whole
-domain of treatment values in the data, or some subset, as in the [example](#examples)
+domain of treatment values in the data, or some subset, as in the [example](#Examples)
 below. For this we can use `predictCounterfactualEffects`, which also
 tracks the values of the `doT` intervention values for comparison.
 
@@ -56,7 +58,7 @@ predictCounterfactualEffects
 
 It can be helpful to summarize the inferred individual treatment effects
 and sample average treatment effects into mean and credible intervals.
-A use case for this is demonstrated in the [examples](#examples) section.
+A use case for this is demonstrated in the [examples](#Examples) section.
 
 ```@docs
 summarizeEstimates

@@ -80,14 +80,8 @@ import Pkg; Pkg.test("GPSLC")
 To check code coverage, run 
 
 ```bash
-julia --code-coverage test/runtests.jl
-```
-
-To create an interactive code coverage session
-
-```bash
-julia test/coverage.jl
+$ julia --code-coverage test/runtests.jl
 ```
 
 Which will work assuming you have followed the instructions 
-in [Setup](#setup))
+in [Setup](#setup)

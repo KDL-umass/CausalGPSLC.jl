@@ -9,7 +9,13 @@ Pkg.add("Documenter");
 
 using Documenter, GPSLC
 
-makedocs(sitename="GPSLC.jl")
+makedocs(
+    sitename="GPSLC.jl",
+    pages=[
+        "Documentation" => "index.md",
+        "Contributing" => "contributing.md"
+    ],
+)
 
 deploydocs(
     repo="github.com/KDL-umass/GPSLC.jl.git",

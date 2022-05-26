@@ -3,7 +3,10 @@ export gpslc, samplePosterior, sampleITE, sampleSATE, summarizeEstimates
 
 """
     gpslc(filename * ".csv")
+    gpslc(filename * ".csv"; hyperparams=hyperparams, priorparams=priorparams))
+    
     gpslc(DataFrame(X1=...,X2=...,T=...,Y=...,obj=...))
+    gpslc(DataFrame(X1=...,X2=...,T=...,Y=...,obj=...); hyperparams=hyperparams, priorparams=priorparams)
 
 Run posterior inference on the input data.
 
