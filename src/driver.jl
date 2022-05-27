@@ -131,13 +131,13 @@ function summarizeEstimates(samples; savetofile::String="", credible_interval::F
     upperQ = 1 - lowerQ
 
     transformedSamples = [samples[i, :] for i in 1:size(samples, 1)]
-    mean = mean(samples, dims=2)[:, 1]
+    Mean = mean(samples, dims=2)[:, 1]
     lowerBound = broadcast(quantile, transformedSamples, lowerQ)
     upperBound = broadcast(quantile, transformedSamples, upperQ)
 
     df = DataFrame(
-        Individual=1:size(mean, 1),
-        Mean=mean,
+        Individual=1:size(Mean, 1),
+        Mean=Mean,
         LowerBound=lowerBound,
         UpperBound=upperBound,
     )
