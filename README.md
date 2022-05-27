@@ -1,4 +1,4 @@
-# GPSLC: Gaussian Processes with Structured Latent Confounders
+# GPSLC.jl: Gaussian Processes with Structured Latent Confounders
 
 [![](https://img.shields.io/badge/language-julia-Green.svg)](https://julialang.org)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://kdl-umass.github.io/GPSLC.jl/stable)
@@ -9,7 +9,6 @@
 ## Description
 
 This project provides a software interface in Julia for performing causal inference using Gaussian processes with structured latent confounders, as defined in the ICML 2020 [paper](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf). 
-
 
 ## Contributing
 
