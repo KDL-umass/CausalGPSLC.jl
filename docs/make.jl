@@ -15,6 +15,10 @@ makedocs(
         "Documentation" => "index.md",
         "Contributing" => "contributing.md"
     ],
+    format=[
+        # Documenter.LaTeX(), # uncomment to generate PDF
+        Documenter.HTML()
+    ]
 )
 
 deploydocs(
