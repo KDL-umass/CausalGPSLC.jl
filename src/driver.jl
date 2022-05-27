@@ -18,8 +18,8 @@ Datatypes of DataFrame or CSV must follow these standards:
 - `obj` (Any)
 
 Optional parameters
-- `hyperparams::`[`HyperParameters`](@ref)=[`getHyperParameters`](@ref)(): Hyper parameters primarily define the high level amount of inference to perform.
-- `priorparams::`[`PriorParameters`](@ref)=[`getPriorParameters`](@ref)(): Prior parameters define the high level priors to draw from when constructing kernel functions and latent confounder structure.
+- `hyperparams::`[`HyperParameters`](@ref)=[`getHyperParameters`](@ref)`()`: Hyper parameters primarily define the high level amount of inference to perform.
+- `priorparams::`[`PriorParameters`](@ref)=[`getPriorParameters`](@ref)`()`: Prior parameters define the high level priors to draw from when constructing kernel functions and latent confounder structure.
 
 Returns a [`GPSLCObject`](@ref) which stores the 
 hyperparameters, prior parameters, data, and posterior samples.
@@ -46,17 +46,14 @@ end
 
 """
     samplePosterior(hyperparameters, priorparameters, SigmaU, X, T, Y)
-
 Draw samples from the posterior given the observed data.
-
 Params: 
-- `hyperparams::`[`HyperParameters`](@ref): 
-- `priorparams::`[`PriorParameters`](@ref): 
-- `SigmaU::`[`ConfounderStructure`](@ref): 
-- `X::`[`Covariates`](@ref): 
-- `T::`[`Treatment`](@ref): 
-- `Y::`[`Outcome`](@ref): 
-
+- `hyperparams::`[`HyperParameters`](@ref)
+- `priorparams::`[`PriorParameters`](@ref) 
+- `SigmaU::`[`ConfounderStructure`](@ref) 
+- `X::`[`Covariates`](@ref)
+- `T::`[`Treatment`](@ref) 
+- `Y::`[`Outcome`](@ref)
 Posterior samples are returned as a Vector of Gen choicemaps.
 """
 function samplePosterior(hyperparams, priorparams, SigmaU, X, T, Y)
@@ -122,22 +119,31 @@ Summarize Predicted Estimates (Counterfactual Outcomes or Individual Treatment E
 Create dataframe of mean, lower and upper quantiles of the samples from [`sampleITE`](@ref) or [`predictCounterfactualEffects`](@ref).
 
 Params:
-- `samples`: `n x m` array of samples
-- `savetofile`: Optionally save the resultant dataframe as CSV to the filename passed.
+- `samples`: The `n x m` array of samples from sampleSATE or sampleITE
+- `savetofile::String`: Optionally save the resultant DataFrame as CSV to the filename passed
+- `credible_interval::Float64`: A real in [0,1] where 0.90 is the default for a 90% credible interval
 
 Returns:
 - `df`: Dataframe of Individual, Mean, LowerBound, and UpperBound values for the credible intervals around the sample.
 """
-function summarizeEstimates(samples; savetofile::String="")
-    Mean = mean(samples, dims=2)[:, 1]
-    LowerBound = broadcast(quantile,
-        [samples[i, :] for i in 1:size(samples)[1]], 0.05)
-    UpperBound = broadcast(quantile,
-        [samples[i, :] for i in 1:size(samples)[1]], 0.95)
-    df = DataFrame(Individual=1:size(Mean)[1], Mean=Mean, LowerBound=LowerBound, UpperBound=UpperBound)
+function summarizeEstimates(samples; savetofile::String="", credible_interval::Float64=0.90)
+    lowerQ = (1 - credible_interval) / 2
+    upperQ = 1 - lowerQ
+
+    transformedSamples = [samples[i, :] for i in 1:size(samples, 1)]
+    mean = mean(samples, dims=2)[:, 1]
+    lowerBound = broadcast(quantile, transformedSamples, lowerQ)
+    upperBound = broadcast(quantile, transformedSamples, upperQ)
+
+    df = DataFrame(
+        Individual=1:size(mean, 1),
+        Mean=mean,
+        LowerBound=lowerBound,
+        UpperBound=upperBound,
+    )
     if savetofile != ""
         CSV.write(savetofile, df)
-        println("Saved ITE mean and 90% credible intervals to " * savetofile)
+        println("Saved mean and 90% credible intervals to " * savetofile)
     end
     return df
 end

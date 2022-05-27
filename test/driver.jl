@@ -42,12 +42,31 @@ end
     end
 end
 
-@testset "SummarizeITE after gpslc" begin
-    @testset "NEEC" begin
+@testset "summarizeEstimates" begin
+    @testset "NEEC using gpslc" begin
         expected = CSV.read("$(prefix)test_results/NEEC_sampled_0.6.csv", DataFrame)
         g = gpslc("$(prefix)test_data/NEEC_sampled.csv")
         ITEsamples = sampleITE(g, 0.6)
         actual = summarizeEstimates(ITEsamples; savetofile="tmp.csv")
         @test countCloseEnough(expected, actual) >= 0.50
+    end
+
+    @testset "credible interval" begin
+        @testset "90%" begin
+            interval = 0.9
+            sample = 0:100
+            samples = toMatrix([collect(sample)], 1, 101)
+            summary = summarizeEstimates(samples; credible_interval=interval)
+            @test summary[1, "LowerBound"] ≈ 5.0
+            @test summary[1, "UpperBound"] ≈ 95.0
+        end
+        @testset "80%" begin
+            interval = 0.8
+            sample = 0:100
+            samples = toMatrix([collect(sample)], 1, 101)
+            summary = summarizeEstimates(samples; credible_interval=interval)
+            @test summary[1, "LowerBound"] ≈ 10.0
+            @test summary[1, "UpperBound"] ≈ 90.0
+        end
     end
 end

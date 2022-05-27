@@ -1,4 +1,6 @@
-export sampleNoiseFromPriorU, sampleNoiseFromPriorX, sampleNoiseFromPriorT, sampleNoiseFromPriorY, lengthscaleFromPriorT, lengthscaleFromPriorU, lengthscaleFromPriorX, scaleFromPriorX, scaleFromPriorT, scaleFromPriorY,
+export sampleNoiseFromPriorU, sampleNoiseFromPriorX, sampleNoiseFromPriorT,
+    sampleNoiseFromPriorY, lengthscaleFromPriorT, lengthscaleFromPriorU,
+    lengthscaleFromPriorX, scaleFromPriorX, scaleFromPriorT, scaleFromPriorY,
     generateXfromPrior, generateRealTfromPrior, generateBinaryTfromPrior
 
 """Gen function to generate lengthscale parameter for GP"""
@@ -59,8 +61,10 @@ end
 
 """Sample noise from prior for covariates (X)"""
 @gen function sampleNoiseFromPriorX(priorparams::PriorParameters, nX::Int64)::Vector{Float64}
-    xNoise = @trace(MappedGenerateNoise(fill(priorparams["xNoiseShape"], nX),
-            fill(priorparams["xNoiseScale"], nX)), :xNoise)
+    xNoise = @trace(MappedGenerateNoise(
+            fill(priorparams["xNoiseShape"], nX),
+            fill(priorparams["xNoiseScale"], nX)
+        ), :xNoise)
     return xNoise
 end
 
@@ -86,28 +90,45 @@ end
 
 """Latent confounders to treatment and outcome lengthscale"""
 @gen function lengthscaleFromPriorU(priorparams::PriorParameters, nU::Int64)::Tuple{Vector{Float64},Vector{Float64}}
-    utLS = @trace(MappedGenerateLS(fill(priorparams["utLSShape"], nU),
-            fill(priorparams["utLSScale"], nU)), :utLS)
-    uyLS = @trace(MappedGenerateLS(fill(priorparams["uyLSShape"], nU),
-            fill(priorparams["uyLSScale"], nU)), :uyLS)
+    utLS = @trace(MappedGenerateLS(
+            fill(priorparams["utLSShape"], nU),
+            fill(priorparams["utLSScale"], nU)
+        ), :utLS)
+    uyLS = @trace(MappedGenerateLS(
+            fill(priorparams["uyLSShape"], nU),
+            fill(priorparams["uyLSScale"], nU)
+        ), :uyLS)
     return utLS, uyLS
 end
 
 """Latent confounders to treatment and outcome lengthscale when nX is known"""
 @gen function lengthscaleFromPriorUX(priorparams::PriorParameters, nU::Int64, nX::Int64)::Tuple{Matrix{Float64},Vector{Float64},Vector{Float64}}
-    uxLS = @trace(MappedMappedGenerateLS(fill(fill(priorparams["uxLSShape"], nX), nU), fill(fill(priorparams["uxLSScale"], nX), nU)), :uxLS)
+    uxLS = @trace(MappedMappedGenerateLS(
+            fill(fill(priorparams["uxLSShape"], nX), nU),
+            fill(fill(priorparams["uxLSScale"], nX), nU)
+        ), :uxLS)
     uxLS = toMatrix(uxLS, nX, nU)
-    utLS = @trace(MappedGenerateLS(fill(priorparams["utLSShape"], nU), fill(priorparams["utLSScale"], nU)), :utLS)
-    uyLS = @trace(MappedGenerateLS(fill(priorparams["uyLSShape"], nU), fill(priorparams["uyLSScale"], nU)), :uyLS)
+    utLS = @trace(MappedGenerateLS(
+            fill(priorparams["utLSShape"], nU),
+            fill(priorparams["utLSScale"], nU)
+        ), :utLS)
+    uyLS = @trace(MappedGenerateLS(
+            fill(priorparams["uyLSShape"], nU),
+            fill(priorparams["uyLSScale"], nU)
+        ), :uyLS)
     return uxLS, utLS, uyLS
 end
 
 """Covariates to treatment and outcome lengthscale"""
 @gen function lengthscaleFromPriorX(priorparams::PriorParameters, nX::Int64)::Tuple{Vector{Float64},Vector{Float64}}
-    xtLS = @trace(MappedGenerateLS(fill(priorparams["xtLSShape"], nX),
-            fill(priorparams["xtLSScale"], nX)), :xtLS)
-    xyLS = @trace(MappedGenerateLS(fill(priorparams["xyLSShape"], nX),
-            fill(priorparams["xyLSScale"], nX)), :xyLS)
+    xtLS = @trace(MappedGenerateLS(
+            fill(priorparams["xtLSShape"], nX),
+            fill(priorparams["xtLSScale"], nX)
+        ), :xtLS)
+    xyLS = @trace(MappedGenerateLS(
+            fill(priorparams["xyLSShape"], nX),
+            fill(priorparams["xyLSScale"], nX)
+        ), :xyLS)
     @assert size(xtLS, 1) == nX "x lengthscale not correct length"
     @assert size(xyLS, 1) == nX "x lengthscale not correct length"
     return xtLS, xyLS
@@ -119,7 +140,10 @@ end
 Generate kernel scales from prior for covariates (X)
 """
 @gen function scaleFromPriorX(priorparams::PriorParameters, nX::Int64)::Vector{Float64}
-    xScale = @trace(MappedGenerateScale(fill(priorparams["xScaleShape"], nX), fill(priorparams["xScaleScale"], nX)), :xScale)
+    xScale = @trace(MappedGenerateScale(
+            fill(priorparams["xScaleShape"], nX),
+            fill(priorparams["xScaleScale"], nX)
+        ), :xScale)
     return xScale
 end
 
@@ -127,7 +151,10 @@ end
 Sample kernel scale from prior for treatment (T)
 """
 @gen function scaleFromPriorT(priorparams::PriorParameters)::Float64
-    tScale = @trace(inv_gamma(priorparams["tScaleShape"], priorparams["tScaleScale"]), :tScale)
+    tScale = @trace(inv_gamma(
+            priorparams["tScaleShape"],
+            priorparams["tScaleScale"]
+        ), :tScale)
     return tScale
 end
 
@@ -135,7 +162,10 @@ end
 Sample kernel scale from prior for outcome (Y)
 """
 @gen function scaleFromPriorY(priorparams::PriorParameters)::Float64
-    yScale = @trace(inv_gamma(priorparams["yScaleShape"], priorparams["yScaleScale"]), :yScale)
+    yScale = @trace(inv_gamma(
+            priorparams["yScaleShape"],
+            priorparams["yScaleScale"]
+        ), :yScale)
     return yScale
 end
 
