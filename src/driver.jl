@@ -72,7 +72,7 @@ end
 """
     sampleITE(g, doT)
     sampleITE(g, doT; samplesPerPosterior=10)
-Estimate Individual Treatment Effect with GPSLC model
+Estimate Individual Treatment Effect with CausalGPSLC model
 
 Params:
 - `g::`[`GPSLCObject`](@ref): Contains data and hyperparameters
@@ -92,7 +92,7 @@ end
 """
     sampleSATE(g, doT)
     sampleSATE(g, doT; samplesPerPosterior=10)
-Estimate Sample Average Treatment Effect with GPSLC model
+Estimate Sample Average Treatment Effect with CausalGPSLC model
 
 Using [`sampleITE`](@ref), samples can be drawn for the sample average treatment effect
 

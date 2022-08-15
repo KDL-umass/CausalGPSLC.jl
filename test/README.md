@@ -1,4 +1,4 @@
-GPSLC Tests
+CausalGPSLC Tests
 ===========
 
 Most users will include `runtests.jl` without any arguments 

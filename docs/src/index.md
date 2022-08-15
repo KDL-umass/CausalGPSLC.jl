@@ -1,10 +1,10 @@
 ```@meta
-CurrentModule = GPSLC
+CurrentModule = CausalGPSLC
 ```
 Gaussian Processes with Structured Latent Confounders
 =====================================================
 
-`GPSLC.jl` is a Julia package for semi-parametric causal effect estimation with structured latent confounding. It provides interfaces for performing causal inference over the latent variables and Gaussian process parameters to produce accurate causal effect estimates.
+`CausalGPSLC.jl` is a Julia package for semi-parametric causal effect estimation with structured latent confounding. It provides interfaces for performing causal inference over the latent variables and Gaussian process parameters to produce accurate causal effect estimates.
 
 The original GP-SLC paper can be found here: [http://proceedings.mlr.press/v119/witty20a/witty20a.pdf](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf).
 
@@ -82,7 +82,7 @@ This example creates an example plot of the NEEC treatment vs outcome data. Plot
 ```@example
 import Random # hide
 Random.seed!(1234) # hide
-using GPSLC # hide
+using CausalGPSLC # hide
 using Plots # hide
 using Statistics # hide
 
@@ -146,7 +146,7 @@ The data used in this example can be found [here](../example_data/NEEC_sampled.c
 
 ## External Types
 
-External types are those relevant for using `GPSLC.jl` in a high-level way, 
+External types are those relevant for using `CausalGPSLC.jl` in a high-level way, 
 where inference and prediction are automatically performed.
 
 ### HyperParameters
@@ -184,7 +184,7 @@ This also means that the `GPSLCObject` contains the result of a large portion
 of compute time, as well as contains all the relevant data for a given workflow. 
 For this reason, all the fields and functions that utilize it are externally available,
 and described below, to provide users with a simple way to extend the functionality 
-of `GPSLC.jl` and estimate other quantities of interest.
+of `CausalGPSLC.jl` and estimate other quantities of interest.
 
 ```@docs
 GPSLCObject

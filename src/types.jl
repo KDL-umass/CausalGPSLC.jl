@@ -72,13 +72,13 @@ ConfounderStructure = Matrix{Float64}
 """
     Object Labels for instances (obj)
     
-Optional for GPSLC, but per publication it improves performance.
+Optional for CausalGPSLC, but per publication it improves performance.
 """
 ObjectLabels = Any
 
 """
     Confounders (U)
-Latent confounders that GPSLC performs inference over.
+Latent confounders that CausalGPSLC performs inference over.
 
 Either 1D or 2D matrices of `Float64` values.
 """
@@ -242,7 +242,7 @@ ReshapeableMatrix = Union{
 """
     GPSLCObject
 
-This is the struct in GPSLC.jl that contains the data, hyperparamters, prior parameters, and posterior samples. It provides the primary interfaces to abstract the internals of GPSLC away from the higher-order functions like [`sampleITE`](@ref), [`sampleSATE`](@ref), and [`predictCounterfactualEffects`](@ref).
+This is the struct in CausalGPSLC.jl that contains the data, hyperparamters, prior parameters, and posterior samples. It provides the primary interfaces to abstract the internals of CausalGPSLC away from the higher-order functions like [`sampleITE`](@ref), [`sampleSATE`](@ref), and [`predictCounterfactualEffects`](@ref).
 
 Returned by [`gpslc`](@ref)
 """

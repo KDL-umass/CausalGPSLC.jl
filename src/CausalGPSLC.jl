@@ -1,4 +1,4 @@
-module GPSLC
+module CausalGPSLC
 
 using Gen
 using DataFrames

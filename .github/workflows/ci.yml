@@ -58,9 +58,9 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using GPSLC
-            DocMeta.setdocmeta!(GPSLC, :DocTestSetup, :(using GPSLC); recursive=true)
-            doctest(GPSLC)'
+            using GPSLCCausalGPSLC
+            DocMeta.setdocmeta!(GPSLC,CausalGPSLCTestSetup, :(using GPSLC); recuCausalGPSLC=true)
+            doctest(GPSLC)CausalGPSLC
   tag:
     name: Julia TagBot
     runs-on: ubuntu-latest

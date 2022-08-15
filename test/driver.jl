@@ -8,7 +8,7 @@ end
 
 @testset "Sample Treatment Effects for Toy Examples" begin
     priorparams = getPriorParameters()
-    hyperparams = GPSLC.getHyperParameters()
+    hyperparams = CausalGPSLC.getHyperParameters()
     nSamplesPerMixture = 30
     uyLS = [1.0]
     xyLS = [1.0]

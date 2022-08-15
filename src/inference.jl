@@ -17,7 +17,7 @@ function Posterior(priorparams::PriorParameters, X::Covariates, T::ContinuousTre
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCRealT, (priorparams, n, nU, nX), obs)
+    (trace, _) = generate(CausalGPSLCRealT, (priorparams, n, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uNoise")))
@@ -70,7 +70,7 @@ function Posterior(priorparams::PriorParameters, X::Nothing, T::ContinuousTreatm
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovRealT, (priorparams, n, nU, nothing), obs)
+    (trace, _) = generate(CausalGPSLCNoCovRealT, (priorparams, n, nU, nothing), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uNoise"),))
@@ -120,7 +120,7 @@ function Posterior(priorparams::PriorParameters, X::Covariates, T::ContinuousTre
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoURealT, (priorparams, n, nothing, nX), obs)
+    (trace, _) = generate(CausalGPSLCNoURealT, (priorparams, n, nothing, nX), obs)
     for i = @mock tqdm(1:nOuter)
 
         for j = 1:nMHInner # Support for loop added after paper
@@ -153,7 +153,7 @@ function Posterior(priorparams::PriorParameters, X::Nothing, T::ContinuousTreatm
 
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUNoCovRealT, (priorparams, n, nothing, nothing), obs)
+    (trace, _) = generate(CausalGPSLCNoUNoCovRealT, (priorparams, n, nothing, nothing), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
@@ -186,7 +186,7 @@ function Posterior(priorparams::PriorParameters, X::Covariates, T::BinaryTreatme
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCBinaryT, (priorparams, n, nU, nX), obs)
+    (trace, _) = generate(CausalGPSLCBinaryT, (priorparams, n, nU, nX), obs)
     for i in @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uNoise")))
@@ -258,7 +258,7 @@ function Posterior(priorparams::PriorParameters, X::Nothing, T::BinaryTreatment,
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoCovBinaryT, (priorparams, n, nU, nothing), obs)
+    (trace, _) = generate(CausalGPSLCNoCovBinaryT, (priorparams, n, nU, nothing), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("uNoise")))
@@ -318,7 +318,7 @@ function Posterior(priorparams::PriorParameters, X::Covariates, T::BinaryTreatme
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUBinaryT, (priorparams, n, nothing, nX), obs)
+    (trace, _) = generate(CausalGPSLCNoUBinaryT, (priorparams, n, nothing, nX), obs)
     for i = @mock tqdm(1:nOuter)
         for j = 1:nMHInner
             (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tNoise")))
@@ -367,7 +367,7 @@ function Posterior(priorparams::PriorParameters, X::Nothing, T::BinaryTreatment,
     # Algorithm 2 HyperParameter Update
     posteriorSamples = []
 
-    (trace, _) = generate(GPSLCNoUNoCovBinaryT, (priorparams, n, nothing, nothing), obs)
+    (trace, _) = generate(CausalGPSLCNoUNoCovBinaryT, (priorparams, n, nothing, nothing), obs)
     for i = @mock tqdm(1:nOuter)
         (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("yNoise")))
         (trace, _) = mh(trace, paramProposal, (priorparams["drift"], getProposalAddress("tyLS")))
