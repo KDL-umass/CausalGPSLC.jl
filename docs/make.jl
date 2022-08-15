@@ -7,10 +7,10 @@ push!(LOAD_PATH, "..")
 import Pkg
 Pkg.add("Documenter");
 
-using Documenter, GPSLCCausalGPSLC
+using Documenter, CausalGPSLC
 
 makedocs(
-    sitename="GPSLC.CausalGPSLC
+    sitename="CausalGPSLC",
     pages=[
         "Documentation" => "index.md",
         "Contributing" => "contributing.md"
@@ -22,6 +22,6 @@ makedocs(
 )
 
 deploydocs(
-    repo="github.com/KDL-umass/GPSLC.CausalGPSLCt",
+    repo="github.com/KDL-umass/CausalGPSLC",
     devbranch="main"
 )
