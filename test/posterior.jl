@@ -40,7 +40,7 @@ percentClose = 0.5
 
         predictedTreatment = zeros(n, length(posteriorSamples))
         for (i, sampleChoiceMap) in enumerate(posteriorSamples)
-            choicemap = generateTreatment(GPSLCNoUNoCovBinaryT, sampleChoiceMap, priorparams, n, nothing, nothing)
+            choicemap = generateTreatment(CausalGPSLCNoUNoCovBinaryT, sampleChoiceMap, priorparams, n, nothing, nothing)
             predictedTreatment[:, i] = [choicemap[:T=>i=>:T] for i in 1:n]
         end
         comparison = comparePredictedBinary(predictedTreatment, binaryT, n)
@@ -53,7 +53,7 @@ percentClose = 0.5
 
         predictedTreatment = zeros(n, length(posteriorSamples))
         for (i, sampleChoiceMap) in enumerate(posteriorSamples)
-            choicemap = generateTreatment(GPSLCNoCovBinaryT, sampleChoiceMap, priorparams, n, nU, nothing)
+            choicemap = generateTreatment(CausalGPSLCNoCovBinaryT, sampleChoiceMap, priorparams, n, nU, nothing)
             predictedTreatment[:, i] = [choicemap[:T=>i=>:T] for i in 1:n]
         end
         comparison = comparePredictedBinary(predictedTreatment, binaryT, n)
@@ -66,7 +66,7 @@ percentClose = 0.5
 
         predictedTreatment = zeros(n, length(posteriorSamples))
         for (i, sampleChoiceMap) in enumerate(posteriorSamples)
-            choicemap = generateTreatment(GPSLCNoUBinaryT, sampleChoiceMap, priorparams, n, nothing, nX)
+            choicemap = generateTreatment(CausalGPSLCNoUBinaryT, sampleChoiceMap, priorparams, n, nothing, nX)
             predictedTreatment[:, i] = [choicemap[:T=>i=>:T] for i in 1:n]
         end
         comparison = comparePredictedBinary(predictedTreatment, binaryT, n)
@@ -79,7 +79,7 @@ percentClose = 0.5
 
         predictedTreatment = zeros(n, length(posteriorSamples))
         for (i, sampleChoiceMap) in enumerate(posteriorSamples)
-            choicemap = generateTreatment(GPSLCBinaryT, sampleChoiceMap, priorparams, n, nU, nX)
+            choicemap = generateTreatment(CausalGPSLCBinaryT, sampleChoiceMap, priorparams, n, nU, nX)
             predictedTreatment[:, i] = [choicemap[:T=>i=>:T] for i in 1:n]
         end
         comparison = comparePredictedBinary(predictedTreatment, binaryT, n)
@@ -92,7 +92,7 @@ percentClose = 0.5
 
         predictedTreatment = zeros(n, length(posteriorSamples))
         for (i, sampleChoiceMap) in enumerate(posteriorSamples)
-            choicemap = generateTreatment(GPSLCNoUNoCovRealT, sampleChoiceMap, priorparams, n, nothing, nothing)
+            choicemap = generateTreatment(CausalGPSLCNoUNoCovRealT, sampleChoiceMap, priorparams, n, nothing, nothing)
             predictedTreatment[:, i] = choicemap[:T]
         end
         comparison = comparePredictedReal(predictedTreatment, realT, n)
@@ -105,7 +105,7 @@ percentClose = 0.5
 
         predictedTreatment = zeros(n, length(posteriorSamples))
         for (i, sampleChoiceMap) in enumerate(posteriorSamples)
-            choicemap = generateTreatment(GPSLCNoCovRealT, sampleChoiceMap, priorparams, n, nU, nothing)
+            choicemap = generateTreatment(CausalGPSLCNoCovRealT, sampleChoiceMap, priorparams, n, nU, nothing)
             predictedTreatment[:, i] = choicemap[:T]
         end
         comparison = comparePredictedReal(predictedTreatment, realT, n)
@@ -118,7 +118,7 @@ percentClose = 0.5
 
         predictedTreatment = zeros(n, length(posteriorSamples))
         for (i, sampleChoiceMap) in enumerate(posteriorSamples)
-            choicemap = generateTreatment(GPSLCNoURealT, sampleChoiceMap, priorparams, n, nothing, nX)
+            choicemap = generateTreatment(CausalGPSLCNoURealT, sampleChoiceMap, priorparams, n, nothing, nX)
             predictedTreatment[:, i] = choicemap[:T]
         end
         comparison = comparePredictedReal(predictedTreatment, realT, n)
@@ -131,7 +131,7 @@ percentClose = 0.5
 
         predictedTreatment = zeros(n, length(posteriorSamples))
         for (i, sampleChoiceMap) in enumerate(posteriorSamples)
-            choicemap = generateTreatment(GPSLCRealT, sampleChoiceMap, priorparams, n, nU, nX)
+            choicemap = generateTreatment(CausalGPSLCRealT, sampleChoiceMap, priorparams, n, nU, nX)
             predictedTreatment[:, i] = choicemap[:T]
         end
         comparison = comparePredictedReal(predictedTreatment, realT, n)

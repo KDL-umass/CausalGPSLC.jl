@@ -34,7 +34,7 @@ Returns simple dataset and params for estimation testing.
 """
 function getEstimationTestParams()
     priorparams = getPriorParameters()
-    hyperparams = GPSLC.getHyperParameters()
+    hyperparams = CausalGPSLC.getHyperParameters()
     uyLS = [1.0]
     xyLS = [1.0]
     tyLS = 1.0

@@ -1,6 +1,6 @@
 import Random # hide
 Random.seed!(1234) # hide
-using GPSLC # hide
+using CausalGPSLC # hide
 using Plots # hide
 using Statistics # hide
 

@@ -7,17 +7,21 @@ push!(LOAD_PATH, "..")
 import Pkg
 Pkg.add("Documenter");
 
-using Documenter, GPSLC
+using Documenter, CausalGPSLC
 
 makedocs(
-    sitename="GPSLC.jl",
+    sitename="CausalGPSLC",
     pages=[
         "Documentation" => "index.md",
         "Contributing" => "contributing.md"
     ],
+    format=[
+        # Documenter.LaTeX(), # uncomment to generate PDF
+        Documenter.HTML()
+    ]
 )
 
 deploydocs(
-    repo="github.com/KDL-umass/GPSLC.jl.git",
+    repo="github.com/KDL-umass/CausalGPSLC",
     devbranch="main"
 )

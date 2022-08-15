@@ -1,4 +1,4 @@
-module GPSLCTests
+module CausalGPSLCTests
 
 using Revise
 using Mocking
@@ -11,7 +11,7 @@ using FunctionalCollections
 using Distributions
 using Statistics
 using HypothesisTests
-using GPSLC
+using CausalGPSLC
 import CSV
 
 import Random

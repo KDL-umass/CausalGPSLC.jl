@@ -8,12 +8,12 @@
             obs[:T=>i=>:T] = binaryT[i]
         end
 
-        @testset "GPSLCNoUNoCovBinaryT" begin
-            (trace, _) = generate(GPSLCNoUNoCovBinaryT, (priorparams, n, nothing, nothing), obs)
+        @testset "CausalGPSLCNoUNoCovBinaryT" begin
+            (trace, _) = generate(CausalGPSLCNoUNoCovBinaryT, (priorparams, n, nothing, nothing), obs)
             @test true
         end
-        @testset "GPSLCNoCovBinaryT" begin
-            (trace, _) = generate(GPSLCNoCovBinaryT, (priorparams, n, nU, nothing), obs)
+        @testset "CausalGPSLCNoCovBinaryT" begin
+            (trace, _) = generate(CausalGPSLCNoCovBinaryT, (priorparams, n, nU, nothing), obs)
             @test true
         end
 
@@ -21,12 +21,12 @@
         for k in 1:nX
             obs[:X=>k=>:X] = X[:, k]
         end
-        @testset "GPSLCNoUBinaryT" begin
-            (trace, _) = generate(GPSLCNoUBinaryT, (priorparams, n, nothing, nX), obs)
+        @testset "CausalGPSLCNoUBinaryT" begin
+            (trace, _) = generate(CausalGPSLCNoUBinaryT, (priorparams, n, nothing, nX), obs)
             @test true
         end
-        @testset "GPSLCBinaryT" begin
-            (trace, _) = generate(GPSLCBinaryT, (priorparams, n, nU, nX), obs)
+        @testset "CausalGPSLCBinaryT" begin
+            (trace, _) = generate(CausalGPSLCBinaryT, (priorparams, n, nU, nX), obs)
             @test true
         end
     end
@@ -35,14 +35,14 @@
         obs, _ = getToyObservations(n)
         obs[:T] = realT
 
-        @testset "GPSLCNoUNoCovRealT" begin
-            (trace, _) = generate(GPSLCNoUNoCovRealT, (priorparams, n, nothing, nothing), obs)
+        @testset "CausalGPSLCNoUNoCovRealT" begin
+            (trace, _) = generate(CausalGPSLCNoUNoCovRealT, (priorparams, n, nothing, nothing), obs)
             @test true
         end
 
         obs[:T] = realT # whole symbol because no logit Map
-        @testset "GPSLCNoCovRealT" begin
-            (trace, _) = generate(GPSLCNoCovRealT, (priorparams, n, nU, nothing), obs)
+        @testset "CausalGPSLCNoCovRealT" begin
+            (trace, _) = generate(CausalGPSLCNoCovRealT, (priorparams, n, nU, nothing), obs)
             @test true
         end
 
@@ -50,13 +50,13 @@
         for k in 1:nX
             obs[:X=>k=>:X] = X[:, k]
         end
-        @testset "GPSLCNoURealT" begin
-            (trace, _) = generate(GPSLCNoURealT, (priorparams, n, nothing, nU), obs)
+        @testset "CausalGPSLCNoURealT" begin
+            (trace, _) = generate(CausalGPSLCNoURealT, (priorparams, n, nothing, nU), obs)
             @test true
         end
 
-        @testset "GPSLCRealT" begin
-            (trace, _) = generate(GPSLCRealT, (priorparams, n, nU, nX), obs)
+        @testset "CausalGPSLCRealT" begin
+            (trace, _) = generate(CausalGPSLCRealT, (priorparams, n, nU, nX), obs)
             @test true
         end
 

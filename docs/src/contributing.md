@@ -1,21 +1,21 @@
-Contributing to GPSLC.jl
+Contributing to CausalGPSLC.jl
 ========================
 
 # Development
 
-For basic editing of small portions of the GPSLC.jl source code, 
+For basic editing of small portions of the CausalGPSLC.jl source code, 
 you can use `Revise.jl` to ensure the package is precompiled and up-to-date.
 
 ## Forks
 
-If you intend to make a contribution to `GPSLC.jl`, 
+If you intend to make a contribution to `CausalGPSLC.jl`, 
 please make a fork of this repository
 and work on your additions there.
 
 ## Pull Requests
 
 When the changes on your fork are ready for review, 
-please create a pull request on Github to the `dev` branch of `GPSLC.jl`.
+please create a pull request on Github to the `dev` branch of `CausalGPSLC.jl`.
 Please also mention any relevant issues the PR is intending to address in the 
 description of the PR.
 
@@ -40,7 +40,7 @@ catch
 end
 ```
 
-This makes it so `$ julia` bash commands will run in the GPSLC environment.
+This makes it so `$ julia` bash commands will run in the CausalGPSLC environment.
 
 ## Revise
 
@@ -49,7 +49,7 @@ In the Julia REPL execute
 ```julia
 using Pkg, Revise
 Pkg.activate(".")
-using GPSLC
+using CausalGPSLC
 ```
 
 And then you're good to go and add things as needed and rerun them. Revise should keep things up to date in the REPL as changes are made.
@@ -60,8 +60,8 @@ All changes should be accompanied by corresponding tests in the test suite found
 We recommend using test-driven-development (TDD) and writing tests for the components prior to the components themselves, so you know they work as expected once they've been written. 
 There are many good resources out there for TDD.
 
-If you're using Visual Studio Code with the Julia extension, the contents of `runtests.jl`, the `GPSLCTests` module can be executed using `Shift+Enter` or similar, 
-and it will include a call to `Revise.jl` so that the `GPSLC.jl` package is up to date.
+If you're using Visual Studio Code with the Julia extension, the contents of `runtests.jl`, the `CausalGPSLCTests` module can be executed using `Shift+Enter` or similar, 
+and it will include a call to `Revise.jl` so that the `CausalGPSLC.jl` package is up to date.
 
 You can also run the tests straight from the REPL by running
 
@@ -72,7 +72,7 @@ include("test/runtests.jl")
 or to run the full test suite including package installation verification
 
 ```julia
-import Pkg; Pkg.test("GPSLC")
+import Pkg; Pkg.test("CausalGPSLC")
 ```
 
 ## Coverage

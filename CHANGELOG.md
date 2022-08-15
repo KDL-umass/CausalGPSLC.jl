@@ -4,7 +4,7 @@ Changelog
 
 # 1.0.0
 
-- Unify external API around `GPSLCObject` interface.
+- Initial release for public use
 
 # 0.*.*
 

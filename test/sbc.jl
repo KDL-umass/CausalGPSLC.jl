@@ -147,49 +147,49 @@ end
 
     @testset "Binary Treatment, No U, No Cov" begin
         @test simulationBasedCalibration(
-            GPSLCNoUNoCovBinaryT, Posterior, priorparams,
+            CausalGPSLCNoUNoCovBinaryT, Posterior, priorparams,
             n, nothing, nothing, numSamples, nothing, nothing)
     end
 
     @testset "Binary Treatment, No Cov" begin
         @test simulationBasedCalibration(
-            GPSLCNoCovBinaryT, Posterior, priorparams,
+            CausalGPSLCNoCovBinaryT, Posterior, priorparams,
             n, nU, nothing, numSamples, nMHInner, nESInner)
     end
 
     @testset "Binary Treatment, No U" begin
         @test simulationBasedCalibration(
-            GPSLCNoUBinaryT, Posterior, priorparams,
+            CausalGPSLCNoUBinaryT, Posterior, priorparams,
             n, nothing, nX, numSamples, nMHInner, nESInner)
     end
 
     @testset "Binary Treatment, Full Model" begin
         @test simulationBasedCalibration(
-            GPSLCBinaryT, Posterior, priorparams,
+            CausalGPSLCBinaryT, Posterior, priorparams,
             n, nU, nX, numSamples, nMHInner, nESInner)
     end
 
     @testset "Continous Treatment, No U, No Cov" begin
         @test simulationBasedCalibration(
-            GPSLCNoUNoCovRealT, Posterior, priorparams,
+            CausalGPSLCNoUNoCovRealT, Posterior, priorparams,
             n, nothing, nothing, numSamples, nothing, nothing)
     end
 
     @testset "Continous Treatment, No Cov" begin
         @test simulationBasedCalibration(
-            GPSLCNoCovRealT, Posterior, priorparams,
+            CausalGPSLCNoCovRealT, Posterior, priorparams,
             n, nU, nothing, numSamples, nMHInner, nESInner)
     end
 
     @testset "Continous Treatment, No U" begin
         @test simulationBasedCalibration(
-            GPSLCNoURealT, Posterior, priorparams,
+            CausalGPSLCNoURealT, Posterior, priorparams,
             n, nothing, nX, numSamples, nMHInner, nESInner)
     end
 
     @testset "Continous Treatment, Full Model" begin
         @test simulationBasedCalibration(
-            GPSLCRealT, Posterior, priorparams,
+            CausalGPSLCRealT, Posterior, priorparams,
             n, nU, nX, numSamples, nMHInner, nESInner)
     end
 end
