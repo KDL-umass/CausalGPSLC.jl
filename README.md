@@ -1,4 +1,4 @@
-# CausalCausalGPSLC: Gaussian Processes with Structured Latent Confounders
+# CausalGPSLC: Gaussian Processes with Structured Latent Confounders
 
 [![](https://img.shields.io/badge/language-julia-Green.svg)](https://julialang.org)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://kdl-umass.github.io/CausalCausalGPSLC.jl/stable)
@@ -10,10 +10,9 @@
 
 This project provides a software interface in Julia for performing causal inference using Gaussian processes with structured latent confounders, as defined in the ICML 2020 [paper](http://proceedings.mlr.press/v119/witty20a/witty20a.pdf). 
 
-
 ## Contributing
 
-Please review the contribution instructions in [CONTRIBUTING.md](CONTRIBUTING.md)
+Please review the contribution instructions in the [contributing](docs/src/contributing.md) page.
 
 ## Acknowledgements
 
