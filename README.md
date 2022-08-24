@@ -1,10 +1,10 @@
 # CausalGPSLC: Gaussian Processes with Structured Latent Confounders
 
 [![](https://img.shields.io/badge/language-julia-Green.svg)](https://julialang.org)
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://kdl-umass.github.io/CausalCausalGPSLC.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://kdl-umass.github.io/CausalCausalGPSLC.jl/dev)
-[![CI](https://github.com/KDL-umass/CausalCausalGPSLC.jl/workflows/ci/badge.svg)](https://github.com/kdl-umass/CausalCausalGPSLC.jl/actions?query=workflow%3Aci)
-[![codecov](https://codecov.io/gh/kdl-umass/CausalCausalGPSLC.jl/branch/main/graph/badge.svg?token=KBIFQ1D5NH)](https://codecov.io/gh/kdl-umass/CausalCausalGPSLC.jl)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://kdl-umass.github.io/CausalGPSLC.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://kdl-umass.github.io/CausalGPSLC.jl/dev)
+[![CI](https://github.com/KDL-umass/CausalGPSLC.jl/workflows/ci/badge.svg)](https://github.com/kdl-umass/CausalGPSLC.jl/actions?query=workflow%3Aci)
+[![codecov](https://codecov.io/gh/kdl-umass/CausalGPSLC.jl/branch/main/graph/badge.svg?token=KBIFQ1D5NH)](https://codecov.io/gh/kdl-umass/CausalGPSLC.jl)
 
 ## Description
 
