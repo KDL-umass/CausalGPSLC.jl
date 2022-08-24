@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 1.0.2
+
+- Add TagBot
+
+# 1.0.1
+
+- Fix documentation links in README
 
 # 1.0.0
 
